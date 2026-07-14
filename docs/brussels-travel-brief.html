@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A cleaned-up travel brief for getting from Brussels Airport to Mechelen, with hotel, venue, and transit notes.">
+<title>Brussels Travel Brief</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1621;
+    --bg-deep: #091019;
+    --paper: rgba(15, 23, 34, 0.8);
+    --paper-strong: rgba(11, 18, 28, 0.92);
+    --line: rgba(255, 212, 143, 0.18);
+    --line-strong: rgba(255, 212, 143, 0.36);
+    --text: #f6efe4;
+    --muted: #c4baa8;
+    --sand: #ffd48f;
+    --amber: #ff9b46;
+    --rust: #d95d30;
+    --green: #7fcf99;
+    --red: #ff7b68;
+    --blue: #7dc9ff;
+    --shadow: 0 26px 70px rgba(0, 0, 0, 0.35);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(255, 155, 70, 0.18), transparent 32%),
+      radial-gradient(circle at 85% 12%, rgba(125, 201, 255, 0.14), transparent 24%),
+      linear-gradient(180deg, #162233 0%, var(--bg-deep) 100%);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  }
+
+  body {
+    padding: 28px 18px 60px;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  .page-actions {
+    width: min(860px, 100%);
+    margin: 0 auto 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .download-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    border: 1px solid rgba(255, 212, 143, 0.24);
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--amber), var(--rust));
+    color: #fff7ed;
+    cursor: pointer;
+    box-shadow: 0 16px 32px rgba(217, 93, 48, 0.22);
+  }
+
+  .download-button:disabled {
+    cursor: wait;
+    opacity: 0.75;
+  }
+
+  .download-status {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .page {
+    width: min(860px, 100%);
+    margin: 0 auto;
+  }
+
+  .hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 34px;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent 42%),
+      linear-gradient(180deg, rgba(255, 212, 143, 0.06), rgba(255, 212, 143, 0.02)),
+      var(--paper-strong);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .hero::before,
+  .hero::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .hero::before {
+    inset: -20% auto auto -10%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 155, 70, 0.16), transparent 70%);
+  }
+
+  .hero::after {
+    right: -60px;
+    bottom: -90px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(125, 201, 255, 0.16), transparent 70%);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 46px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--amber), rgba(255, 155, 70, 0.18));
+  }
+
+  h1 {
+    margin: 16px 0 14px;
+    max-width: none;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(3rem, 6vw, 5.3rem);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+
+  .lede {
+    max-width: 60ch;
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .chip {
+    padding: 11px 14px;
+    border: 1px solid rgba(255, 212, 143, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.94rem;
+    color: var(--text);
+  }
+
+  .hero-card {
+    position: relative;
+    align-self: stretch;
+    padding: 22px 22px 20px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 212, 143, 0.16);
+    background:
+      linear-gradient(180deg, rgba(255, 155, 70, 0.09), transparent 38%),
+      rgba(7, 13, 20, 0.76);
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-card h2,
+  .panel h2 {
+    margin: 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+
+  .hero-card p {
+    margin: 12px 0 18px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .mini-route {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 14px;
+  }
+
+  .mini-route li {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .mini-route .step {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255, 155, 70, 0.28), rgba(255, 155, 70, 0.1));
+    border: 1px solid rgba(255, 212, 143, 0.28);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sand);
+  }
+
+  .mini-route strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.98rem;
+  }
+
+  .mini-route span:last-child {
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .banner {
+    margin-top: 22px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--amber);
+    background: rgba(255, 212, 143, 0.08);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .grid {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .panel {
+    padding: 26px;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
+      var(--paper);
+    box-shadow: var(--shadow);
+  }
+
+  .hero,
+  .panel,
+  .timeline li,
+  .step-figure,
+  .route-card,
+  .note-list li,
+  .resource-list li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .panel-copy {
+    margin: 12px 0 0;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .timeline {
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 18px;
+  }
+
+  .timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .timeline li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 27px;
+    top: 56px;
+    bottom: -18px;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(255, 212, 143, 0.34), transparent);
+  }
+
+  .timeline-number {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, rgba(255, 155, 70, 0.22), rgba(255, 155, 70, 0.08));
+    border: 1px solid rgba(255, 212, 143, 0.22);
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--sand);
+  }
+
+  .timeline strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1.02rem;
+  }
+
+  .timeline p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .resource-list {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 14px;
+  }
+
+  .resource-list li {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 212, 143, 0.12);
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .resource-list strong {
+    color: var(--text);
+  }
+
+  .resource-list a {
+    color: var(--sand);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255, 212, 143, 0.38);
+  }
+
+  .resource-list a:hover {
+    color: var(--text);
+    border-bottom-color: rgba(255, 212, 143, 0.7);
+  }
+
+  .step-figure {
+    margin: 16px 0 0;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 212, 143, 0.16);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .step-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  .step-figure figcaption {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .placeholder-grid {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .placeholder {
+    min-height: 168px;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px dashed var(--line-strong);
+    background:
+      linear-gradient(135deg, rgba(255, 212, 143, 0.05), transparent 55%),
+      rgba(255, 255, 255, 0.02);
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+
+  .placeholder-tag {
+    display: inline-flex;
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 212, 143, 0.08);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+
+  .placeholder strong {
+    font-size: 1rem;
+  }
+
+  .placeholder p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .triptych {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .note-list,
+  .practice-list {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 14px;
+  }
+
+  .note-list li,
+  .practice-list li {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 212, 143, 0.12);
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .note-list strong,
+  .practice-list strong {
+    color: var(--text);
+  }
+
+  .route-legend {
+    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .route-card {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .route-card strong {
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+
+  .route-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .route-green {
+    border-left: 4px solid var(--green);
+  }
+
+  .route-red {
+    border-left: 4px solid var(--red);
+  }
+
+  .route-blue {
+    border-left: 4px solid var(--blue);
+  }
+
+  .footer {
+    margin-top: 24px;
+    padding: 18px 22px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: rgba(11, 18, 28, 0.72);
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 980px) {
+    .hero {
+      padding: 26px;
+    }
+
+    h1 {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    body {
+      padding: 18px 12px 40px;
+    }
+
+    h1 {
+      white-space: normal;
+    }
+
+    .hero,
+    .panel,
+    .footer {
+      border-radius: 20px;
+    }
+
+    .hero,
+    .panel {
+      padding: 20px;
+    }
+
+    .placeholder-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .timeline li {
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .timeline-number {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+    }
+
+    .timeline li:not(:last-child)::after {
+      left: 23px;
+      top: 48px;
+    }
+  }
+
+  @media print {
+    body {
+      padding: 0;
+      background: #ffffff;
+    }
+
+    .page-actions {
+      display: none;
+    }
+
+    .hero,
+    .panel {
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="page-actions" data-html2canvas-ignore="true">
+    <button class="download-button" id="download-pdf-button" type="button">Download PDF</button>
+    <p class="download-status" id="download-status" aria-live="polite"></p>
+  </div>
+
+  <main class="page" id="travel-brief-content">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Brussels arrival brief</p>
+        <h1>Airport to Mechelen</h1>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Links</h2>
+        <p class="panel-copy">Keep the main references here so you do not have to hunt through the steps for them.</p>
+        <ul class="resource-list">
+          <li><strong>Brussels Airport map:</strong> <a href="https://www.brusselsairport.be/en/passengers/at-the-airport/maps/overview/departure-connections" target="_blank" rel="noopener noreferrer">Brussels Airport departure and connections map</a></li>
+          <li><strong>Belgian Train:</strong> <a href="https://www.belgiantrain.be/en" target="_blank" rel="noopener noreferrer">Belgian Train website</a></li>
+          <li><strong>Mechelen map:</strong> <a href="https://www.google.com/maps/place/Mechelen,+Belgium/" target="_blank" rel="noopener noreferrer">Mechelen, Belgium on Google Maps</a></li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Arrival sequence</h2>
+        <p class="panel-copy">step by step from landing at the airport to getting to Mechelen.</p>
+        <ol class="timeline">
+          <li>
+            <span class="timeline-number">1</span>
+            <div>
+              <strong>After landing, follow the airport signs down to level -1.</strong>
+              <p>Stay in the main arrivals flow until you reach the lower transit level, then keep moving toward the train connection area.</p>
+              <figure class="step-figure">
+                <img src="./assets/airport1.png" alt="Brussels Airport arrival map with the level -1 area circled.">
+                <figcaption>The circled area marks the part of the airport to aim for before heading down toward the rail connection.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">2</span>
+            <div>
+              <strong>Buy your ticket at the entrance to the train station.</strong>
+              <p>Select English on the ticket machine, then book a train toward Malines/Mechelen before you continue on toward the departure boards and the correct platform. Malines is the French word for the town, so it might be what is displayed when looking for your train as the signs scroll and show different stops or languages. You can also buy a ticket beforehand on the site below, but due to potential delays it is probably easier to book at the airport.</p>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">3</span>
+            <div>
+              <strong>At level -1, walk into the train station and check the departure boards for Mechelen.</strong>
+              <p>Look for the train from Brussels-Airport-Zaventem to Mechelen, then head toward the correct platform once you confirm the departure.</p>
+              <figure class="step-figure">
+                <img src="./assets/trainstation2.png" alt="Brussels Airport train station area.">
+                <figcaption>This is the train station area you want once you reach level -1 and start following the boards for Mechelen.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">4</span>
+            <div>
+              <strong>Before boarding, make sure the train is actually taking you to Mechelen.</strong>
+              <p>If the spelling on the board looks strange or unclear, stop and ask a train attendant before you commit to a platform or a train.</p>
+              <figure class="step-figure">
+                <img src="./assets/Trainshedule.png" alt="Belgian train schedule board example.">
+                <figcaption>Use the schedule board to confirm you are heading toward Mechelen before you board.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">5</span>
+            <div>
+              <strong>Avoid routes that look like they are pulling you into downtown Brussels.</strong>
+              <p>If the route starts looking stop-heavy or city-bound, back up and re-check with staff. Mechelen is the simple target and the cleaner route.</p>
+              <figure class="step-figure">
+                <img src="./assets/trainmap3.png" alt="Train map showing the route context from Brussels Airport toward Mechelen.">
+                <figcaption>Use the rail map as a quick check: if you start drifting into central Brussels instead of toward Mechelen, stop and re-check before you ride farther.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">6</span>
+            <div>
+              <strong>When you arrive in Mechelen, exit the station and head for the bus bays or call an Uber.</strong>
+              <p>The bus pickup area is right outside, but buses can pause up to 30 mins between loops, so Uber is probably the better move after a long flight or with bags.</p>
+              <figure class="step-figure">
+                <img src="./assets/busstop5.png" alt="Bus bay area outside the Mechelen station.">
+                <figcaption>This is the bus bay area outside the station if you decide to take the bus instead of calling an Uber.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <span class="timeline-number">7</span>
+            <div>
+              <strong>Go to the Holiday Inn first, then use that as your base for the rest of the trip.</strong>
+              <p>From the station to the Holiday Inn is about 2 miles, so it is technically walkable but not a great call with roller bags. Once you are checked in, the venue is only about 0.4 miles away on foot, and the downtown area with the old church and restaurants is easy to reach from there. Plan on roughly 1 hour 30 minutes total from landing to getting settled.</p>
+              <figure class="step-figure">
+                <img src="./assets/mechelen4.png" alt="Mechelen route overview near the hotel, venue, and downtown area.">
+                <figcaption>This view covers the hotel area, the short walk to the venue, and the downtown section for food and wandering around.</figcaption>
+              </figure>
+              <div class="route-legend">
+                <div class="route-card route-green">
+                  <strong>Green route: station to hotel</strong>
+                  <p>About 2 miles from the station to the Holiday Inn. It is walkable, but the stone sidewalks and luggage make it a bad option after travel.</p>
+                </div>
+                <div class="route-card route-red">
+                  <strong>Red route: hotel to venue</strong>
+                  <p>About 0.4 miles. Short enough to walk, and I like a little walk before each day, so I suggest we hoof it.</p>
+                </div>
+                <div class="route-card route-blue">
+                  <strong>Blue route: downtown loop</strong>
+                  <p>This marks the old church, restaurants, and the more scenic downtown stretch if you want to get out after arriving.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="triptych">
+      <article class="panel">
+        <h2>Mechelen notes</h2>
+        <ul class="note-list">
+          <li><strong>General feel:</strong> Mechelen is safe, easy to walk, and more sleepy than hectic. There is amazing beer in Belgium and a very nice bierhouse in the main square.</li>
+          <li><strong>Downtown:</strong> the old church and restaurant area are the obvious places to wander if people want a meal or a short look around.</li>
+          <li><strong>Station outlook:</strong> the station was under construction last year, so the expectation is that it should now be better signed and easier to navigate.</li>
+        </ul>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    (function () {
+      const button = document.getElementById('download-pdf-button');
+      const status = document.getElementById('download-status');
+      const content = document.getElementById('travel-brief-content');
+
+      if (!button || !status || !content) {
+        return;
+      }
+
+      button.addEventListener('click', async function () {
+        const originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Building PDF...';
+        status.textContent = 'Generating a PDF of this page.';
+
+        try {
+          if (window.html2pdf) {
+            await window.html2pdf().set({
+              margin: 0.35,
+              filename: 'airport-to-mechelen-travel-brief.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f1621' },
+              jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+              pagebreak: { mode: ['css', 'legacy'] }
+            }).from(content).save();
+
+            status.textContent = 'PDF download started.';
+          } else {
+            window.print();
+            status.textContent = 'Print dialog opened. Save as PDF from your browser.';
+          }
+        } catch (error) {
+          console.error('Failed to generate travel brief PDF', error);
+          status.textContent = 'PDF download failed. Use your browser print dialog instead.';
+        } finally {
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
+      });
+    }());
+  </script>
+</body>
+</html>
