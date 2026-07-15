@@ -1,0 +1,3508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Interactive team pairing simulator for the 2026 team event, built around the round-by-round pairing process.">
+<title>Team Pairing Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&family=Oswald:wght@400;500;600;700&display=swap');
+
+  :root {
+    --panel: rgba(18, 18, 18, 0.9);
+    --panel-soft: rgba(28, 28, 28, 0.8);
+    --line: rgba(255, 106, 28, 0.22);
+    --line-strong: rgba(255, 106, 28, 0.42);
+    --text: #f0e6d7;
+    --muted: #b8ac9c;
+    --cream: #f3d3ab;
+    --orange: #ff6118;
+    --orange-deep: #b93b04;
+    --blue: #7dbef5;
+    --green: #8bd18f;
+    --gold: #f5ca67;
+    --danger: #f59b80;
+    --shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+    --radius: 24px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 50%;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(255, 97, 24, 0.18), transparent 28%),
+      radial-gradient(circle at 82% 12%, rgba(125, 190, 245, 0.12), transparent 24%),
+      linear-gradient(180deg, #050505 0%, #0e0e11 52%, #090909 100%);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  }
+
+  body {
+    padding: 28px 18px 54px;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  .shell {
+    width: min(1460px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 22px;
+  }
+
+  .hero,
+  .panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 4px);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent 42%),
+      linear-gradient(180deg, rgba(255, 97, 24, 0.06), rgba(0, 0, 0, 0.08)),
+      var(--panel);
+    box-shadow: var(--shadow);
+  }
+
+  .hero {
+    padding: 28px;
+  }
+
+  .hero::before,
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 62px, rgba(255, 106, 28, 0.04) 62px 63px),
+      repeating-linear-gradient(0deg, transparent 0 62px, rgba(255, 106, 28, 0.03) 62px 63px);
+    opacity: 0.5;
+    mix-blend-mode: screen;
+  }
+
+  .hero > *,
+  .panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .top-nav,
+  .nav-group,
+  .panel-head,
+  .section-head,
+  .section-tools,
+  .roster-head,
+  .setup-actions,
+  .mini-actions,
+  .sim-actions,
+  .selection-actions,
+  .offer-lane,
+  .context-grid,
+  .graveyard-grid,
+  .deck-row,
+  .card-badges,
+  .card-grid,
+  .library-grid,
+  .draft-grid,
+  .map-grid,
+  .resource-chip-row,
+  .history-list,
+  .deck-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .top-nav,
+  .panel-head,
+  .section-head,
+  .roster-head {
+    justify-content: space-between;
+    align-items: start;
+  }
+
+  .section-tools {
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .top-nav {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .nav-link,
+  .primary-button,
+  .ghost-button,
+  .confirm-button,
+  .remove-button,
+  .card-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--cream);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .nav-link,
+  .ghost-button,
+  .confirm-button,
+  .remove-button,
+  .card-remove {
+    border-color: rgba(255, 106, 28, 0.18);
+  }
+
+  .primary-button {
+    border-color: rgba(255, 106, 28, 0.46);
+    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
+    color: #fff7ef;
+    box-shadow: 0 14px 30px rgba(255, 97, 24, 0.22);
+  }
+
+  .confirm-button {
+    border-color: rgba(125, 190, 245, 0.32);
+    background: linear-gradient(135deg, rgba(125, 190, 245, 0.2), rgba(72, 122, 167, 0.16));
+    color: #e9f6ff;
+  }
+
+  .primary-button:disabled,
+  .ghost-button:disabled,
+  .confirm-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .eyebrow,
+  .panel-kicker,
+  .step-label,
+  .side-tag,
+  .status-title,
+  .deck-kicker,
+  .drop-label,
+  .map-label {
+    margin: 0;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.86rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 106, 28, 0.3);
+    background: rgba(255, 97, 24, 0.08);
+    color: var(--cream);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--orange), rgba(255, 97, 24, 0.18));
+  }
+
+  h1 {
+    margin: 18px 0 10px;
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(4rem, 9vw, 6.4rem);
+    line-height: 0.9;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff4e6;
+  }
+
+  .panel h2,
+  .panel h3,
+  .card-title,
+  .drop-title,
+  .map-name {
+    margin: 0;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .panel h2 {
+    margin-top: 6px;
+    font-size: 2rem;
+    color: var(--cream);
+  }
+
+  .panel h3,
+  .drop-title,
+  .map-name {
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+
+  .lede,
+  .panel-copy,
+  .setup-feedback,
+  .empty-state p,
+  .step-banner p,
+  .match-copy,
+  .mini-note,
+  .board-help,
+  .drop-copy,
+  .map-copy,
+  .card-subtitle,
+  .card-meta,
+  .history-list li {
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 78ch;
+    font-size: 1.02rem;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  #primary-layout.live-mode {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .secondary {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 24px;
+  }
+
+  .panel-head {
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .setup-library,
+  .mission-strip,
+  .draft-zone,
+  .step-banner,
+  .action-context,
+  .board-help,
+  .sim-board,
+  .status-card,
+  .match-card,
+  .empty-state,
+  .deck-panel,
+  .dropzone,
+  .map-zone,
+  .action-area {
+    border-radius: 18px;
+    border: 1px solid rgba(255, 106, 28, 0.14);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .setup-library,
+  .mission-strip,
+  .draft-zone,
+  .step-banner,
+  .action-context,
+  .board-help,
+  .sim-board,
+  .status-card,
+  .match-card,
+  .empty-state,
+  .action-area {
+    padding: 18px;
+  }
+
+  .setup-library[hidden] {
+    display: none;
+  }
+
+  .setup-grid,
+  .graveyard-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .setup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .graveyard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-board {
+    display: grid;
+    gap: 18px;
+  }
+
+  .board-section {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .deck-row {
+    align-items: stretch;
+  }
+
+  .deck-panel {
+    flex: 1 1 280px;
+    padding: 16px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+      rgba(7, 7, 7, 0.55);
+  }
+
+  .deck-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+  }
+
+  .deck-stack,
+  .library-grid,
+  .draft-grid {
+    align-items: stretch;
+  }
+
+  .library-grid {
+    max-height: 520px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .team-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    max-height: 540px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .team-list-head {
+    margin: 14px 0 10px;
+    padding: 0 4px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    align-items: center;
+    color: var(--muted);
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .team-list-head span:first-child {
+    margin-right: auto;
+  }
+
+  .team-list-head span:not(:first-child) {
+    text-align: center;
+    min-width: 32px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 106, 28, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 76px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 106, 28, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .team-name {
+    flex: 1 1 auto;
+    font-size: 1.08rem;
+    line-height: 1.35;
+    color: var(--text);
+  }
+
+  .team-toggle-grid {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .team-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 106, 28, 0.14);
+    background: rgba(7, 7, 7, 0.38);
+  }
+
+  .team-toggle.side-a.selected {
+    border-color: rgba(125, 190, 245, 0.42);
+    background: rgba(125, 190, 245, 0.12);
+  }
+
+  .team-toggle.side-b.selected {
+    border-color: rgba(245, 129, 129, 0.42);
+    background: rgba(245, 129, 129, 0.12);
+  }
+
+  .team-toggle.disabled {
+    opacity: 0.55;
+  }
+
+  .team-toggle.side-a input {
+    accent-color: var(--blue);
+  }
+
+  .team-toggle.side-b input {
+    accent-color: #f58181;
+  }
+
+  .team-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .team-toggle input:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .team-toggle-copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .deck-stack {
+    min-height: 72px;
+  }
+
+  .roster-stack {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+    min-height: 72px;
+  }
+
+  .mission-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 8px;
+    align-items: stretch;
+    min-height: 72px;
+  }
+
+  .card-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .roster-stack > .sim-card,
+  .mission-stack > .sim-card,
+  .card-grid > .sim-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .draft-zone {
+    display: grid;
+    gap: 14px;
+  }
+
+  .setup-pick-list {
+    min-height: 176px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 106, 28, 0.18);
+    background: rgba(7, 7, 7, 0.42);
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .pick-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .pick-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: space-between;
+    gap: 14px;
+    min-height: 104px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 106, 28, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+  }
+
+  .pick-row:hover,
+  .pick-row:focus-visible {
+    border-color: rgba(255, 106, 28, 0.32);
+    background: rgba(255, 97, 24, 0.08);
+    outline: none;
+  }
+
+  .pick-name {
+    display: block;
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .pick-hint {
+    color: var(--muted);
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .pick-empty {
+    margin: 0;
+    color: var(--muted);
+    grid-column: 1 / -1;
+  }
+
+  .setup-search {
+    display: flex;
+    flex: 1 1 22rem;
+    align-items: center;
+    gap: 8px;
+    min-width: min(22rem, 100%);
+  }
+
+  .setup-search-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 106, 28, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .setup-search-input::placeholder {
+    color: var(--muted);
+  }
+
+  .setup-search-input:focus {
+    outline: none;
+    border-color: rgba(255, 106, 28, 0.42);
+    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.14), 0 0 0 1px rgba(255, 106, 28, 0.12);
+  }
+
+  .setup-search-input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .draft-drop {
+    min-height: 176px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px dashed rgba(255, 106, 28, 0.24);
+    background: rgba(7, 7, 7, 0.42);
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .draft-drop.active,
+  .dropzone.active,
+  .map-zone.active {
+    border-color: rgba(255, 106, 28, 0.46);
+    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.18), 0 0 0 1px rgba(255, 106, 28, 0.12);
+  }
+
+  .draft-drop.drag-over,
+  .dropzone.drag-over,
+  .map-zone.drag-over {
+    background: rgba(255, 97, 24, 0.12);
+    border-color: rgba(255, 106, 28, 0.66);
+  }
+
+  .draft-drop.filled,
+  .dropzone.filled,
+  .map-zone.locked,
+  .map-zone.pending {
+    border-style: solid;
+  }
+
+  .count-pill,
+  .status-chip,
+  .info-chip,
+  .card-status,
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 106, 28, 0.22);
+    background: rgba(255, 106, 28, 0.08);
+    color: var(--cream);
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+  }
+
+  .info-chip {
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    border-color: rgba(255, 106, 28, 0.16);
+  }
+
+  .card-badge {
+    min-height: 24px;
+    padding: 0 8px;
+    letter-spacing: 0.06em;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #fff6ea;
+  }
+
+  .card-badges {
+    gap: 4px;
+  }
+
+  .card-badge.sticker {
+    min-height: 6px;
+    padding: 0 2px;
+    font-size: 0.32rem;
+    line-height: 1;
+    letter-spacing: 0.03em;
+  }
+
+  .card-badge.attacker {
+    border-color: rgba(125, 190, 245, 0.34);
+    background: rgba(125, 190, 245, 0.12);
+    color: #e7f5ff;
+  }
+
+  .card-badge.defender {
+    border-color: rgba(245, 202, 103, 0.32);
+    background: rgba(245, 202, 103, 0.12);
+    color: #fff1c3;
+  }
+
+  .card-badge.mission {
+    border-color: rgba(139, 209, 143, 0.3);
+    background: rgba(139, 209, 143, 0.12);
+    color: #e8ffe9;
+  }
+
+  .sim-card {
+    position: relative;
+    flex: 1 1 170px;
+    min-width: 150px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+      rgba(8, 8, 8, 0.78);
+    display: grid;
+    gap: 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .sim-card.compact {
+    flex-basis: auto;
+    min-width: 0;
+    min-height: 62px;
+    padding: 7px 8px;
+    gap: 4px;
+    align-content: start;
+  }
+
+  .sim-card.compact .card-top {
+    gap: 6px;
+  }
+
+  .sim-card.compact .card-title {
+    font-size: 0.82rem;
+    line-height: 1.12;
+  }
+
+  .sim-card.compact .card-subtitle {
+    display: none;
+  }
+
+  .sim-card.compact .card-status {
+    min-height: 16px;
+    padding: 0 4px;
+    font-size: 0.52rem;
+  }
+
+  .sim-card.library {
+    border-color: rgba(255, 106, 28, 0.18);
+  }
+
+  .sim-card.defender {
+    border-color: rgba(245, 202, 103, 0.2);
+    background:
+      linear-gradient(180deg, rgba(245, 202, 103, 0.08), rgba(255, 255, 255, 0.015)),
+      rgba(8, 8, 8, 0.8);
+  }
+
+  .sim-card.attacker {
+    border-color: rgba(125, 190, 245, 0.22);
+    background:
+      linear-gradient(180deg, rgba(125, 190, 245, 0.08), rgba(255, 255, 255, 0.015)),
+      rgba(8, 8, 8, 0.8);
+  }
+
+  .sim-card.mission {
+    border-color: rgba(139, 209, 143, 0.24);
+    background:
+      linear-gradient(180deg, rgba(139, 209, 143, 0.09), rgba(255, 255, 255, 0.015)),
+      rgba(8, 8, 8, 0.8);
+  }
+
+  .sim-card.matchup {
+    border-color: rgba(255, 106, 28, 0.24);
+    background:
+      linear-gradient(180deg, rgba(255, 106, 28, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(8, 8, 8, 0.8);
+  }
+
+  .sim-card.draggable {
+    cursor: grab;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 1px rgba(255, 106, 28, 0.08);
+  }
+
+  .sim-card.draggable:hover {
+    border-color: rgba(255, 106, 28, 0.42);
+    transform: translateY(-2px);
+  }
+
+  .sim-card.clickable-card {
+    cursor: pointer;
+  }
+
+  .sim-card.clickable-card:hover {
+    border-color: rgba(245, 155, 128, 0.46);
+    box-shadow: 0 0 0 1px rgba(245, 155, 128, 0.14), inset 0 0 0 1px rgba(245, 155, 128, 0.16);
+  }
+
+  .sim-card.selected {
+    border-color: rgba(255, 106, 28, 0.52);
+    box-shadow: 0 0 0 1px rgba(255, 106, 28, 0.12), inset 0 0 0 1px rgba(255, 106, 28, 0.18);
+  }
+
+  .sim-card.dim {
+    opacity: 0.42;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    color: #fff5e8;
+  }
+
+  .card-subtitle,
+  .card-meta {
+    margin: 0;
+    font-size: 0.92rem;
+  }
+
+  .card-remove {
+    min-height: 28px;
+    padding: 0 10px;
+    align-self: start;
+    border-color: rgba(245, 155, 128, 0.34);
+    color: #ffd7cb;
+    background: rgba(245, 155, 128, 0.08);
+  }
+
+  .step-banner {
+    margin-bottom: 14px;
+  }
+
+  .step-banner h3 {
+    margin: 8px 0 10px;
+    font-size: 1.55rem;
+  }
+
+  .action-context,
+  .board-help {
+    margin-bottom: 14px;
+  }
+
+  .board-help {
+    background: rgba(255, 97, 24, 0.08);
+  }
+
+  .action-area {
+    display: grid;
+    gap: 14px;
+    background:
+      radial-gradient(circle at top, rgba(255, 106, 28, 0.08), transparent 48%),
+      rgba(7, 7, 7, 0.6);
+  }
+
+  .action-slot {
+    min-height: 136px;
+    align-content: start;
+  }
+
+  .dropzone {
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+    min-height: 170px;
+    background: rgba(7, 7, 7, 0.5);
+    border-style: dashed;
+  }
+
+  .dropzone-body {
+    min-height: 88px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+
+  .drop-empty {
+    margin: 0;
+    color: rgba(240, 230, 215, 0.52);
+  }
+
+  .offer-lane {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .offer-lane .dropzone {
+    flex: 1 1 220px;
+  }
+
+  .offer-drop-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .offer-drop-body .drop-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+
+  .map-panel {
+    display: grid;
+    gap: 14px;
+  }
+
+  .map-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+  }
+
+  .map-grid > .map-zone {
+    flex: 0 0 20rem;
+    min-width: 20rem;
+  }
+
+  .map-zone {
+    position: relative;
+    flex: 1 1 180px;
+    min-height: 190px;
+    padding: 16px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(125, 190, 245, 0.12), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      rgba(7, 7, 7, 0.55);
+    border-style: dashed;
+  }
+
+  .map-zone::after {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+  }
+
+  .map-zone.available .map-copy {
+    color: #dfeefb;
+  }
+
+  .map-zone.locked {
+    border-color: rgba(139, 209, 143, 0.34);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(139, 209, 143, 0.16), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      rgba(7, 7, 7, 0.55);
+  }
+
+  .map-zone.pending {
+    border-color: rgba(245, 202, 103, 0.36);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(245, 202, 103, 0.18), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      rgba(7, 7, 7, 0.55);
+  }
+
+  .map-zone .sim-card {
+    min-width: 0;
+  }
+
+  #sim-live .sim-board {
+    gap: 4px 8px;
+    max-width: 1200px;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.9fr) minmax(0, 0.85fr);
+    grid-template-areas:
+      'attacker-roster attacker-roster attacker-roster'
+      'mission mission mission'
+      'attacker-selection maps defender-selection'
+      'defender-roster defender-roster defender-roster';
+    align-items: start;
+  }
+
+  #sim-live .attacker-roster-section {
+    grid-area: attacker-roster;
+  }
+
+  #sim-live .defender-roster-section {
+    grid-area: defender-roster;
+  }
+
+  #sim-live .attacker-selection-section {
+    grid-area: attacker-selection;
+  }
+
+  #sim-live .defender-selection-section {
+    grid-area: defender-selection;
+  }
+
+  #sim-live .mission-board-section {
+    grid-area: mission;
+  }
+
+  #sim-live .attacker-roster-section {
+    background:
+      linear-gradient(180deg, rgba(125, 190, 245, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(7, 7, 7, 0.55);
+    border-color: rgba(125, 190, 245, 0.24);
+  }
+
+  #sim-live .mission-board-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 13rem;
+    column-gap: 8px;
+    row-gap: 4px;
+    align-items: start;
+    background:
+      linear-gradient(180deg, rgba(139, 209, 143, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(7, 7, 7, 0.55);
+    border-color: rgba(139, 209, 143, 0.26);
+  }
+
+  #sim-live .mission-board-section .deck-head {
+    grid-column: 1 / -1;
+  }
+
+  #sim-live .defender-roster-section {
+    background:
+      linear-gradient(180deg, rgba(245, 129, 129, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(7, 7, 7, 0.55);
+    border-color: rgba(245, 129, 129, 0.24);
+  }
+
+  #sim-live .roster-panel[data-role="attacker"] {
+    background:
+      linear-gradient(180deg, rgba(125, 190, 245, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(7, 7, 7, 0.55);
+    border-color: rgba(125, 190, 245, 0.24);
+  }
+
+  #sim-live .roster-panel[data-role="defender"] {
+    background:
+      linear-gradient(180deg, rgba(245, 129, 129, 0.12), rgba(255, 255, 255, 0.015)),
+      rgba(7, 7, 7, 0.55);
+    border-color: rgba(245, 129, 129, 0.24);
+  }
+
+  #sim-live .live-map-section {
+    grid-area: maps;
+  }
+
+  #sim-live .deck-panel,
+  #sim-live .action-area,
+  #sim-live .status-card,
+  #sim-live .map-zone,
+  #sim-live .dropzone {
+    padding: 8px;
+  }
+
+  #sim-live .board-section,
+  #sim-live .action-area,
+  #sim-live .map-zone {
+    gap: 6px;
+  }
+
+  #sim-live .deck-head,
+  #sim-live .section-head {
+    margin-bottom: 6px;
+  }
+
+  #sim-live .deck-stack {
+    min-height: 26px;
+  }
+
+  #sim-live .action-slot {
+    min-height: 38px;
+  }
+
+  #sim-live .action-slot {
+    padding: 4px;
+  }
+
+  #sim-live .dropzone {
+    min-height: 46px;
+    gap: 4px;
+  }
+
+  #sim-live .dropzone-body {
+    min-height: 16px;
+    gap: 4px;
+  }
+
+  #sim-live .graveyard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  #sim-live .mission-board-section .graveyard-grid {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    align-content: start;
+  }
+
+  #sim-live .mission-board-section .status-card {
+    display: grid;
+    gap: 3px;
+    padding: 5px 6px;
+  }
+
+  #sim-live .mission-board-section .resource-chip-row {
+    display: grid;
+    gap: 2px;
+  }
+
+  #sim-live .mission-board-section .resource-chip {
+    justify-content: flex-start;
+    text-align: left;
+    min-height: 12px;
+    padding: 1px 4px;
+  }
+
+  #sim-live .mission-board-section .status-card:first-child .status-title {
+    color: #ffb6b6;
+  }
+
+  #sim-live .mission-board-section .status-card:last-child .status-title {
+    color: #b7dbff;
+  }
+
+  #sim-live .mission-board-section .resource-chip.banned {
+    border-color: rgba(245, 91, 91, 0.52);
+    background: rgba(245, 91, 91, 0.14);
+    color: #ffd2d2;
+  }
+
+  #sim-live .mission-board-section .resource-chip.used {
+    border-color: rgba(104, 170, 255, 0.52);
+    background: rgba(104, 170, 255, 0.14);
+    color: #d8ebff;
+  }
+
+  #sim-live .map-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  #sim-live .map-grid > .map-zone {
+    flex: none;
+    min-width: 0;
+  }
+
+  #sim-live .map-zone {
+    min-height: 72px;
+    padding: 6px;
+    gap: 4px;
+  }
+
+  #sim-live .map-zone::after {
+    inset: 4px;
+    border-radius: 3px;
+  }
+
+  #sim-live .roster-stack,
+  #sim-live .mission-stack {
+    gap: 4px;
+    align-content: start;
+  }
+
+  #sim-live .active-source {
+    border-color: rgba(255, 106, 28, 0.62);
+    box-shadow: 0 0 0 1px rgba(255, 106, 28, 0.18), inset 0 0 0 1px rgba(255, 106, 28, 0.12);
+  }
+
+  #sim-live .step-banner,
+  #sim-live .action-context,
+  #sim-live .board-help,
+  #sim-live .deck-panel,
+  #sim-live .action-area,
+  #sim-live .status-card,
+  #sim-live .map-zone,
+  #sim-live .dropzone,
+  #sim-live .sim-card {
+    border-radius: 3px;
+  }
+
+  #sim-live .mission-stack {
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: repeat(auto-fit, minmax(4.4rem, 1fr));
+    gap: 2px;
+  }
+
+  #sim-live .panel-kicker,
+  #sim-live .deck-kicker,
+  #sim-live .status-title,
+  #sim-live .map-label,
+  #sim-live .drop-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+  }
+
+  #sim-live .board-section h3,
+  #sim-live .map-name {
+    font-size: 0.82rem;
+  }
+
+  #sim-live .count-pill,
+  #sim-live .card-status,
+  #sim-live .resource-chip {
+    min-height: 14px;
+    padding: 0 4px;
+    font-size: 0.48rem;
+  }
+
+  #sim-live .mini-note,
+  #sim-live .drop-copy,
+  #sim-live .map-copy,
+  #sim-live .card-meta,
+  #sim-live .resource-empty,
+  #sim-live .drop-empty {
+    font-size: 0.62rem;
+    line-height: 1.15;
+  }
+
+  #sim-live #map-help,
+  #sim-live .drop-copy {
+    display: none;
+  }
+
+  #sim-live .board-help {
+    border: none;
+    background: none;
+    padding: 0;
+    color: #ffffff;
+    margin-bottom: 6px;
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+
+  #sim-live .resource-chip-row {
+    gap: 4px;
+  }
+
+  #sim-live .sim-card.compact {
+    min-height: 30px;
+    padding: 2px 4px;
+    gap: 1px;
+    place-items: center;
+    align-content: center;
+    text-align: center;
+  }
+
+  #sim-live .sim-card.compact .card-top {
+    gap: 2px;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #sim-live .sim-card.compact .card-title {
+    font-size: 0.92rem;
+    line-height: 1.05;
+    text-align: center;
+  }
+
+  #sim-live .sim-card.draggable {
+    border-color: rgba(255, 106, 28, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.24), 0 0 0 1px rgba(255, 106, 28, 0.2), 0 0 10px rgba(255, 97, 24, 0.14);
+  }
+
+  #sim-live .sim-card.compact .card-badges {
+    gap: 2px;
+  }
+
+  #sim-live .roster-stack > .sim-card.compact .card-top > div,
+  #sim-live .mission-stack > .sim-card.compact .card-top > div {
+    display: grid;
+    justify-items: center;
+    width: 100%;
+  }
+
+  #sim-live .roster-stack > .sim-card.compact .card-badges {
+    display: none;
+  }
+
+  #sim-live .roster-stack > .sim-card.compact .card-status {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    min-height: 10px;
+    padding: 0 2px;
+    font-size: 0.34rem;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact {
+    min-height: 22px;
+    padding: 2px 3px;
+    gap: 1px;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact .card-title {
+    font-size: 0.7rem;
+    line-height: 1.05;
+    letter-spacing: 0.06em;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact .card-top {
+    gap: 2px;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact .card-status,
+  #sim-live .mission-stack > .sim-card.compact .card-badges {
+    display: none;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact .card-status {
+    min-height: 10px;
+    padding: 0 2px;
+    font-size: 0.34rem;
+  }
+
+  #sim-live .mission-stack > .sim-card.compact .card-badge.sticker {
+    min-height: 4px;
+    padding: 0 1px;
+    font-size: 0.18rem;
+  }
+
+  #sim-live #mission-action-area[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 820px) {
+    #sim-live .sim-board {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'attacker-roster'
+        'mission'
+        'attacker-selection'
+        'maps'
+        'defender-selection'
+        'defender-roster';
+    }
+
+    #sim-live .mission-stack {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  #sim-live .action-area .empty-state {
+    gap: 2px;
+  }
+
+  #sim-live .action-area .empty-state strong {
+    font-size: 0.72rem;
+  }
+
+  #sim-live .action-area .empty-state p {
+    display: none;
+  }
+
+  .resource-chip-row,
+  .history-list,
+  .match-grid {
+    margin-top: 12px;
+  }
+
+  .resource-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 106, 28, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+  }
+
+  .resource-chip.banned {
+    border-color: rgba(245, 202, 103, 0.34);
+    background: rgba(245, 202, 103, 0.08);
+    color: #fff1c3;
+  }
+
+  .resource-chip.used {
+    border-color: rgba(139, 209, 143, 0.3);
+    background: rgba(139, 209, 143, 0.08);
+    color: #e8ffe9;
+  }
+
+  .resource-empty,
+  .match-empty,
+  .log-empty,
+  .roster-empty {
+    color: var(--muted);
+  }
+
+  .match-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .match-card h3 {
+    margin: 10px 0;
+  }
+
+  .match-meta {
+    display: grid;
+    gap: 8px;
+  }
+
+  .history-list {
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    max-height: 560px;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .history-list li {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 106, 28, 0.12);
+  }
+
+  .empty-state {
+    display: grid;
+    gap: 8px;
+  }
+
+  .empty-state strong {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cream);
+  }
+
+  .sim-empty-chip {
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 1200px) {
+    .layout,
+    .secondary,
+    .setup-grid,
+    .graveyard-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #primary-layout.live-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .roster-stack {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .mission-stack,
+    .card-grid {
+      grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+    }
+
+    .pick-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .team-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .map-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 820px) {
+    body {
+      padding: 16px 12px 40px;
+    }
+
+    .hero,
+    .panel {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    h1 {
+      font-size: clamp(3.2rem, 14vw, 5rem);
+    }
+
+    .top-nav,
+    .panel-head,
+    .section-head,
+    .roster-head,
+    .setup-actions,
+    .mini-actions,
+    .sim-actions,
+    .selection-actions {
+      align-items: stretch;
+    }
+
+    .nav-group,
+    .setup-actions,
+    .mini-actions,
+    .sim-actions,
+    .selection-actions {
+      flex-direction: column;
+    }
+
+    .nav-link,
+    .primary-button,
+    .ghost-button,
+    .confirm-button,
+    .remove-button {
+      width: 100%;
+    }
+
+    .deck-panel,
+    .map-zone,
+    .dropzone {
+      min-width: 100%;
+    }
+
+    .roster-stack,
+    .mission-stack,
+    .map-grid {
+      gap: 6px;
+    }
+
+    .roster-stack {
+      grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    }
+
+    .mission-stack,
+    .card-grid {
+      grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    }
+
+    .pick-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .team-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .team-name {
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="top-nav">
+        <div class="nav-group">
+          <a class="nav-link" href="./">Back to Calendar</a>
+          <a class="nav-link" href="./brussels-travel-brief.html">Travel Brief</a>
+        </div>
+        <div class="nav-group">
+          <span class="status-chip">5 Matches</span>
+        </div>
+      </div>
+      <p class="eyebrow">2026 Team Event</p>
+      <h1>Pairing Simulator</h1>
+      <p class="lede">The step order stays the same, but the interface is now a drag-and-drop playmat. Build both five-team rosters, then drag cards from the attacking deck, defending deck, and mission deck into the highlighted zones and onto the five map areas.</p>
+    </section>
+
+    <section class="layout" id="primary-layout">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">Pre-Step</p>
+            <h2>Roster Setup</h2>
+          </div>
+          <button class="ghost-button" id="swap-sides-button" type="button">Swap Sides</button>
+        </div>
+        <p class="panel-copy">Use the Team A and Team B checkboxes to build both five-team rosters. Team A opens the round as the Defender side and Team B opens as the Attacker side.</p>
+
+        <section class="setup-library" id="setup-library">
+          <div class="section-head">
+            <div>
+              <p class="panel-kicker">Kill Team Library</p>
+              <h3>Checkbox Draft List</h3>
+            </div>
+            <div class="section-tools">
+              <button class="ghost-button" id="toggle-declassified" type="button">Show Declassified Teams</button>
+              <span class="count-pill" id="library-count">0 Cards</span>
+            </div>
+          </div>
+          <p class="mini-note">The same team can appear on both sides, but not twice on the same side. Each card lets you tick A, B, or both. Declassified teams are hidden by default.</p>
+          <div class="team-list-head" aria-hidden="true">
+            <span>Kill Team</span>
+            <span>A</span>
+            <span>B</span>
+          </div>
+          <div class="team-list" id="team-library"></div>
+        </section>
+
+        <div class="setup-grid">
+          <section class="draft-zone" aria-labelledby="team-a-setup-heading">
+            <div class="roster-head">
+              <div>
+                <p class="side-tag">Team A</p>
+                <h3 id="team-a-setup-heading">Defender Pool</h3>
+              </div>
+              <span class="count-pill" id="count-a">0 / 5</span>
+            </div>
+            <div class="setup-pick-list" id="setup-roster-a"></div>
+            <div class="mini-actions">
+              <div class="setup-search">
+                <input class="setup-search-input" id="setup-search-a" type="search" list="setup-search-options-a" placeholder="Add a team to Team A">
+                <datalist id="setup-search-options-a"></datalist>
+                <button class="ghost-button" id="add-search-a" type="button">Add</button>
+              </div>
+              <button class="ghost-button" id="random-a" type="button">Random 5</button>
+              <button class="ghost-button" id="clear-a" type="button">Clear</button>
+            </div>
+          </section>
+
+          <section class="draft-zone" aria-labelledby="team-b-setup-heading">
+            <div class="roster-head">
+              <div>
+                <p class="side-tag">Team B</p>
+                <h3 id="team-b-setup-heading">Attacker Pool</h3>
+              </div>
+              <span class="count-pill" id="count-b">0 / 5</span>
+            </div>
+            <div class="setup-pick-list" id="setup-roster-b"></div>
+            <div class="mini-actions">
+              <div class="setup-search">
+                <input class="setup-search-input" id="setup-search-b" type="search" list="setup-search-options-b" placeholder="Add a team to Team B">
+                <datalist id="setup-search-options-b"></datalist>
+                <button class="ghost-button" id="add-search-b" type="button">Add</button>
+              </div>
+              <button class="ghost-button" id="random-b" type="button">Random 5</button>
+              <button class="ghost-button" id="clear-b" type="button">Clear</button>
+            </div>
+          </section>
+        </div>
+
+        <section class="mission-strip">
+          <div class="section-head">
+            <div>
+              <p class="panel-kicker">Mission Deck</p>
+              <h3>Round Cards</h3>
+            </div>
+          </div>
+          <div class="card-grid" id="setup-missions"></div>
+        </section>
+
+        <div class="setup-actions">
+          <button class="primary-button" id="start-simulation" type="button">Start Pairing Simulation</button>
+          <button class="ghost-button" id="clear-both" type="button">Clear Both Rosters</button>
+        </div>
+        <p class="setup-feedback" id="setup-feedback">Pick five teams on each side to begin.</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">Live Playmat</p>
+            <h2>Simulation</h2>
+          </div>
+          <span class="status-chip" id="progress-chip">Not Started</span>
+        </div>
+
+        <div id="sim-empty" class="sim-empty-chip">
+          <span class="status-chip">Waiting for rosters</span>
+        </div>
+
+        <div id="sim-live" hidden>
+          <div class="step-banner">
+            <p class="step-label" id="step-label"></p>
+            <h3 id="step-title"></h3>
+            <p id="step-copy"></p>
+          </div>
+
+          <div class="action-context" id="action-context"></div>
+          <div class="board-help" id="board-help"></div>
+
+          <div class="sim-board">
+            <section class="deck-panel board-section roster-panel attacker-roster-section">
+              <div class="deck-head">
+                <div>
+                  <p class="deck-kicker">Roster</p>
+                  <h3 id="attacker-deck-title">Attacker Roster</h3>
+                </div>
+                <span class="count-pill" id="attacker-deck-count">0 Cards</span>
+              </div>
+              <div class="deck-stack roster-stack" id="attacker-deck"></div>
+            </section>
+
+            <section class="board-section selection-panel attacker-selection-section">
+              <div class="section-head">
+                <div>
+                  <p class="panel-kicker">Attacker Choice</p>
+                  <h3 id="attacker-selection-title">Attacker Selection Area</h3>
+                </div>
+              </div>
+              <div class="action-area action-slot" id="attacker-action-area"></div>
+            </section>
+
+            <section class="deck-panel board-section mission-panel mission-board-section">
+              <div class="deck-head">
+                <div>
+                  <p class="deck-kicker">Deck 3</p>
+                  <h3 id="mission-deck-title">Mission Cards</h3>
+                </div>
+                <span class="count-pill" id="mission-deck-count">0 Cards</span>
+              </div>
+              <div class="deck-stack mission-stack" id="mission-deck"></div>
+
+              <div class="graveyard-grid">
+                <section class="status-card">
+                  <p class="status-title">Banned Missions</p>
+                  <div class="resource-chip-row" id="missions-banned"></div>
+                </section>
+                <section class="status-card">
+                  <p class="status-title">Locked Missions</p>
+                  <div class="resource-chip-row" id="missions-used"></div>
+                </section>
+              </div>
+
+              <div class="action-area action-slot" id="mission-action-area" hidden></div>
+            </section>
+
+            <section class="map-panel board-section live-map-section">
+              <div class="section-head">
+                <div>
+                  <p class="panel-kicker">Table Maps</p>
+                  <h3>Five Play Areas</h3>
+                </div>
+              </div>
+              <p class="mini-note" id="map-help">These map spaces stay on the table for the whole round. Committed pairings stay pinned to their map with the chosen mission.</p>
+              <div class="map-grid" id="map-grid"></div>
+            </section>
+
+            <section class="board-section selection-panel defender-selection-section">
+              <div class="section-head">
+                <div>
+                  <p class="panel-kicker">Defender Choice</p>
+                  <h3 id="defender-selection-title">Defender Selection Area</h3>
+                </div>
+              </div>
+              <div class="action-area action-slot" id="defender-action-area"></div>
+            </section>
+
+            <section class="deck-panel board-section roster-panel defender-roster-section">
+              <div class="deck-head">
+                <div>
+                  <p class="deck-kicker">Roster</p>
+                  <h3 id="defender-deck-title">Defender Roster</h3>
+                </div>
+                <span class="count-pill" id="defender-deck-count">0 Cards</span>
+              </div>
+              <div class="deck-stack roster-stack" id="defender-deck"></div>
+            </section>
+          </div>
+
+          <div class="sim-actions">
+            <button class="ghost-button" id="restart-simulation" type="button">Restart Simulation</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="layout secondary">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">Results</p>
+            <h2>Completed Pairings</h2>
+          </div>
+        </div>
+        <div class="match-grid" id="matchups"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">Round Log</p>
+            <h2>Action History</h2>
+          </div>
+        </div>
+        <ol class="history-list" id="history-list"></ol>
+      </article>
+    </section>
+  </main>
+
+  <script src="./team-pairing-teams.js"></script>
+  <script>
+    const TEAM_OPTIONS = Array.isArray(window.TEAM_PAIRING_TEAMS) ? [...window.TEAM_PAIRING_TEAMS] : [];
+    const DECLASSIFIED_TEAMS = new Set([
+      'Blooded',
+      'Corsair Voidscarred',
+      'Death Korps',
+      'Elucidian Starstriders',
+      'Gellerpox Infected',
+      'Hunter Clade',
+      'Kommandos',
+      'Legionaries',
+      'Novitiates',
+      'Pathfinders',
+      'Phobos Strike Team',
+      'Spectre Squad',
+      'Void-Dancer Troupe',
+      'Warpcoven',
+      'Wyrmblade'
+    ]);
+    const MISSIONS = [
+      'Secure',
+      'Loot',
+      'Transmission',
+      'Orb',
+      'Reboot',
+      'Energy Cells',
+      'Download',
+      'Stake Claim',
+      'Data'
+    ];
+    const TABLE_COUNT = 5;
+    const MAP_NUMBERS = ['1', '2', '3', '4', '5', '6'];
+    const SEQUENCES = [
+      { number: 1, label: 'Pairing 1', defender: 'A', attacker: 'B' },
+      { number: 2, label: 'Pairing 2', defender: 'B', attacker: 'A' },
+      { number: 3, label: 'Pairing 3', defender: 'A', attacker: 'B', extraBanAfter: true },
+      { number: 4, label: 'Pairing 4', defender: 'B', attacker: 'A' },
+      { number: 5, label: 'Pairing 5', defender: 'A', attacker: 'B', final: true }
+    ];
+
+    function randomChoice(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function drawMapNumber(usedNumbers, mapType) {
+      const used = usedNumbers.get(mapType) || new Set();
+      const availableNumbers = MAP_NUMBERS.filter((number) => !used.has(number));
+      const number = randomChoice(availableNumbers.length ? availableNumbers : MAP_NUMBERS);
+      used.add(number);
+      usedNumbers.set(mapType, used);
+      return number;
+    }
+
+    function createTableAssignments() {
+      const volkusType = randomChoice(['Volkus 24', 'Volkus 25']);
+      const mapTypes = [volkusType, 'Tomb World', 'WTC ITD'];
+
+      while (mapTypes.length < TABLE_COUNT) {
+        mapTypes.push(randomChoice([volkusType, 'Tomb World']));
+      }
+
+      const usedNumbers = new Map();
+      return shuffle(mapTypes).map((mapType) => `${mapType}:${drawMapNumber(usedNumbers, mapType)}`);
+    }
+
+    const INITIAL_TABLE_ASSIGNMENTS = createTableAssignments();
+
+    const state = {
+      setup: {
+        A: [],
+        B: []
+      },
+      showDeclassifiedTeams: false,
+      started: false,
+      completed: false,
+      phaseIndex: 0,
+      phases: [],
+      pools: {
+        A: [],
+        B: []
+      },
+      availableMissions: [...MISSIONS],
+      bannedMissions: [],
+      usedMissions: [],
+      tableAssignments: [...INITIAL_TABLE_ASSIGNMENTS],
+      availableTables: [...INITIAL_TABLE_ASSIGNMENTS],
+      pendingMatch: null,
+      pendingOfferSelection: [],
+      matchups: [],
+      history: []
+    };
+
+    const elements = {
+      primaryLayout: document.getElementById('primary-layout'),
+      setupLibrary: document.getElementById('setup-library'),
+      teamLibrary: document.getElementById('team-library'),
+      libraryCount: document.getElementById('library-count'),
+      toggleDeclassified: document.getElementById('toggle-declassified'),
+      setupRosterA: document.getElementById('setup-roster-a'),
+      setupRosterB: document.getElementById('setup-roster-b'),
+      setupSearchA: document.getElementById('setup-search-a'),
+      setupSearchB: document.getElementById('setup-search-b'),
+      setupSearchOptionsA: document.getElementById('setup-search-options-a'),
+      setupSearchOptionsB: document.getElementById('setup-search-options-b'),
+      addSearchA: document.getElementById('add-search-a'),
+      addSearchB: document.getElementById('add-search-b'),
+      countA: document.getElementById('count-a'),
+      countB: document.getElementById('count-b'),
+      setupMissions: document.getElementById('setup-missions'),
+      setupFeedback: document.getElementById('setup-feedback'),
+      progressChip: document.getElementById('progress-chip'),
+      simEmpty: document.getElementById('sim-empty'),
+      simLive: document.getElementById('sim-live'),
+      stepLabel: document.getElementById('step-label'),
+      stepTitle: document.getElementById('step-title'),
+      stepCopy: document.getElementById('step-copy'),
+      actionContext: document.getElementById('action-context'),
+      boardHelp: document.getElementById('board-help'),
+      attackerSelectionTitle: document.getElementById('attacker-selection-title'),
+      defenderSelectionTitle: document.getElementById('defender-selection-title'),
+      attackerActionArea: document.getElementById('attacker-action-area'),
+      missionActionArea: document.getElementById('mission-action-area'),
+      defenderActionArea: document.getElementById('defender-action-area'),
+      mapHelp: document.getElementById('map-help'),
+      defenderDeckTitle: document.getElementById('defender-deck-title'),
+      attackerDeckTitle: document.getElementById('attacker-deck-title'),
+      defenderDeckCount: document.getElementById('defender-deck-count'),
+      attackerDeckCount: document.getElementById('attacker-deck-count'),
+      missionDeckCount: document.getElementById('mission-deck-count'),
+      defenderDeck: document.getElementById('defender-deck'),
+      attackerDeck: document.getElementById('attacker-deck'),
+      missionDeck: document.getElementById('mission-deck'),
+      mapGrid: document.getElementById('map-grid'),
+      missionsBanned: document.getElementById('missions-banned'),
+      missionsUsed: document.getElementById('missions-used'),
+      matchups: document.getElementById('matchups'),
+      historyList: document.getElementById('history-list')
+    };
+
+    function buildPhases() {
+      const phases = [
+        { type: 'mission-ban', side: 'A', stage: 'Opening Bans', detail: 'Defender (A) bans one mission.' },
+        { type: 'mission-ban', side: 'B', stage: 'Opening Bans', detail: 'Attacker (B) bans one mission.' }
+      ];
+
+      for (const sequence of SEQUENCES.slice(0, 4)) {
+        phases.push({ type: 'defender-reveal', sequence: sequence.number });
+        phases.push({ type: 'attacker-offer', sequence: sequence.number });
+        phases.push({ type: 'defender-pick', sequence: sequence.number });
+        phases.push({ type: 'table-select', sequence: sequence.number });
+        phases.push({ type: 'mission-select', sequence: sequence.number });
+        if (sequence.extraBanAfter) {
+          phases.push({ type: 'mission-ban', side: sequence.defender, stage: 'Remaining Process Ban', detail: 'Defender (A) bans one more mission for the rest of the round.' });
+        }
+      }
+
+      phases.push({ type: 'final-pairing', sequence: 5 });
+      return phases;
+    }
+
+    function getSequence(number) {
+      return SEQUENCES.find((sequence) => sequence.number === number);
+    }
+
+    function teamLabel(side) {
+      return `Team ${side}`;
+    }
+
+    function roleName(side) {
+      return side === 'A' ? 'Defender (A)' : 'Attacker (B)';
+    }
+
+    function getRoleSides(phase) {
+      if (phase && phase.sequence) {
+        const sequence = getSequence(phase.sequence);
+        return { defender: sequence.defender, attacker: sequence.attacker };
+      }
+      return { defender: 'A', attacker: 'B' };
+    }
+
+    function getRoleForSide(side, phase) {
+      const sides = getRoleSides(phase);
+      return side === sides.defender ? 'defender' : 'attacker';
+    }
+
+    function formatRole(role) {
+      return role === 'defender' ? 'Defender' : 'Attacker';
+    }
+
+    function getDeckSectionForSide(side) {
+      return side === 'A'
+        ? elements.attackerDeck?.closest('section')
+        : elements.defenderDeck?.closest('section');
+    }
+
+    function sequenceRoleName(sequence, side) {
+      return side === sequence.defender ? `Defender (${teamLabel(side)})` : `Attacker (${teamLabel(side)})`;
+    }
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        const temp = copy[index];
+        copy[index] = copy[swapIndex];
+        copy[swapIndex] = temp;
+      }
+      return copy;
+    }
+
+    function canStart() {
+      return state.setup.A.length === 5 && state.setup.B.length === 5;
+    }
+
+    function resetSimulationState() {
+      state.started = false;
+      state.completed = false;
+      state.phaseIndex = 0;
+      state.phases = [];
+      state.pools = { A: [], B: [] };
+      state.availableMissions = [...MISSIONS];
+      state.bannedMissions = [];
+      state.usedMissions = [];
+      state.tableAssignments = createTableAssignments();
+      state.availableTables = [...state.tableAssignments];
+      state.pendingMatch = null;
+      state.pendingOfferSelection = [];
+      state.matchups = [];
+      state.history = [];
+    }
+
+    function applySetupChange(changeFn) {
+      changeFn();
+      if (state.started) {
+        resetSimulationState();
+      }
+      renderAll();
+    }
+
+    function addSetupTeam(side, team) {
+      if (!TEAM_OPTIONS.includes(team) || state.setup[side].includes(team) || state.setup[side].length >= 5) {
+        return;
+      }
+      applySetupChange(() => {
+        state.setup[side] = [...state.setup[side], team];
+      });
+    }
+
+    function removeSetupTeam(side, team) {
+      applySetupChange(() => {
+        state.setup[side] = state.setup[side].filter((entry) => entry !== team);
+      });
+    }
+
+    function setSetupTeamSelection(side, team, shouldSelect) {
+      if (!TEAM_OPTIONS.includes(team)) {
+        return;
+      }
+
+      if (shouldSelect) {
+        addSetupTeam(side, team);
+        return;
+      }
+
+      if (state.setup[side].includes(team)) {
+        removeSetupTeam(side, team);
+      }
+    }
+
+    function getVisibleSetupTeams() {
+      return state.showDeclassifiedTeams
+        ? TEAM_OPTIONS
+        : TEAM_OPTIONS.filter((team) => !DECLASSIFIED_TEAMS.has(team));
+    }
+
+    function getAddableSetupTeams(side) {
+      return getVisibleSetupTeams().filter((team) => !state.setup[side].includes(team));
+    }
+
+    function toggleDeclassifiedTeams() {
+      state.showDeclassifiedTeams = !state.showDeclassifiedTeams;
+      renderSetup();
+    }
+
+    function findSetupTeamMatch(side, query) {
+      const normalized = query.trim().toLowerCase();
+      if (!normalized) {
+        return null;
+      }
+
+      const candidates = getAddableSetupTeams(side);
+      return candidates.find((team) => team.toLowerCase() === normalized)
+        || candidates.find((team) => team.toLowerCase().startsWith(normalized))
+        || candidates.find((team) => team.toLowerCase().includes(normalized))
+        || null;
+    }
+
+    function addTeamFromSearch(side) {
+      const input = side === 'A' ? elements.setupSearchA : elements.setupSearchB;
+      const match = findSetupTeamMatch(side, input.value);
+      input.setCustomValidity('');
+
+      if (!match) {
+        if (input.value.trim()) {
+          input.setCustomValidity('No matching visible team found.');
+          input.reportValidity();
+        }
+        return;
+      }
+
+      addSetupTeam(side, match);
+      input.value = '';
+      input.setCustomValidity('');
+    }
+
+    function renderSetupSearchControls() {
+      for (const side of ['A', 'B']) {
+        const input = side === 'A' ? elements.setupSearchA : elements.setupSearchB;
+        const datalist = side === 'A' ? elements.setupSearchOptionsA : elements.setupSearchOptionsB;
+        const button = side === 'A' ? elements.addSearchA : elements.addSearchB;
+        const candidates = getAddableSetupTeams(side);
+        const isFull = state.setup[side].length >= 5;
+
+        datalist.innerHTML = '';
+        for (const team of candidates) {
+          const option = document.createElement('option');
+          option.value = team;
+          datalist.appendChild(option);
+        }
+
+        input.disabled = isFull;
+        button.disabled = isFull;
+        input.placeholder = isFull
+          ? `Team ${side} is full`
+          : `Add a team to Team ${side}`;
+
+        if (isFull) {
+          input.value = '';
+          input.setCustomValidity('');
+        }
+      }
+    }
+
+    function randomFill(side) {
+      applySetupChange(() => {
+        const selected = [...state.setup[side]];
+        const remaining = shuffle(getVisibleSetupTeams().filter((team) => !selected.includes(team)));
+        while (selected.length < 5 && remaining.length) {
+          selected.push(remaining.shift());
+        }
+        state.setup[side] = selected.slice(0, 5);
+      });
+    }
+
+    function clearSide(side) {
+      applySetupChange(() => {
+        state.setup[side] = [];
+      });
+    }
+
+    function clearBothSides() {
+      applySetupChange(() => {
+        state.setup.A = [];
+        state.setup.B = [];
+      });
+    }
+
+    function swapSides() {
+      applySetupChange(() => {
+        const originalA = [...state.setup.A];
+        state.setup.A = [...state.setup.B];
+        state.setup.B = originalA;
+      });
+    }
+
+    function startSimulation() {
+      if (!canStart()) {
+        return;
+      }
+
+      resetSimulationState();
+      state.started = true;
+      state.phases = buildPhases();
+      state.pools = {
+        A: [...state.setup.A],
+        B: [...state.setup.B]
+      };
+      state.history.push('Simulation started with Team A as the Defender side and Team B as the Attacker side.');
+      renderAll();
+    }
+
+    function restartSimulation() {
+      if (canStart()) {
+        startSimulation();
+      }
+    }
+
+    function getCurrentPhase() {
+      return state.started && !state.completed ? state.phases[state.phaseIndex] : null;
+    }
+
+    function advancePhase() {
+      state.phaseIndex += 1;
+      state.pendingOfferSelection = [];
+      if (state.phaseIndex >= state.phases.length) {
+        state.completed = true;
+      }
+      renderAll();
+    }
+
+    function banMission(mission, side, detail) {
+      if (!state.availableMissions.includes(mission)) {
+        return;
+      }
+      state.availableMissions = state.availableMissions.filter((entry) => entry !== mission);
+      state.bannedMissions.push(mission);
+      state.history.push(`${roleName(side)} banned ${mission}. ${detail || ''}`.trim());
+      advancePhase();
+    }
+
+    function revealDefenderTeam(sequence, team) {
+      if (!state.pools[sequence.defender].includes(team)) {
+        return;
+      }
+      state.pendingMatch = {
+        sequence: sequence.number,
+        defenderSide: sequence.defender,
+        attackerSide: sequence.attacker,
+        defenderTeam: team,
+        offeredTeams: [],
+        attackerTeam: null,
+        returnedAttackerTeam: null,
+        table: null,
+        mission: null
+      };
+      state.history.push(`${sequence.label}: Defender (${sequence.defender}) revealed ${team}.`);
+      advancePhase();
+    }
+
+    function addOfferedTeam(team) {
+      if (state.pendingOfferSelection.includes(team) || state.pendingOfferSelection.length >= 2) {
+        return;
+      }
+      state.pendingOfferSelection = [...state.pendingOfferSelection, team];
+      renderAll();
+    }
+
+    function removeOfferedTeam(team) {
+      state.pendingOfferSelection = state.pendingOfferSelection.filter((entry) => entry !== team);
+      renderAll();
+    }
+
+    function clearOfferSelection() {
+      state.pendingOfferSelection = [];
+      renderAll();
+    }
+
+    function confirmOfferedTeams(sequence) {
+      if (state.pendingOfferSelection.length !== 2) {
+        return;
+      }
+      state.pendingMatch.offeredTeams = [...state.pendingOfferSelection];
+      state.history.push(`${sequence.label}: Attacker (${sequence.attacker}) offered ${state.pendingOfferSelection.join(' and ')}.`);
+      advancePhase();
+    }
+
+    function pickAttackerTeam(sequence, selectedTeam) {
+      if (!state.pendingMatch || !state.pendingMatch.offeredTeams.includes(selectedTeam)) {
+        return;
+      }
+      const returnedTeam = state.pendingMatch.offeredTeams.find((team) => team !== selectedTeam) || null;
+      state.pendingMatch.attackerTeam = selectedTeam;
+      state.pendingMatch.returnedAttackerTeam = returnedTeam;
+      state.pools[sequence.defender] = state.pools[sequence.defender].filter((team) => team !== state.pendingMatch.defenderTeam);
+      state.pools[sequence.attacker] = state.pools[sequence.attacker].filter((team) => team !== selectedTeam);
+      state.history.push(`${sequence.label}: Defender (${sequence.defender}) selected ${selectedTeam}; ${returnedTeam} returned to Attacker (${sequence.attacker}).`);
+      advancePhase();
+    }
+
+    function selectTable(sequence, table) {
+      if (!state.pendingMatch || !state.availableTables.includes(table)) {
+        return;
+      }
+      state.pendingMatch.table = table;
+      state.availableTables = state.availableTables.filter((entry) => entry !== table);
+      state.history.push(`${sequence.label}: Attacker (${sequence.attacker}) selected ${table}.`);
+      advancePhase();
+    }
+
+    function lockMission(sequence, mission) {
+      if (!state.pendingMatch || !state.availableMissions.includes(mission)) {
+        return;
+      }
+      state.pendingMatch.mission = mission;
+      state.availableMissions = state.availableMissions.filter((entry) => entry !== mission);
+      state.usedMissions.push(mission);
+      state.matchups.push({ ...state.pendingMatch });
+      state.history.push(`${sequence.label}: Defender (${sequence.defender}) selected ${mission}. Match locked on ${state.pendingMatch.table}.`);
+      state.pendingMatch = null;
+      advancePhase();
+    }
+
+    function resolveFinalPairing(chosenMission) {
+      if (!state.availableMissions.includes(chosenMission)) {
+        return;
+      }
+      const sequence = getSequence(5);
+      const defenderTeam = state.pools[sequence.defender][0];
+      const attackerTeam = state.pools[sequence.attacker][0];
+      const table = state.availableTables[0];
+      state.pools[sequence.defender] = [];
+      state.pools[sequence.attacker] = [];
+      state.availableTables = state.availableTables.filter((entry) => entry !== table);
+      state.availableMissions = state.availableMissions.filter((entry) => entry !== chosenMission);
+      state.usedMissions.push(chosenMission);
+      state.matchups.push({
+        sequence: sequence.number,
+        defenderSide: sequence.defender,
+        attackerSide: sequence.attacker,
+        defenderTeam,
+        attackerTeam,
+        returnedAttackerTeam: null,
+        table,
+        mission: chosenMission
+      });
+      state.history.push(`Pairing 5: ${defenderTeam} and ${attackerTeam} automatically paired on ${table}. Defender (${sequence.defender}) selected ${chosenMission}.`);
+      state.completed = true;
+      state.phaseIndex = state.phases.length;
+      renderAll();
+    }
+
+    function getPhaseMeta(phase) {
+      if (!phase) {
+        return {
+          label: 'Simulation Complete',
+          title: 'All Pairings Locked',
+          copy: 'Every matchup for the round is assigned. Review the locked results below or restart with the same rosters.'
+        };
+      }
+
+      if (phase.type === 'mission-ban') {
+        return {
+          label: phase.stage,
+          title: phase.detail,
+          copy: 'Drag one mission card from the mission deck into the Ban Mission zone.'
+        };
+      }
+
+      const sequence = getSequence(phase.sequence);
+
+      if (phase.type === 'defender-reveal') {
+        return {
+          label: sequence.label,
+          title: `Defender (${sequence.defender}) reveals one Kill Team`,
+          copy: 'Drag one card from the Defending Player Teams deck into the reveal zone.'
+        };
+      }
+
+      if (phase.type === 'attacker-offer') {
+        return {
+          label: sequence.label,
+          title: `Attacker (${sequence.attacker}) offers two Kill Teams`,
+          copy: 'Drag two attacker cards into the offer zone, then lock the two-card offer.'
+        };
+      }
+
+      if (phase.type === 'defender-pick') {
+        return {
+          label: sequence.label,
+          title: `Defender (${sequence.defender}) picks the matchup`,
+          copy: 'Drag one of the offered attacker cards into the selection zone to decide who plays.'
+        };
+      }
+
+      if (phase.type === 'table-select') {
+        return {
+          label: sequence.label,
+          title: `Attacker (${sequence.attacker}) chooses a map`,
+          copy: 'Drag the current pairing card onto one of the highlighted open maps.'
+        };
+      }
+
+      if (phase.type === 'mission-select') {
+        return {
+          label: sequence.label,
+          title: `Defender (${sequence.defender}) chooses a mission`,
+          copy: 'Drag one mission card into the lock zone to finish this pairing.'
+        };
+      }
+
+      return {
+        label: sequence.label,
+        title: 'Resolve the final automatic pairing',
+        copy: state.availableMissions.length > 1
+          ? 'The last teams and last map are automatic. Drag one remaining mission card into the final lock zone to close the round.'
+          : 'The last teams, map, and mission are nearly automatic. Drag the final mission card into the lock zone to close the round.'
+      };
+    }
+
+    function getBoardHelp(phase) {
+      if (!phase) {
+        return 'The round is complete. Review the five matchups below or restart the playmat.';
+      }
+
+      if (phase.type === 'mission-ban') {
+        return `Active deck: Mission Cards. Active side zone: ${phase.side === 'A' ? 'Defender side panel' : 'Attacker side panel'}. ${roleName(phase.side)} is acting.`;
+      }
+
+      const sequence = getSequence(phase.sequence);
+
+      if (phase.type === 'defender-reveal') {
+        return `Active deck: Defending Player Teams for ${teamLabel(sequence.defender)}. Drag one defender card into the reveal zone.`;
+      }
+
+      if (phase.type === 'attacker-offer') {
+        return `Active deck: Attacking Player Teams for ${teamLabel(sequence.attacker)}. Drag two cards into the offer zone.`;
+      }
+
+      if (phase.type === 'defender-pick') {
+        return `Active deck: the offered attacker cards. Drag the chosen card into the selection zone to lock the matchup.`;
+      }
+
+      if (phase.type === 'table-select') {
+        return 'Active piece: the current pairing card. Drag it onto one of the highlighted map areas.';
+      }
+
+      if (phase.type === 'mission-select') {
+        return 'Active deck: Mission Cards. Drag one mission into the active side lock zone to finish the pairing.';
+      }
+
+      return 'Active deck: Mission Cards. Drag the final mission into the active side lock zone to finish the last automatic pairing.';
+    }
+
+    function getMapHelp(phase) {
+      if (phase && phase.type === 'table-select') {
+        return 'The map step is active. Drag the current pairing card onto one of the highlighted open maps.';
+      }
+      return 'These map spaces stay on the table for the whole round. Once a pairing uses a map, that space stays locked.';
+    }
+
+    function renderChipList(container, items, className, emptyText) {
+      container.innerHTML = '';
+      if (!items.length) {
+        const empty = document.createElement('span');
+        empty.className = 'resource-empty';
+        empty.textContent = emptyText;
+        container.appendChild(empty);
+        return;
+      }
+
+      for (const item of items) {
+        const chip = document.createElement('span');
+        chip.className = className;
+        chip.textContent = item;
+        container.appendChild(chip);
+      }
+    }
+
+    function createBadge(label, tone, sticker = false) {
+      const badge = document.createElement('span');
+      badge.className = `card-badge${tone ? ` ${tone}` : ''}${sticker ? ' sticker' : ''}`;
+      badge.textContent = label;
+      return badge;
+    }
+
+    function makeDraggable(element, payload) {
+      element.draggable = true;
+      element.addEventListener('dragstart', (event) => {
+        const raw = JSON.stringify(payload);
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('application/json', raw);
+        event.dataTransfer.setData('text/plain', raw);
+      });
+    }
+
+    function readDragPayload(event) {
+      const raw = event.dataTransfer.getData('application/json') || event.dataTransfer.getData('text/plain');
+      if (!raw) {
+        return null;
+      }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function attachDropTarget(element, onDrop) {
+      element.classList.add('active');
+      element.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        element.classList.add('drag-over');
+      });
+      element.addEventListener('dragleave', () => {
+        element.classList.remove('drag-over');
+      });
+      element.addEventListener('drop', (event) => {
+        event.preventDefault();
+        element.classList.remove('drag-over');
+        const payload = readDragPayload(event);
+        if (payload) {
+          onDrop(payload);
+        }
+      });
+    }
+
+    function createCard({
+      label,
+      subtitle = '',
+      tone = 'library',
+      status = '',
+      badges = [],
+      draggable = false,
+      payload = null,
+      compact = false,
+      selected = false,
+      dim = false,
+      meta = '',
+      removeLabel = '',
+      onRemove = null,
+      onClick = null
+    }) {
+      const card = document.createElement('article');
+      card.className = `sim-card ${tone}${compact ? ' compact' : ''}${draggable ? ' draggable' : ''}${selected ? ' selected' : ''}${dim ? ' dim' : ''}`;
+
+      if (payload?.kind) {
+        card.dataset.cardKind = payload.kind;
+      }
+      if (payload?.team) {
+        card.dataset.cardValue = payload.team;
+      }
+      if (payload?.mission) {
+        card.dataset.cardValue = payload.mission;
+      }
+      if (payload?.side) {
+        card.dataset.cardSide = payload.side;
+      }
+      if (payload?.sequence) {
+        card.dataset.cardSequence = String(payload.sequence);
+      }
+
+      const top = document.createElement('div');
+      top.className = 'card-top';
+
+      const content = document.createElement('div');
+      const title = document.createElement('h4');
+      title.className = 'card-title';
+      title.textContent = label;
+      content.appendChild(title);
+
+      if (subtitle) {
+        const subtitleEl = document.createElement('p');
+        subtitleEl.className = 'card-subtitle';
+        subtitleEl.textContent = subtitle;
+        content.appendChild(subtitleEl);
+      }
+
+      top.appendChild(content);
+
+      if (status) {
+        const statusEl = document.createElement('span');
+        statusEl.className = 'card-status';
+        statusEl.textContent = status;
+        top.appendChild(statusEl);
+      }
+
+      if (removeLabel && onRemove) {
+        const removeButton = document.createElement('button');
+        removeButton.className = 'card-remove';
+        removeButton.type = 'button';
+        removeButton.textContent = removeLabel;
+        removeButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onRemove();
+        });
+        top.appendChild(removeButton);
+      }
+
+      card.appendChild(top);
+
+      if (badges.length) {
+        const badgeRow = document.createElement('div');
+        badgeRow.className = 'card-badges';
+        for (const badge of badges) {
+          badgeRow.appendChild(createBadge(badge.label, badge.tone, Boolean(badge.sticker)));
+        }
+        card.appendChild(badgeRow);
+      }
+
+      if (meta) {
+        const metaEl = document.createElement('p');
+        metaEl.className = 'card-meta';
+        metaEl.textContent = meta;
+        card.appendChild(metaEl);
+      }
+
+      if (draggable && payload) {
+        makeDraggable(card, payload);
+      }
+
+      if (onClick) {
+        card.classList.add('clickable-card');
+        card.tabIndex = 0;
+        card.addEventListener('click', onClick);
+        card.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+          }
+        });
+      }
+
+      return card;
+    }
+
+    function createMatchupCard(match, options = {}) {
+      const card = createCard({
+        label: `${match.defenderTeam || 'TBD'} vs ${match.attackerTeam || 'TBD'}`,
+        subtitle: `Pairing ${match.sequence}`,
+        tone: 'matchup',
+        status: options.status || '',
+        badges: [
+          { label: `Defender ${teamLabel(match.defenderSide)}`, tone: 'defender', sticker: true },
+          { label: `Attacker ${teamLabel(match.attackerSide)}`, tone: 'attacker', sticker: true }
+        ],
+        draggable: Boolean(options.draggable),
+        payload: options.payload || null,
+        meta: options.meta !== undefined
+          ? options.meta
+          : (match.table ? `Map: ${match.table}${match.mission ? ` | Mission: ${match.mission}` : ''}` : ''),
+        compact: Boolean(options.compact)
+      });
+      return card;
+    }
+
+    function createDropZone({ id, title, copy, active = false, children = [] }) {
+      const zone = document.createElement('section');
+      zone.className = `dropzone${children.length ? ' filled' : ''}${active ? ' active' : ''}`;
+      zone.dataset.dropId = id;
+
+      const label = document.createElement('p');
+      label.className = 'drop-label';
+      label.textContent = id;
+      zone.appendChild(label);
+
+      const heading = document.createElement('h3');
+      heading.className = 'drop-title';
+      heading.textContent = title;
+      zone.appendChild(heading);
+
+      const copyEl = document.createElement('p');
+      copyEl.className = 'drop-copy';
+      copyEl.textContent = copy;
+      zone.appendChild(copyEl);
+
+      const body = document.createElement('div');
+      body.className = 'dropzone-body';
+      if (!children.length) {
+        const empty = document.createElement('p');
+        empty.className = 'drop-empty';
+        empty.textContent = 'Drop a card here.';
+        body.appendChild(empty);
+      } else {
+        for (const child of children) {
+          body.appendChild(child);
+        }
+      }
+      zone.appendChild(body);
+      return zone;
+    }
+
+    function renderSetupLibrary() {
+      elements.teamLibrary.innerHTML = '';
+      const visibleTeams = getVisibleSetupTeams();
+      elements.libraryCount.textContent = `${visibleTeams.length} Teams`;
+      elements.toggleDeclassified.textContent = state.showDeclassifiedTeams
+        ? 'Hide Declassified Teams'
+        : 'Show Declassified Teams';
+
+      for (const team of visibleTeams) {
+        const row = document.createElement('div');
+        row.className = 'team-row';
+
+        const name = document.createElement('span');
+        name.className = 'team-name';
+        name.textContent = team;
+        row.appendChild(name);
+
+        const toggleGrid = document.createElement('div');
+        toggleGrid.className = 'team-toggle-grid';
+
+        for (const side of ['A', 'B']) {
+          const isSelected = state.setup[side].includes(team);
+          const isFull = state.setup[side].length >= 5;
+
+          const toggle = document.createElement('label');
+          toggle.className = `team-toggle ${side === 'A' ? 'side-a' : 'side-b'}`;
+          if (isSelected) {
+            toggle.classList.add('selected');
+          }
+          if (isFull && !isSelected) {
+            toggle.classList.add('disabled');
+          }
+
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = isSelected;
+          input.disabled = isFull && !isSelected;
+          input.dataset.team = team;
+          input.dataset.side = side;
+          input.setAttribute('aria-label', `Add ${team} to Team ${side}`);
+          input.addEventListener('change', (event) => {
+            setSetupTeamSelection(side, team, event.target.checked);
+          });
+
+          const copy = document.createElement('span');
+          copy.className = 'team-toggle-copy';
+          copy.textContent = `Team ${side}`;
+
+          toggle.appendChild(input);
+          toggle.appendChild(copy);
+          toggleGrid.appendChild(toggle);
+        }
+
+        row.appendChild(toggleGrid);
+
+        elements.teamLibrary.appendChild(row);
+      }
+    }
+
+    function renderSetupRoster(side) {
+      const container = side === 'A' ? elements.setupRosterA : elements.setupRosterB;
+      const count = side === 'A' ? elements.countA : elements.countB;
+      const roster = state.setup[side];
+
+      count.textContent = `${roster.length} / 5`;
+      container.innerHTML = '';
+
+      const note = document.createElement('p');
+      note.className = 'mini-note';
+      note.textContent = roster.length
+        ? 'Use the checkboxes above or click a team here to remove it from the five-team roster.'
+        : 'Use the checkboxes above to add up to five teams.';
+      container.appendChild(note);
+
+      const grid = document.createElement('div');
+      grid.className = 'pick-grid';
+
+      if (!roster.length) {
+        const empty = document.createElement('p');
+        empty.className = 'pick-empty';
+        empty.textContent = 'No teams selected yet.';
+        grid.appendChild(empty);
+      } else {
+        for (const team of roster) {
+          const row = document.createElement('div');
+          row.className = 'pick-row';
+          row.tabIndex = 0;
+          row.setAttribute('role', 'button');
+          row.setAttribute('aria-label', `Remove ${team} from Team ${side}`);
+          row.addEventListener('click', () => removeSetupTeam(side, team));
+          row.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              removeSetupTeam(side, team);
+            }
+          });
+
+          const name = document.createElement('span');
+          name.className = 'pick-name';
+          name.textContent = team;
+
+          const hint = document.createElement('span');
+          hint.className = 'pick-hint';
+          hint.textContent = 'Click to remove';
+
+          row.appendChild(name);
+          row.appendChild(hint);
+          grid.appendChild(row);
+        }
+      }
+
+      container.appendChild(grid);
+    }
+
+    function renderSetupMissions() {
+      elements.setupMissions.innerHTML = '';
+      for (const mission of MISSIONS) {
+        const card = createCard({
+          label: mission,
+          subtitle: 'Mission Card',
+          tone: 'mission',
+          compact: true,
+          badges: [{ label: 'Deck', tone: 'mission' }]
+        });
+        elements.setupMissions.appendChild(card);
+      }
+    }
+
+    function renderSetupFeedback() {
+      if (state.started) {
+        elements.setupFeedback.textContent = 'Simulation is live. Editing either roster resets the round.';
+        return;
+      }
+      if (canStart()) {
+        elements.setupFeedback.textContent = 'Both sides are ready. Start the pairing simulation when you are ready.';
+        return;
+      }
+      elements.setupFeedback.textContent = 'Pick five teams on each side to begin.';
+    }
+
+    function renderSetup() {
+      elements.primaryLayout.classList.toggle('live-mode', state.started);
+      elements.setupLibrary.hidden = state.started;
+      renderSetupLibrary();
+      renderSetupRoster('A');
+      renderSetupRoster('B');
+      renderSetupSearchControls();
+      renderSetupMissions();
+      renderSetupFeedback();
+      document.getElementById('start-simulation').disabled = !canStart();
+    }
+
+    function renderContext(phase) {
+      elements.actionContext.innerHTML = '';
+      const context = [];
+
+      if (phase && phase.sequence) {
+        const sequence = getSequence(phase.sequence);
+        context.push(`${sequenceRoleName(sequence, sequence.defender)} deck: ${state.pools[sequence.defender].length}`);
+        context.push(`${sequenceRoleName(sequence, sequence.attacker)} deck: ${state.pools[sequence.attacker].length}`);
+      }
+
+      if (state.pendingMatch?.defenderTeam) {
+        context.push(`Revealed: ${state.pendingMatch.defenderTeam}`);
+      }
+      if (state.pendingMatch?.offeredTeams?.length) {
+        context.push(`Offered: ${state.pendingMatch.offeredTeams.join(' / ')}`);
+      }
+      context.push(`Mission cards left: ${state.availableMissions.length}`);
+      context.push(`Open maps: ${state.availableTables.length}`);
+
+      const grid = document.createElement('div');
+      grid.className = 'context-grid';
+      for (const item of context) {
+        const chip = document.createElement('span');
+        chip.className = 'info-chip';
+        chip.textContent = item;
+        grid.appendChild(chip);
+      }
+
+      elements.actionContext.appendChild(grid);
+    }
+
+    function renderDeckTitles(phase) {
+      const sides = getRoleSides(phase);
+      elements.attackerDeckTitle.textContent = `${teamLabel('A')} Roster · ${formatRole(getRoleForSide('A', phase))}`;
+      elements.defenderDeckTitle.textContent = `${teamLabel('B')} Roster · ${formatRole(getRoleForSide('B', phase))}`;
+      elements.attackerSelectionTitle.textContent = `Attacker Selection Area · ${teamLabel(sides.attacker)}`;
+      elements.defenderSelectionTitle.textContent = `Defender Selection Area · ${teamLabel(sides.defender)}`;
+      elements.missionDeckCount.textContent = `${state.availableMissions.length} Cards`;
+      elements.attackerDeckCount.textContent = `${state.pools.A?.length || 0} Cards`;
+      elements.defenderDeckCount.textContent = `${state.pools.B?.length || 0} Cards`;
+    }
+
+    function renderTeamDeck(container, side, phase) {
+      container.innerHTML = '';
+      const role = getRoleForSide(side, phase);
+      const teams = state.pools[side] || [];
+
+      if (!teams.length) {
+        const empty = document.createElement('p');
+        empty.className = 'resource-empty';
+        empty.textContent = 'No cards remaining.';
+        container.appendChild(empty);
+        return;
+      }
+
+      const sequence = phase && phase.sequence ? getSequence(phase.sequence) : null;
+
+      for (const team of teams) {
+        let draggable = false;
+        let selected = false;
+        let dim = false;
+        let status = '';
+        const badges = [{ label: teamLabel(side), tone: role === 'defender' ? 'defender' : 'attacker', sticker: true }];
+
+        if (state.pendingMatch?.defenderTeam === team && role === 'defender') {
+          badges.push({ label: 'Revealed', tone: 'defender' });
+          status = 'Revealed';
+        }
+
+        if (phase?.type === 'defender-reveal' && sequence && side === sequence.defender) {
+          draggable = true;
+        }
+
+        if (phase?.type === 'attacker-offer' && sequence && side === sequence.attacker) {
+          draggable = !state.pendingOfferSelection.includes(team);
+          selected = state.pendingOfferSelection.includes(team);
+        }
+
+        if (phase?.type === 'defender-pick' && sequence && side === sequence.attacker) {
+          if (state.pendingMatch?.offeredTeams.includes(team)) {
+            draggable = true;
+          } else {
+            dim = true;
+          }
+        }
+
+        const card = createCard({
+          label: team,
+          subtitle: role === 'defender' ? 'Defending deck' : 'Attacking deck',
+          tone: role,
+          status,
+          badges,
+          draggable,
+          payload: { kind: 'team', team, side, role, sequence: sequence ? sequence.number : null },
+          compact: true,
+          selected,
+          dim
+        });
+        container.appendChild(card);
+      }
+    }
+
+    function renderMissionDeck(phase) {
+      elements.missionDeck.innerHTML = '';
+      if (!state.availableMissions.length) {
+        const empty = document.createElement('p');
+        empty.className = 'resource-empty';
+        empty.textContent = 'No mission cards remaining.';
+        elements.missionDeck.appendChild(empty);
+        return;
+      }
+
+      const active = phase && ['mission-ban', 'mission-select', 'final-pairing'].includes(phase.type);
+
+      for (const mission of state.availableMissions) {
+        const card = createCard({
+          label: mission,
+          subtitle: 'Mission Deck',
+          tone: 'mission',
+          badges: [{ label: 'Mission', tone: 'mission', sticker: true }],
+          draggable: active,
+          payload: { kind: 'mission', mission },
+          compact: true
+        });
+        elements.missionDeck.appendChild(card);
+      }
+    }
+
+    function renderDecks(phase) {
+      renderDeckTitles(phase);
+      getDeckSectionForSide('A')?.setAttribute('data-role', getRoleForSide('A', phase));
+      getDeckSectionForSide('B')?.setAttribute('data-role', getRoleForSide('B', phase));
+      renderTeamDeck(elements.attackerDeck, 'A', phase);
+      renderTeamDeck(elements.defenderDeck, 'B', phase);
+      renderMissionDeck(phase);
+    }
+
+    function createPendingSummaryCard(override = null) {
+      if (override) {
+        return createMatchupCard(override, {
+          status: override.table ? 'Ready' : 'Current Pairing',
+          compact: false,
+          meta: override.table ? `Map: ${override.table}` : 'Waiting for map selection'
+        });
+      }
+
+      if (!state.pendingMatch) {
+        return null;
+      }
+
+      return createMatchupCard({
+        sequence: state.pendingMatch.sequence,
+        defenderSide: state.pendingMatch.defenderSide,
+        attackerSide: state.pendingMatch.attackerSide,
+        defenderTeam: state.pendingMatch.defenderTeam,
+        attackerTeam: state.pendingMatch.attackerTeam || (state.pendingMatch.offeredTeams.length ? state.pendingMatch.offeredTeams.join(' / ') : 'Pending'),
+        table: state.pendingMatch.table,
+        mission: state.pendingMatch.mission
+      }, {
+        status: state.pendingMatch.table ? 'Map Locked' : 'Current Pairing',
+        compact: false,
+        meta: state.pendingMatch.table ? `Map: ${state.pendingMatch.table}` : 'Waiting for map selection'
+      });
+    }
+
+    function createAreaState(title, copy) {
+      const stateCard = document.createElement('div');
+      stateCard.className = 'empty-state';
+      stateCard.innerHTML = `<strong>${title}</strong><p>${copy}</p>`;
+      return stateCard;
+    }
+
+    function updateActiveSourceHighlight(phase) {
+      const sourceAreas = [
+        elements.attackerDeck?.closest('section'),
+        elements.defenderDeck?.closest('section'),
+        elements.missionDeck?.closest('section'),
+        elements.attackerActionArea,
+        elements.defenderActionArea,
+        elements.mapGrid?.closest('section')
+      ];
+
+      for (const area of sourceAreas) {
+        area?.classList.remove('active-source');
+      }
+
+      if (!phase) {
+        return;
+      }
+
+      const highlightAreas = (...areas) => {
+        for (const area of areas) {
+          area?.classList.add('active-source');
+        }
+      };
+
+      if (phase.type === 'defender-reveal') {
+        const sequence = getSequence(phase.sequence);
+        highlightAreas(getDeckSectionForSide(sequence.defender), elements.defenderActionArea);
+        return;
+      }
+
+      if (phase.type === 'attacker-offer') {
+        const sequence = getSequence(phase.sequence);
+        highlightAreas(getDeckSectionForSide(sequence.attacker), elements.attackerActionArea);
+        return;
+      }
+
+      if (phase.type === 'defender-pick') {
+        const sequence = getSequence(phase.sequence);
+        highlightAreas(getDeckSectionForSide(sequence.attacker), elements.defenderActionArea);
+        return;
+      }
+
+      if (phase.type === 'table-select') {
+        highlightAreas(elements.attackerActionArea, elements.mapGrid?.closest('section'));
+        return;
+      }
+
+      if (phase.type === 'mission-ban') {
+        highlightAreas(elements.missionDeck?.closest('section'), getSideActionArea(phase.side, phase));
+        return;
+      }
+
+      if (phase.type === 'mission-select' || phase.type === 'final-pairing') {
+        const sequence = getSequence(phase.sequence);
+        highlightAreas(elements.missionDeck?.closest('section'), getSideActionArea(sequence.defender, phase));
+      }
+    }
+
+    function getSideActionArea(side, phase) {
+      const sides = getRoleSides(phase);
+      return side === sides.attacker ? elements.attackerActionArea : elements.defenderActionArea;
+    }
+
+    function getOpposingActionArea(side, phase) {
+      const sides = getRoleSides(phase);
+      return side === sides.attacker ? elements.defenderActionArea : elements.attackerActionArea;
+    }
+
+    function renderActionArea(phase) {
+      elements.attackerActionArea.innerHTML = '';
+      elements.missionActionArea.innerHTML = '';
+      elements.defenderActionArea.innerHTML = '';
+
+      elements.attackerActionArea.appendChild(createAreaState('Attacker Waiting', 'When the attacking side needs to choose a card or place a pairing on a map, that action appears here.'));
+      elements.defenderActionArea.appendChild(createAreaState('Defender Waiting', 'When the defending side needs to reveal, choose, or react, that action appears here.'));
+
+      if (!phase) {
+        elements.attackerActionArea.innerHTML = '';
+        const complete = document.createElement('div');
+        complete.className = 'empty-state';
+        complete.innerHTML = '<strong>Round Ready</strong><p>All five pairings are locked. Review the cards below or restart the playmat with the same rosters.</p>';
+        elements.attackerActionArea.appendChild(complete);
+        return;
+      }
+
+      if (phase.type === 'mission-ban') {
+        const actingArea = getSideActionArea(phase.side, phase);
+        actingArea.innerHTML = '';
+        const zone = createDropZone({
+          id: 'Ban Mission',
+          title: 'Drag a Mission Here',
+          copy: `${roleName(phase.side)} removes one mission from the round.`
+        });
+        attachDropTarget(zone, (payload) => {
+          if (payload.kind === 'mission') {
+            banMission(payload.mission, phase.side, phase.detail);
+          }
+        });
+        actingArea.appendChild(zone);
+        return;
+      }
+
+      const sequence = getSequence(phase.sequence);
+
+      if (phase.type === 'defender-reveal') {
+        elements.defenderActionArea.innerHTML = '';
+        const zone = createDropZone({
+          id: 'Reveal Zone',
+          title: 'Reveal the Defender Card',
+          copy: `Drag one card from ${teamLabel(sequence.defender)}'s defender roster into this reveal zone.`
+        });
+        attachDropTarget(zone, (payload) => {
+          if (payload.kind === 'team' && payload.side === sequence.defender) {
+            revealDefenderTeam(sequence, payload.team);
+          }
+        });
+        elements.defenderActionArea.appendChild(zone);
+        return;
+      }
+
+      if (phase.type === 'attacker-offer') {
+        elements.attackerActionArea.innerHTML = '';
+        elements.defenderActionArea.innerHTML = '';
+
+        const children = state.pendingOfferSelection.map((team, index) => createCard({
+          label: team,
+          subtitle: `Offer Slot ${index + 1}`,
+          tone: 'attacker',
+          compact: true,
+          onClick: () => removeOfferedTeam(team)
+        }));
+
+        const zone = createDropZone({
+          id: 'Two-Card Offer',
+          title: state.pendingOfferSelection.length === 2 ? 'Two Attacker Cards Locked In' : `Offer Two Attacker Cards (${state.pendingOfferSelection.length}/2)`,
+          copy: state.pendingOfferSelection.length ? 'This single offer zone holds both attacker cards.' : 'Drag two attacker cards here from the highlighted roster.',
+          children,
+          active: state.pendingOfferSelection.length < 2
+        });
+        zone.classList.add('offer-dropzone');
+        zone.querySelector('.dropzone-body')?.classList.add('offer-drop-body');
+
+        if (state.pendingOfferSelection.length < 2) {
+          attachDropTarget(zone, (payload) => {
+            if (payload.kind === 'team' && payload.side === sequence.attacker) {
+              addOfferedTeam(payload.team);
+            }
+          });
+        }
+
+        elements.attackerActionArea.appendChild(zone);
+
+        const actions = document.createElement('div');
+        actions.className = 'selection-actions';
+
+        const confirm = document.createElement('button');
+        confirm.className = 'confirm-button';
+        confirm.type = 'button';
+        confirm.textContent = `Lock Two-Card Offer (${state.pendingOfferSelection.length}/2)`;
+        confirm.disabled = state.pendingOfferSelection.length !== 2;
+        confirm.addEventListener('click', () => confirmOfferedTeams(sequence));
+        actions.appendChild(confirm);
+
+        elements.attackerActionArea.appendChild(actions);
+        elements.defenderActionArea.appendChild(createPendingSummaryCard());
+        return;
+      }
+
+      if (phase.type === 'defender-pick') {
+        elements.defenderActionArea.innerHTML = '';
+        const summary = createPendingSummaryCard();
+        if (summary) {
+          elements.defenderActionArea.appendChild(summary);
+        }
+        const zone = createDropZone({
+          id: 'Match Choice',
+          title: 'Choose the Attacker Card',
+          copy: 'Drag one of the offered attacker cards into this zone to finalize the matchup.'
+        });
+        attachDropTarget(zone, (payload) => {
+          if (payload.kind === 'team' && state.pendingMatch?.offeredTeams.includes(payload.team)) {
+            pickAttackerTeam(sequence, payload.team);
+          }
+        });
+        elements.defenderActionArea.appendChild(zone);
+        return;
+      }
+
+      if (phase.type === 'table-select') {
+        elements.attackerActionArea.innerHTML = '';
+        elements.defenderActionArea.innerHTML = '';
+
+        const helper = document.createElement('p');
+        helper.className = 'mini-note';
+        helper.textContent = 'Drag the current pairing card onto one of the highlighted open maps below.';
+        elements.attackerActionArea.appendChild(helper);
+
+        if (state.pendingMatch) {
+          const pairingCard = createMatchupCard({
+            sequence: state.pendingMatch.sequence,
+            defenderSide: state.pendingMatch.defenderSide,
+            attackerSide: state.pendingMatch.attackerSide,
+            defenderTeam: state.pendingMatch.defenderTeam,
+            attackerTeam: state.pendingMatch.attackerTeam,
+            table: state.pendingMatch.table,
+            mission: state.pendingMatch.mission
+          }, {
+            draggable: true,
+            payload: { kind: 'matchup', sequence: state.pendingMatch.sequence },
+            compact: false,
+            meta: 'Drop this card onto one of the highlighted map spaces.'
+          });
+          elements.attackerActionArea.appendChild(pairingCard);
+          elements.defenderActionArea.appendChild(createPendingSummaryCard());
+        }
+        return;
+      }
+
+      if (phase.type === 'mission-select') {
+        const actingArea = getSideActionArea(sequence.defender, phase);
+        const otherArea = getOpposingActionArea(sequence.defender, phase);
+        actingArea.innerHTML = '';
+        otherArea.innerHTML = '';
+        const summary = createPendingSummaryCard();
+        if (summary) {
+          otherArea.appendChild(summary);
+        }
+        const zone = createDropZone({
+          id: 'Mission Lock',
+          title: 'Lock the Mission',
+          copy: `Drag one mission card here to finish ${sequence.label} on ${state.pendingMatch?.table || 'the selected map'}.`
+        });
+        attachDropTarget(zone, (payload) => {
+          if (payload.kind === 'mission') {
+            lockMission(sequence, payload.mission);
+          }
+        });
+        actingArea.appendChild(zone);
+        return;
+      }
+
+      const finalSequence = getSequence(5);
+      const actingArea = getSideActionArea(finalSequence.defender, phase);
+      const otherArea = getOpposingActionArea(finalSequence.defender, phase);
+      actingArea.innerHTML = '';
+      otherArea.innerHTML = '';
+      const finalSummary = {
+        sequence: finalSequence.number,
+        defenderSide: finalSequence.defender,
+        attackerSide: finalSequence.attacker,
+        defenderTeam: state.pools[finalSequence.defender][0],
+        attackerTeam: state.pools[finalSequence.attacker][0],
+        table: state.availableTables[0],
+        mission: null
+      };
+
+      otherArea.appendChild(createPendingSummaryCard(finalSummary));
+      const zone = createDropZone({
+        id: 'Final Mission Lock',
+        title: 'Finish the Last Pairing',
+        copy: 'Drag one remaining mission card here to close the final automatic matchup.'
+      });
+      attachDropTarget(zone, (payload) => {
+        if (payload.kind === 'mission') {
+          resolveFinalPairing(payload.mission);
+        }
+      });
+      actingArea.appendChild(zone);
+    }
+
+    function renderMapGrid(phase) {
+      elements.mapGrid.innerHTML = '';
+
+      for (const table of state.tableAssignments) {
+        const locked = state.matchups.find((match) => match.table === table);
+        const pending = state.pendingMatch && state.pendingMatch.table === table ? state.pendingMatch : null;
+        const available = state.availableTables.includes(table);
+        const zone = document.createElement('section');
+        zone.className = 'map-zone';
+        zone.dataset.mapName = table;
+
+        if (locked) {
+          zone.classList.add('locked');
+        } else if (pending) {
+          zone.classList.add('pending');
+        } else if (available) {
+          zone.classList.add('available');
+        }
+
+        const label = document.createElement('p');
+        label.className = 'map-label';
+        label.textContent = 'Map Area';
+        zone.appendChild(label);
+
+        const name = document.createElement('h3');
+        name.className = 'map-name';
+        name.textContent = table;
+        zone.appendChild(name);
+
+        if (locked) {
+          zone.appendChild(createMatchupCard({
+            sequence: locked.sequence,
+            defenderSide: locked.defenderSide,
+            attackerSide: locked.attackerSide,
+            defenderTeam: locked.defenderTeam,
+            attackerTeam: locked.attackerTeam,
+            table: locked.table,
+            mission: locked.mission
+          }, {
+            compact: true,
+            status: 'Locked',
+            meta: `Mission: ${locked.mission}`
+          }));
+        } else if (pending) {
+          zone.appendChild(createMatchupCard({
+            sequence: pending.sequence,
+            defenderSide: pending.defenderSide,
+            attackerSide: pending.attackerSide,
+            defenderTeam: pending.defenderTeam,
+            attackerTeam: pending.attackerTeam,
+            table: pending.table,
+            mission: pending.mission
+          }, {
+            compact: true,
+            status: 'Pending',
+            meta: 'Mission not locked yet.'
+          }));
+        }
+
+        if (phase?.type === 'table-select' && available) {
+          attachDropTarget(zone, (payload) => {
+            if (payload.kind === 'matchup' && state.pendingMatch && payload.sequence === state.pendingMatch.sequence) {
+              const sequence = getSequence(phase.sequence);
+              selectTable(sequence, table);
+            }
+          });
+        }
+
+        elements.mapGrid.appendChild(zone);
+      }
+    }
+
+    function renderLive() {
+      elements.progressChip.textContent = state.completed ? 'Complete' : state.started ? `${state.matchups.length} / 5 Locked` : 'Not Started';
+
+      if (!state.started) {
+        elements.simEmpty.hidden = false;
+        elements.simLive.hidden = true;
+        return;
+      }
+
+      elements.simEmpty.hidden = true;
+      elements.simLive.hidden = false;
+
+      const phase = getCurrentPhase();
+      const meta = getPhaseMeta(phase);
+
+      elements.stepLabel.textContent = meta.label;
+      elements.stepTitle.textContent = meta.title;
+      elements.stepCopy.textContent = meta.copy;
+      updateActiveSourceHighlight(phase);
+      elements.boardHelp.textContent = getBoardHelp(phase);
+      elements.mapHelp.textContent = getMapHelp(phase);
+
+      renderContext(phase);
+      renderDecks(phase);
+      renderActionArea(phase);
+      renderMapGrid(phase);
+      renderChipList(elements.missionsBanned, state.bannedMissions, 'resource-chip banned', 'No missions banned yet.');
+      renderChipList(elements.missionsUsed, state.usedMissions, 'resource-chip used', 'No missions locked yet.');
+    }
+
+    function renderMatchups() {
+      elements.matchups.innerHTML = '';
+      if (!state.matchups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'match-card match-empty';
+        empty.textContent = 'No pairings locked yet.';
+        elements.matchups.appendChild(empty);
+        return;
+      }
+
+      for (const matchup of state.matchups) {
+        const card = document.createElement('article');
+        card.className = 'match-card';
+        card.innerHTML = `
+          <p class="status-title">Pairing ${matchup.sequence}</p>
+          <h3>${matchup.defenderTeam} vs ${matchup.attackerTeam}</h3>
+          <div class="match-meta">
+            <p class="match-copy"><strong>Defender:</strong> ${teamLabel(matchup.defenderSide)}</p>
+            <p class="match-copy"><strong>Attacker:</strong> ${teamLabel(matchup.attackerSide)}</p>
+            <p class="match-copy"><strong>Map:</strong> ${matchup.table}</p>
+            <p class="match-copy"><strong>Mission:</strong> ${matchup.mission}</p>
+          </div>
+        `;
+        elements.matchups.appendChild(card);
+      }
+    }
+
+    function renderHistory() {
+      elements.historyList.innerHTML = '';
+      if (!state.history.length) {
+        const empty = document.createElement('li');
+        empty.className = 'log-empty';
+        empty.textContent = 'The action log will populate once the simulation begins.';
+        elements.historyList.appendChild(empty);
+        return;
+      }
+
+      for (const entry of state.history) {
+        const item = document.createElement('li');
+        item.textContent = entry;
+        elements.historyList.appendChild(item);
+      }
+    }
+
+    function renderAll() {
+      renderSetup();
+      renderLive();
+      renderMatchups();
+      renderHistory();
+    }
+
+    document.getElementById('random-a').addEventListener('click', () => randomFill('A'));
+    document.getElementById('random-b').addEventListener('click', () => randomFill('B'));
+    document.getElementById('clear-a').addEventListener('click', () => clearSide('A'));
+    document.getElementById('clear-b').addEventListener('click', () => clearSide('B'));
+    document.getElementById('clear-both').addEventListener('click', clearBothSides);
+    document.getElementById('swap-sides-button').addEventListener('click', swapSides);
+    document.getElementById('start-simulation').addEventListener('click', startSimulation);
+    document.getElementById('restart-simulation').addEventListener('click', restartSimulation);
+    elements.toggleDeclassified.addEventListener('click', toggleDeclassifiedTeams);
+    elements.addSearchA.addEventListener('click', () => addTeamFromSearch('A'));
+    elements.addSearchB.addEventListener('click', () => addTeamFromSearch('B'));
+    elements.setupSearchA.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addTeamFromSearch('A');
+      }
+    });
+    elements.setupSearchB.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addTeamFromSearch('B');
+      }
+    });
+    elements.setupSearchA.addEventListener('input', () => elements.setupSearchA.setCustomValidity(''));
+    elements.setupSearchB.addEventListener('input', () => elements.setupSearchB.setCustomValidity(''));
+
+    renderAll();
+  </script>
+</body>
+</html>
