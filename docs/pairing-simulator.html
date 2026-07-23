@@ -355,6 +355,7 @@
   .setup-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+    z-index: 3;
   }
 
   .graveyard-grid {
@@ -625,16 +626,22 @@
   }
 
   .setup-search {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     flex: 1 1 22rem;
-    align-items: center;
+    align-items: start;
     gap: 8px;
     min-width: min(22rem, 100%);
+    position: relative;
+  }
+
+  .setup-search-field {
+    position: relative;
+    min-width: 0;
   }
 
   .setup-search-input {
-    flex: 1 1 auto;
-    min-width: 0;
+    width: 100%;
     min-height: 42px;
     padding: 0 14px;
     border-radius: 999px;
@@ -657,6 +664,50 @@
   .setup-search-input:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  .setup-search-suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 106, 28, 0.18);
+    background: rgba(18, 18, 18, 0.98);
+    box-shadow: var(--shadow);
+  }
+
+  .setup-search-suggestions[hidden] {
+    display: none;
+  }
+
+  .setup-search-option {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    border-color: rgba(255, 106, 28, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+  }
+
+  .setup-search-option:hover,
+  .setup-search-option:focus-visible {
+    border-color: rgba(255, 106, 28, 0.36);
+    background: rgba(255, 97, 24, 0.08);
+    outline: none;
+  }
+
+  .setup-search-empty {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 106, 28, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
   }
 
   .draft-drop {
@@ -1235,6 +1286,16 @@
     box-shadow: 0 0 0 1px rgba(255, 106, 28, 0.18), inset 0 0 0 1px rgba(255, 106, 28, 0.12);
   }
 
+  #sim-live .roster-panel.deciding-side-a {
+    border-color: rgba(245, 91, 91, 0.72);
+    box-shadow: 0 0 0 1px rgba(245, 91, 91, 0.2), inset 0 0 0 1px rgba(245, 91, 91, 0.16), 0 0 12px rgba(245, 91, 91, 0.14);
+  }
+
+  #sim-live .roster-panel.deciding-side-b {
+    border-color: rgba(104, 170, 255, 0.72);
+    box-shadow: 0 0 0 1px rgba(104, 170, 255, 0.2), inset 0 0 0 1px rgba(104, 170, 255, 0.16), 0 0 12px rgba(104, 170, 255, 0.14);
+  }
+
   #sim-live .step-banner,
   #sim-live .action-context,
   #sim-live .board-help,
@@ -1644,7 +1705,7 @@
           </div>
           <button class="ghost-button" id="swap-sides-button" type="button">Swap Sides</button>
         </div>
-        <p class="panel-copy">Use the Team A and Team B checkboxes to build both five-team rosters. Team A opens the round as the Defender side and Team B opens as the Attacker side.</p>
+        <p class="panel-copy">Use the Team A and Team B checkboxes to build both five-team rosters. Opening attacker and defender roles are randomized each time you start the round.</p>
 
         <section class="setup-library" id="setup-library">
           <div class="section-head">
@@ -1671,15 +1732,17 @@
             <div class="roster-head">
               <div>
                 <p class="side-tag">Team A</p>
-                <h3 id="team-a-setup-heading">Defender Pool</h3>
+                <h3 id="team-a-setup-heading">Team A Pool</h3>
               </div>
               <span class="count-pill" id="count-a">0 / 5</span>
             </div>
             <div class="setup-pick-list" id="setup-roster-a"></div>
             <div class="mini-actions">
               <div class="setup-search">
-                <input class="setup-search-input" id="setup-search-a" type="search" list="setup-search-options-a" placeholder="Add a team to Team A">
-                <datalist id="setup-search-options-a"></datalist>
+                <div class="setup-search-field">
+                  <input class="setup-search-input" id="setup-search-a" type="search" autocomplete="off" placeholder="Add a team to Team A">
+                  <div class="setup-search-suggestions" id="setup-search-suggestions-a" hidden></div>
+                </div>
                 <button class="ghost-button" id="add-search-a" type="button">Add</button>
               </div>
               <button class="ghost-button" id="random-a" type="button">Random 5</button>
@@ -1691,15 +1754,17 @@
             <div class="roster-head">
               <div>
                 <p class="side-tag">Team B</p>
-                <h3 id="team-b-setup-heading">Attacker Pool</h3>
+                <h3 id="team-b-setup-heading">Team B Pool</h3>
               </div>
               <span class="count-pill" id="count-b">0 / 5</span>
             </div>
             <div class="setup-pick-list" id="setup-roster-b"></div>
             <div class="mini-actions">
               <div class="setup-search">
-                <input class="setup-search-input" id="setup-search-b" type="search" list="setup-search-options-b" placeholder="Add a team to Team B">
-                <datalist id="setup-search-options-b"></datalist>
+                <div class="setup-search-field">
+                  <input class="setup-search-input" id="setup-search-b" type="search" autocomplete="off" placeholder="Add a team to Team B">
+                  <div class="setup-search-suggestions" id="setup-search-suggestions-b" hidden></div>
+                </div>
                 <button class="ghost-button" id="add-search-b" type="button">Add</button>
               </div>
               <button class="ghost-button" id="random-b" type="button">Random 5</button>
@@ -1841,7 +1906,13 @@
             <p class="panel-kicker">Results</p>
             <h2>Completed Pairings</h2>
           </div>
+          <div class="section-tools">
+            <span class="count-pill" id="session-record-count">0 Saved</span>
+            <button class="ghost-button" id="download-session-report" type="button" disabled>Download Excel</button>
+            <button class="ghost-button" id="clear-session-records" type="button" disabled>Clear Saved Rounds</button>
+          </div>
         </div>
+        <p class="mini-note" id="export-status">Complete a full round to build the six-tab Excel workbook.</p>
         <div class="match-grid" id="matchups"></div>
       </article>
 
@@ -1858,6 +1929,7 @@
   </main>
 
   <script src="./team-pairing-teams.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
   <script>
     const TEAM_OPTIONS = Array.isArray(window.TEAM_PAIRING_TEAMS) ? [...window.TEAM_PAIRING_TEAMS] : [];
     const DECLASSIFIED_TEAMS = new Set([
@@ -1890,13 +1962,26 @@
     ];
     const TABLE_COUNT = 5;
     const MAP_NUMBERS = ['1', '2', '3', '4', '5', '6'];
-    const SEQUENCES = [
-      { number: 1, label: 'Pairing 1', defender: 'A', attacker: 'B' },
-      { number: 2, label: 'Pairing 2', defender: 'B', attacker: 'A' },
-      { number: 3, label: 'Pairing 3', defender: 'A', attacker: 'B', extraBanAfter: true },
-      { number: 4, label: 'Pairing 4', defender: 'B', attacker: 'A' },
-      { number: 5, label: 'Pairing 5', defender: 'A', attacker: 'B', final: true }
-    ];
+    const SEQUENCE_COUNT = 5;
+
+    function getOpposingSide(side) {
+      return side === 'A' ? 'B' : 'A';
+    }
+
+    function buildSequences(openingDefenderSide) {
+      return Array.from({ length: SEQUENCE_COUNT }, (_, index) => {
+        const number = index + 1;
+        const defender = index % 2 === 0 ? openingDefenderSide : getOpposingSide(openingDefenderSide);
+        return {
+          number,
+          label: `Pairing ${number}`,
+          defender,
+          attacker: getOpposingSide(defender),
+          extraBanAfter: number === 3,
+          final: number === SEQUENCE_COUNT
+        };
+      });
+    }
 
     function randomChoice(items) {
       return items[Math.floor(Math.random() * items.length)];
@@ -1912,12 +1997,13 @@
     }
 
     function createTableAssignments() {
-      const volkusType = randomChoice(['Volkus 24', 'Volkus 25']);
-      const mapTypes = [volkusType, 'Tomb World', 'WTC ITD'];
-
-      while (mapTypes.length < TABLE_COUNT) {
-        mapTypes.push(randomChoice([volkusType, 'Tomb World']));
-      }
+      const mapTypes = [
+        randomChoice(['Volkus 24', 'Volkus 25']),
+        randomChoice(['Volkus 24', 'Volkus 25']),
+        randomChoice(['Volkus 24', 'Volkus 25']),
+        'Tomb World',
+        'WTC ITC'
+      ];
 
       const usedNumbers = new Map();
       return shuffle(mapTypes).map((mapType) => `${mapType}:${drawMapNumber(usedNumbers, mapType)}`);
@@ -1934,6 +2020,8 @@
       started: false,
       completed: false,
       phaseIndex: 0,
+      openingDefenderSide: null,
+      sequences: [],
       phases: [],
       pools: {
         A: [],
@@ -1947,7 +2035,11 @@
       pendingMatch: null,
       pendingOfferSelection: [],
       matchups: [],
-      history: []
+      history: [],
+      sessionRecords: [],
+      sessionCounter: 0,
+      sessionSnapshotCaptured: false,
+      exportFeedback: 'Complete a full round to build the six-tab Excel workbook.'
     };
 
     const elements = {
@@ -1960,8 +2052,8 @@
       setupRosterB: document.getElementById('setup-roster-b'),
       setupSearchA: document.getElementById('setup-search-a'),
       setupSearchB: document.getElementById('setup-search-b'),
-      setupSearchOptionsA: document.getElementById('setup-search-options-a'),
-      setupSearchOptionsB: document.getElementById('setup-search-options-b'),
+      setupSearchSuggestionsA: document.getElementById('setup-search-suggestions-a'),
+      setupSearchSuggestionsB: document.getElementById('setup-search-suggestions-b'),
       addSearchA: document.getElementById('add-search-a'),
       addSearchB: document.getElementById('add-search-b'),
       countA: document.getElementById('count-a'),
@@ -1993,24 +2085,34 @@
       mapGrid: document.getElementById('map-grid'),
       missionsBanned: document.getElementById('missions-banned'),
       missionsUsed: document.getElementById('missions-used'),
+      sessionRecordCount: document.getElementById('session-record-count'),
+      downloadSessionReport: document.getElementById('download-session-report'),
+      clearSessionRecords: document.getElementById('clear-session-records'),
+      exportStatus: document.getElementById('export-status'),
       matchups: document.getElementById('matchups'),
       historyList: document.getElementById('history-list')
     };
 
     function buildPhases() {
+      const openingSides = getRoleSides();
       const phases = [
-        { type: 'mission-ban', side: 'A', stage: 'Opening Bans', detail: 'Defender (A) bans one mission.' },
-        { type: 'mission-ban', side: 'B', stage: 'Opening Bans', detail: 'Attacker (B) bans one mission.' }
+        { type: 'mission-ban', side: openingSides.defender, stage: 'Opening Bans', detail: `${roleName(openingSides.defender)} bans one mission.` },
+        { type: 'mission-ban', side: openingSides.attacker, stage: 'Opening Bans', detail: `${roleName(openingSides.attacker)} bans one mission.` }
       ];
 
-      for (const sequence of SEQUENCES.slice(0, 4)) {
+      for (const sequence of state.sequences.slice(0, 4)) {
         phases.push({ type: 'defender-reveal', sequence: sequence.number });
         phases.push({ type: 'attacker-offer', sequence: sequence.number });
         phases.push({ type: 'defender-pick', sequence: sequence.number });
         phases.push({ type: 'table-select', sequence: sequence.number });
         phases.push({ type: 'mission-select', sequence: sequence.number });
         if (sequence.extraBanAfter) {
-          phases.push({ type: 'mission-ban', side: sequence.defender, stage: 'Remaining Process Ban', detail: 'Defender (A) bans one more mission for the rest of the round.' });
+          phases.push({
+            type: 'mission-ban',
+            side: sequence.defender,
+            stage: 'Remaining Process Ban',
+            detail: `${roleName(sequence.defender, { sequence: sequence.number })} bans one more mission for the rest of the round.`
+          });
         }
       }
 
@@ -2019,21 +2121,26 @@
     }
 
     function getSequence(number) {
-      return SEQUENCES.find((sequence) => sequence.number === number);
+      return state.sequences.find((sequence) => sequence.number === number) || null;
     }
 
     function teamLabel(side) {
       return `Team ${side}`;
     }
 
-    function roleName(side) {
-      return side === 'A' ? 'Defender (A)' : 'Attacker (B)';
+    function roleName(side, phase = null) {
+      return `${formatRole(getRoleForSide(side, phase))} (${side})`;
     }
 
     function getRoleSides(phase) {
       if (phase && phase.sequence) {
         const sequence = getSequence(phase.sequence);
-        return { defender: sequence.defender, attacker: sequence.attacker };
+        if (sequence) {
+          return { defender: sequence.defender, attacker: sequence.attacker };
+        }
+      }
+      if (state.openingDefenderSide) {
+        return { defender: state.openingDefenderSide, attacker: getOpposingSide(state.openingDefenderSide) };
       }
       return { defender: 'A', attacker: 'B' };
     }
@@ -2068,6 +2175,287 @@
       return copy;
     }
 
+    function formatSessionTimestamp(dateValue) {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
+      return date.toLocaleString('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatWorkbookStamp(dateValue = new Date()) {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      const pad = (value) => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+    }
+
+    function haveSameTeams(left, right) {
+      if (left.length !== right.length) {
+        return false;
+      }
+
+      const sortedLeft = [...left].sort((a, b) => a.localeCompare(b));
+      const sortedRight = [...right].sort((a, b) => a.localeCompare(b));
+      return sortedLeft.every((team, index) => team === sortedRight[index]);
+    }
+
+    function clearSavedRounds(message = 'Saved round history cleared.') {
+      state.sessionRecords = [];
+      state.sessionCounter = 0;
+      state.exportFeedback = message;
+    }
+
+    function summarizeTeamBPools(records) {
+      const uniquePools = [];
+
+      for (const record of records) {
+        const sortedPool = [...record.teamB].sort((left, right) => left.localeCompare(right));
+        const signature = sortedPool.join(' | ');
+
+        if (!uniquePools.some((entry) => entry.signature === signature)) {
+          uniquePools.push({
+            signature,
+            label: sortedPool.join(', ')
+          });
+        }
+      }
+
+      if (!uniquePools.length) {
+        return '';
+      }
+
+      if (uniquePools.length === 1) {
+        return uniquePools[0].label;
+      }
+
+      return `Varies across ${uniquePools.length} Team B pools`;
+    }
+
+    function createSessionRecord() {
+      const capturedAt = new Date();
+      return {
+        id: state.sessionCounter,
+        capturedAt: capturedAt.toISOString(),
+        capturedAtLabel: formatSessionTimestamp(capturedAt),
+        teamA: [...state.setup.A],
+        teamB: [...state.setup.B],
+        matchups: state.matchups.map((match) => ({ ...match })),
+        bannedMissions: [...state.bannedMissions],
+        usedMissions: [...state.usedMissions]
+      };
+    }
+
+    function saveCompletedRound() {
+      if (!state.completed || state.sessionSnapshotCaptured || state.matchups.length !== TABLE_COUNT) {
+        return;
+      }
+
+      state.sessionCounter += 1;
+      const record = createSessionRecord();
+      state.sessionRecords = [...state.sessionRecords, record];
+      state.sessionSnapshotCaptured = true;
+      state.exportFeedback = `Saved Round ${record.id} for Excel export.`;
+    }
+
+    function sanitizeSheetName(name, fallback) {
+      const cleaned = name.replace(/[\\/?*\[\]:]/g, ' ').trim() || fallback;
+      return cleaned.slice(0, 31);
+    }
+
+    function createSheetNameMap(teams) {
+      const usedNames = new Set();
+      const mapping = new Map();
+
+      teams.forEach((team, index) => {
+        const baseName = sanitizeSheetName(team, `Team ${index + 1}`) || `Team ${index + 1}`;
+        let candidate = baseName;
+        let suffix = 2;
+
+        while (usedNames.has(candidate)) {
+          const suffixLabel = ` ${suffix}`;
+          candidate = `${baseName.slice(0, 31 - suffixLabel.length)}${suffixLabel}`;
+          suffix += 1;
+        }
+
+        usedNames.add(candidate);
+        mapping.set(team, candidate);
+      });
+
+      return mapping;
+    }
+
+    function quoteSheetName(name) {
+      return `'${name.replace(/'/g, "''")}'`;
+    }
+
+    function getTeamAMatchup(record, team) {
+      return record.matchups.find((match) => (
+        match.defenderSide === 'A' && match.defenderTeam === team
+      ) || (
+        match.attackerSide === 'A' && match.attackerTeam === team
+      )) || null;
+    }
+
+    function getTeamARole(matchup, team) {
+      if (!matchup) {
+        return '';
+      }
+      return matchup.defenderSide === 'A' && matchup.defenderTeam === team ? 'Defender' : 'Attacker';
+    }
+
+    function getTeamAOpponent(matchup, team) {
+      if (!matchup) {
+        return '';
+      }
+      return getTeamARole(matchup, team) === 'Defender' ? matchup.attackerTeam : matchup.defenderTeam;
+    }
+
+    function describeMatchup(matchup) {
+      if (!matchup) {
+        return 'Not paired';
+      }
+      return `${matchup.defenderTeam} vs ${matchup.attackerTeam} | ${matchup.table} | ${matchup.mission}`;
+    }
+
+    function setSheetFormula(sheet, rowIndex, columnIndex, formula) {
+      const address = window.XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+      sheet[address] = { f: formula };
+    }
+
+    function buildOverviewSheet(records, teamATeams, sheetNameMap) {
+      const firstScoreColumnIndex = 1;
+      const lastScoreColumnIndex = firstScoreColumnIndex + teamATeams.length - 1;
+      const roundAverageColumnIndex = lastScoreColumnIndex + 1;
+      const firstScoreColumn = window.XLSX.utils.encode_col(firstScoreColumnIndex);
+      const lastScoreColumn = window.XLSX.utils.encode_col(lastScoreColumnIndex);
+      const teamBPoolSummary = summarizeTeamBPools(records);
+
+      const rows = [
+        ['Pairing Session Overview'],
+        ['Exported At', formatSessionTimestamp(new Date()), 'Saved Rounds', records.length, 'Overall Avg Score', ''],
+        ['Team A Roster', teamATeams.join(', ')],
+        ['Team B Pools', teamBPoolSummary],
+        [],
+        ['Player Ratings'],
+        ['Round', ...teamATeams, 'Round Avg']
+      ];
+
+      records.forEach((record) => {
+        rows.push([record.id, ...teamATeams.map(() => ''), '']);
+      });
+
+      rows.push(['Team Avg', ...teamATeams.map(() => ''), '']);
+
+      const sheet = window.XLSX.utils.aoa_to_sheet(rows);
+      const ratingsHeaderRowIndex = rows.findIndex((row) => row[0] === 'Round' && row[row.length - 1] === 'Round Avg');
+      const ratingsDataStartRowIndex = ratingsHeaderRowIndex + 1;
+      const ratingsDataEndRowIndex = ratingsDataStartRowIndex + records.length - 1;
+      const ratingsAverageRowIndex = ratingsDataEndRowIndex + 1;
+      const ratingsDataStartRow = ratingsDataStartRowIndex + 1;
+      const ratingsDataEndRow = ratingsDataEndRowIndex + 1;
+
+      records.forEach((record, recordIndex) => {
+        const overviewRowIndex = ratingsDataStartRowIndex + recordIndex;
+        const teamSheetRowNumber = recordIndex + 3;
+
+        teamATeams.forEach((team, teamIndex) => {
+          const sheetName = quoteSheetName(sheetNameMap.get(team));
+          setSheetFormula(sheet, overviewRowIndex, firstScoreColumnIndex + teamIndex, `IF(ISBLANK(${sheetName}!F${teamSheetRowNumber}),"",${sheetName}!F${teamSheetRowNumber})`);
+        });
+
+        const excelRow = overviewRowIndex + 1;
+        setSheetFormula(sheet, overviewRowIndex, roundAverageColumnIndex, `IF(COUNT(${firstScoreColumn}${excelRow}:${lastScoreColumn}${excelRow})=0,"",AVERAGE(${firstScoreColumn}${excelRow}:${lastScoreColumn}${excelRow}))`);
+      });
+
+      teamATeams.forEach((team, teamIndex) => {
+        const column = window.XLSX.utils.encode_col(firstScoreColumnIndex + teamIndex);
+        setSheetFormula(sheet, ratingsAverageRowIndex, firstScoreColumnIndex + teamIndex, `IF(COUNT(${column}${ratingsDataStartRow}:${column}${ratingsDataEndRow})=0,"",AVERAGE(${column}${ratingsDataStartRow}:${column}${ratingsDataEndRow}))`);
+      });
+
+      const roundAverageColumn = window.XLSX.utils.encode_col(roundAverageColumnIndex);
+      const overallAverageFormula = `IF(COUNT(${firstScoreColumn}${ratingsDataStartRow}:${lastScoreColumn}${ratingsDataEndRow})=0,"",AVERAGE(${firstScoreColumn}${ratingsDataStartRow}:${lastScoreColumn}${ratingsDataEndRow}))`;
+      setSheetFormula(sheet, 1, 5, overallAverageFormula);
+      setSheetFormula(sheet, ratingsAverageRowIndex, roundAverageColumnIndex, `IF(COUNT(${roundAverageColumn}${ratingsDataStartRow}:${roundAverageColumn}${ratingsDataEndRow})=0,"",AVERAGE(${roundAverageColumn}${ratingsDataStartRow}:${roundAverageColumn}${ratingsDataEndRow}))`);
+
+      sheet['!cols'] = [
+        { wch: 10 },
+        ...teamATeams.map(() => ({ wch: 18 })),
+        { wch: 14 }
+      ];
+
+      return sheet;
+    }
+
+    function buildTeamHistorySheet(records, team) {
+      const rows = [
+        [`${team} Matchup History`, 'Enter the self-assessed score for each round in the last column.'],
+        ['Round', 'Role', 'Opponent Team', 'Map', 'Mission', 'Self-Assessed Score']
+      ];
+
+      records.forEach((record) => {
+        const matchup = getTeamAMatchup(record, team);
+        rows.push([
+          record.id,
+          getTeamARole(matchup, team),
+          getTeamAOpponent(matchup, team),
+          matchup?.table || '',
+          matchup?.mission || '',
+          ''
+        ]);
+      });
+
+      const sheet = window.XLSX.utils.aoa_to_sheet(rows);
+      sheet['!cols'] = [
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 24 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 20 }
+      ];
+      return sheet;
+    }
+
+    function buildSessionWorkbook() {
+      const records = [...state.sessionRecords];
+      const teamATeams = [...records[0].teamA];
+      const sheetNameMap = createSheetNameMap(teamATeams);
+      const workbook = window.XLSX.utils.book_new();
+
+      window.XLSX.utils.book_append_sheet(workbook, buildOverviewSheet(records, teamATeams, sheetNameMap), 'Overview');
+
+      teamATeams.forEach((team) => {
+        window.XLSX.utils.book_append_sheet(workbook, buildTeamHistorySheet(records, team), sheetNameMap.get(team));
+      });
+
+      return workbook;
+    }
+
+    function downloadSessionWorkbook() {
+      if (!state.sessionRecords.length) {
+        state.exportFeedback = 'No saved rounds yet. Complete a full round before exporting.';
+        renderExportControls();
+        return;
+      }
+
+      if (!window.XLSX) {
+        state.exportFeedback = 'Excel export library unavailable. Refresh the page and try again.';
+        renderExportControls();
+        return;
+      }
+
+      const fileName = `pairing-simulator-session-${formatWorkbookStamp()}.xlsx`;
+      window.XLSX.writeFile(buildSessionWorkbook(), fileName);
+      state.exportFeedback = `Downloaded ${fileName}.`;
+      renderExportControls();
+    }
+
     function canStart() {
       return state.setup.A.length === 5 && state.setup.B.length === 5;
     }
@@ -2076,6 +2464,8 @@
       state.started = false;
       state.completed = false;
       state.phaseIndex = 0;
+      state.openingDefenderSide = null;
+      state.sequences = [];
       state.phases = [];
       state.pools = { A: [], B: [] };
       state.availableMissions = [...MISSIONS];
@@ -2087,10 +2477,23 @@
       state.pendingOfferSelection = [];
       state.matchups = [];
       state.history = [];
+      state.sessionSnapshotCaptured = false;
     }
 
     function applySetupChange(changeFn) {
+      const previousSetup = {
+        A: [...state.setup.A],
+        B: [...state.setup.B]
+      };
+
       changeFn();
+
+      const teamAChanged = !haveSameTeams(previousSetup.A, state.setup.A);
+
+      if (teamAChanged && state.sessionRecords.length) {
+        clearSavedRounds('Saved round history cleared because Team A changed.');
+      }
+
       if (state.started) {
         resetSimulationState();
       }
@@ -2143,16 +2546,40 @@
     }
 
     function findSetupTeamMatch(side, query) {
+      return getSetupSearchMatches(side, query, 1)[0] || null;
+    }
+
+    function getSetupSearchMatches(side, query, limit = 6) {
       const normalized = query.trim().toLowerCase();
+      const candidates = getAddableSetupTeams(side);
+
       if (!normalized) {
-        return null;
+        return candidates.slice(0, limit);
       }
 
-      const candidates = getAddableSetupTeams(side);
-      return candidates.find((team) => team.toLowerCase() === normalized)
-        || candidates.find((team) => team.toLowerCase().startsWith(normalized))
-        || candidates.find((team) => team.toLowerCase().includes(normalized))
-        || null;
+      const exact = [];
+      const startsWith = [];
+      const includes = [];
+
+      for (const team of candidates) {
+        const lowerTeam = team.toLowerCase();
+        if (lowerTeam === normalized) {
+          exact.push(team);
+        } else if (lowerTeam.startsWith(normalized)) {
+          startsWith.push(team);
+        } else if (lowerTeam.includes(normalized)) {
+          includes.push(team);
+        }
+      }
+
+      return [...exact, ...startsWith, ...includes].slice(0, limit);
+    }
+
+    function chooseSetupSearchSuggestion(side, team) {
+      const input = side === 'A' ? elements.setupSearchA : elements.setupSearchB;
+      input.value = '';
+      input.setCustomValidity('');
+      addSetupTeam(side, team);
     }
 
     function addTeamFromSearch(side) {
@@ -2168,25 +2595,23 @@
         return;
       }
 
-      addSetupTeam(side, match);
       input.value = '';
       input.setCustomValidity('');
+      addSetupTeam(side, match);
     }
 
     function renderSetupSearchControls() {
       for (const side of ['A', 'B']) {
         const input = side === 'A' ? elements.setupSearchA : elements.setupSearchB;
-        const datalist = side === 'A' ? elements.setupSearchOptionsA : elements.setupSearchOptionsB;
+        const suggestionBox = side === 'A' ? elements.setupSearchSuggestionsA : elements.setupSearchSuggestionsB;
         const button = side === 'A' ? elements.addSearchA : elements.addSearchB;
         const candidates = getAddableSetupTeams(side);
         const isFull = state.setup[side].length >= 5;
+        const query = input.value;
+        const matches = getSetupSearchMatches(side, query);
+        const shouldShowSuggestions = !isFull && (document.activeElement === input || Boolean(query.trim()));
 
-        datalist.innerHTML = '';
-        for (const team of candidates) {
-          const option = document.createElement('option');
-          option.value = team;
-          datalist.appendChild(option);
-        }
+        suggestionBox.innerHTML = '';
 
         input.disabled = isFull;
         button.disabled = isFull;
@@ -2198,6 +2623,34 @@
           input.value = '';
           input.setCustomValidity('');
         }
+
+        if (!shouldShowSuggestions || !candidates.length) {
+          suggestionBox.hidden = true;
+          continue;
+        }
+
+        if (!matches.length) {
+          const empty = document.createElement('p');
+          empty.className = 'setup-search-empty';
+          empty.textContent = 'No matching visible team found.';
+          suggestionBox.appendChild(empty);
+          suggestionBox.hidden = false;
+          continue;
+        }
+
+        for (const team of matches) {
+          const suggestion = document.createElement('button');
+          suggestion.className = 'ghost-button setup-search-option';
+          suggestion.type = 'button';
+          suggestion.textContent = team;
+          suggestion.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+          });
+          suggestion.addEventListener('click', () => chooseSetupSearchSuggestion(side, team));
+          suggestionBox.appendChild(suggestion);
+        }
+
+        suggestionBox.hidden = false;
       }
     }
 
@@ -2240,12 +2693,14 @@
 
       resetSimulationState();
       state.started = true;
+      state.openingDefenderSide = randomChoice(['A', 'B']);
+      state.sequences = buildSequences(state.openingDefenderSide);
       state.phases = buildPhases();
       state.pools = {
         A: [...state.setup.A],
         B: [...state.setup.B]
       };
-      state.history.push('Simulation started with Team A as the Defender side and Team B as the Attacker side.');
+      state.history.push(`Simulation started with Team ${state.openingDefenderSide} as the Defender side and Team ${getOpposingSide(state.openingDefenderSide)} as the Attacker side.`);
       renderAll();
     }
 
@@ -2264,6 +2719,7 @@
       state.pendingOfferSelection = [];
       if (state.phaseIndex >= state.phases.length) {
         state.completed = true;
+        saveCompletedRound();
       }
       renderAll();
     }
@@ -2386,6 +2842,7 @@
       state.history.push(`Pairing 5: ${defenderTeam} and ${attackerTeam} automatically paired on ${table}. Defender (${sequence.defender}) selected ${chosenMission}.`);
       state.completed = true;
       state.phaseIndex = state.phases.length;
+      saveCompletedRound();
       renderAll();
     }
 
@@ -2463,7 +2920,7 @@
       }
 
       if (phase.type === 'mission-ban') {
-        return `Active deck: Mission Cards. Active side zone: ${phase.side === 'A' ? 'Defender side panel' : 'Attacker side panel'}. ${roleName(phase.side)} is acting.`;
+        return `Active deck: Mission Cards. Active side zone: ${formatRole(getRoleForSide(phase.side, phase))} side panel. ${roleName(phase.side, phase)} is acting.`;
       }
 
       const sequence = getSequence(phase.sequence);
@@ -3053,6 +3510,27 @@
       return stateCard;
     }
 
+    function getDecidingSide(phase) {
+      if (!phase) {
+        return null;
+      }
+
+      if (phase.type === 'mission-ban') {
+        return phase.side;
+      }
+
+      const sequence = phase.sequence ? getSequence(phase.sequence) : null;
+      if (!sequence) {
+        return null;
+      }
+
+      if (phase.type === 'attacker-offer' || phase.type === 'table-select') {
+        return sequence.attacker;
+      }
+
+      return sequence.defender;
+    }
+
     function updateActiveSourceHighlight(phase) {
       const sourceAreas = [
         elements.attackerDeck?.closest('section'),
@@ -3062,9 +3540,16 @@
         elements.defenderActionArea,
         elements.mapGrid?.closest('section')
       ];
+      const decidingDecks = [
+        getDeckSectionForSide('A'),
+        getDeckSectionForSide('B')
+      ];
 
       for (const area of sourceAreas) {
         area?.classList.remove('active-source');
+      }
+      for (const deck of decidingDecks) {
+        deck?.classList.remove('deciding-side-a', 'deciding-side-b');
       }
 
       if (!phase) {
@@ -3076,6 +3561,15 @@
           area?.classList.add('active-source');
         }
       };
+      const markDecidingDeck = (side) => {
+        const deckSection = getDeckSectionForSide(side);
+        deckSection?.classList.add(side === 'A' ? 'deciding-side-a' : 'deciding-side-b');
+      };
+
+      const decidingSide = getDecidingSide(phase);
+      if (decidingSide) {
+        markDecidingDeck(decidingSide);
+      }
 
       if (phase.type === 'defender-reveal') {
         const sequence = getSequence(phase.sequence);
@@ -3144,7 +3638,7 @@
         const zone = createDropZone({
           id: 'Ban Mission',
           title: 'Drag a Mission Here',
-          copy: `${roleName(phase.side)} removes one mission from the round.`
+          copy: `${roleName(phase.side, phase)} removes one mission from the round.`
         });
         attachDropTarget(zone, (payload) => {
           if (payload.kind === 'mission') {
@@ -3469,11 +3963,20 @@
       }
     }
 
+    function renderExportControls() {
+      const recordCount = state.sessionRecords.length;
+      elements.sessionRecordCount.textContent = `${recordCount} Saved`;
+      elements.downloadSessionReport.disabled = recordCount === 0 || !window.XLSX;
+      elements.clearSessionRecords.disabled = recordCount === 0;
+      elements.exportStatus.textContent = state.exportFeedback;
+    }
+
     function renderAll() {
       renderSetup();
       renderLive();
       renderMatchups();
       renderHistory();
+      renderExportControls();
     }
 
     document.getElementById('random-a').addEventListener('click', () => randomFill('A'));
@@ -3484,6 +3987,11 @@
     document.getElementById('swap-sides-button').addEventListener('click', swapSides);
     document.getElementById('start-simulation').addEventListener('click', startSimulation);
     document.getElementById('restart-simulation').addEventListener('click', restartSimulation);
+    elements.downloadSessionReport.addEventListener('click', downloadSessionWorkbook);
+    elements.clearSessionRecords.addEventListener('click', () => {
+      clearSavedRounds('Saved round history cleared.');
+      renderExportControls();
+    });
     elements.toggleDeclassified.addEventListener('click', toggleDeclassifiedTeams);
     elements.addSearchA.addEventListener('click', () => addTeamFromSearch('A'));
     elements.addSearchB.addEventListener('click', () => addTeamFromSearch('B'));
@@ -3491,16 +3999,38 @@
       if (event.key === 'Enter') {
         event.preventDefault();
         addTeamFromSearch('A');
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.currentTarget.blur();
       }
     });
     elements.setupSearchB.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         addTeamFromSearch('B');
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.currentTarget.blur();
       }
     });
-    elements.setupSearchA.addEventListener('input', () => elements.setupSearchA.setCustomValidity(''));
-    elements.setupSearchB.addEventListener('input', () => elements.setupSearchB.setCustomValidity(''));
+    elements.setupSearchA.addEventListener('input', () => {
+      elements.setupSearchA.setCustomValidity('');
+      renderSetupSearchControls();
+    });
+    elements.setupSearchB.addEventListener('input', () => {
+      elements.setupSearchB.setCustomValidity('');
+      renderSetupSearchControls();
+    });
+    elements.setupSearchA.addEventListener('focus', renderSetupSearchControls);
+    elements.setupSearchB.addEventListener('focus', renderSetupSearchControls);
+    elements.setupSearchA.addEventListener('blur', () => window.requestAnimationFrame(renderSetupSearchControls));
+    elements.setupSearchB.addEventListener('blur', () => window.requestAnimationFrame(renderSetupSearchControls));
 
     renderAll();
   </script>
