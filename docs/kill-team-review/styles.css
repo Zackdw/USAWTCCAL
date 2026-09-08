@@ -1,0 +1,567 @@
+:root {
+  --bg: #d6dee1;
+  --panel: rgba(252, 248, 241, 0.76);
+  --panel-strong: rgba(251, 247, 240, 0.92);
+  --ink: #162026;
+  --muted: #51606a;
+  --line: rgba(22, 32, 38, 0.12);
+  --accent-red: #b24133;
+  --accent-gold: #f0b735;
+  --accent-lime: #53d42c;
+  --accent-spring: #42df30;
+  --accent-cyan: #37bac7;
+  --accent-blue: #3c6dcb;
+  --shadow: 0 18px 40px rgba(29, 38, 44, 0.15);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(178, 65, 51, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(55, 186, 199, 0.12), transparent 28%),
+    linear-gradient(180deg, #d5dde0 0%, #cfd9dc 100%);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.panel {
+  position: relative;
+  padding: 1.5rem 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  border-radius: 0;
+  isolation: isolate;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 50vw);
+  right: calc(50% - 50vw);
+  background: var(--panel);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  z-index: -1;
+}
+
+.hero {
+  padding: 1.25rem 0 2rem;
+}
+
+.eyebrow,
+.section-kicker,
+.modal-kicker,
+.legend-month {
+  margin: 0;
+  font-family: Bahnschrift, "Trebuchet MS", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow,
+.section-kicker,
+.modal-kicker,
+.legend-month {
+  color: var(--accent-red);
+  font-size: 0.82rem;
+}
+
+.hero h1,
+.section-heading h2,
+.document-card h3,
+.legend-card h3,
+.modal-header h3,
+.document-preview h1,
+.document-preview h2,
+.document-preview h3,
+.document-preview h4 {
+  font-family: Bahnschrift, "Trebuchet MS", sans-serif;
+}
+
+.hero h1 {
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+  margin: 0.45rem 0 1rem;
+  max-width: 12ch;
+  line-height: 0.95;
+}
+
+.lede,
+.section-heading p,
+.legend-card p,
+.document-card p,
+.document-preview p,
+.document-preview li {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.lede {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+}
+
+.hero-actions,
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hero-actions {
+  margin-top: 1.5rem;
+}
+
+.button {
+  appearance: none;
+  border: 1px solid rgba(22, 32, 38, 0.14);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.82rem 1.15rem;
+  font: 700 0.92rem/1 Bahnschrift, "Trebuchet MS", sans-serif;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(22, 32, 38, 0.28);
+}
+
+.button-primary {
+  background: linear-gradient(135deg, #aa3d2f 0%, #d0543f 100%);
+  color: #fff9f1;
+  border-color: transparent;
+}
+
+.button-muted,
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+main {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.panel {
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.section-heading {
+  margin-bottom: 1.5rem;
+}
+
+.section-heading h2 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.section-meta {
+  margin-top: 0.7rem;
+  font: 700 0.84rem/1.2 Bahnschrift, "Trebuchet MS", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(22, 32, 38, 0.68);
+}
+
+.section-meta time {
+  color: var(--ink);
+}
+
+.timeline-frame {
+  background: rgba(17, 25, 30, 0.03);
+  border-radius: calc(var(--radius-lg) - 8px);
+  border: 1px solid rgba(17, 25, 30, 0.08);
+  padding: 1.25rem;
+}
+
+.month-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(4rem, 1fr));
+  gap: 0;
+  margin-bottom: 0.9rem;
+  padding-inline: clamp(1rem, 3vw, 2rem);
+}
+
+.month-cell {
+  font: 700 0.95rem/1 Bahnschrift, "Trebuchet MS", sans-serif;
+  text-align: left;
+  padding-bottom: 0.35rem;
+}
+
+.timeline-board {
+  position: relative;
+  min-height: 31rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(17, 25, 30, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.month-stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(100% / 12);
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.month-stripe.is-alt {
+  background: rgba(17, 25, 30, 0.11);
+}
+
+.phase-bar {
+  position: absolute;
+  height: 1rem;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 8px 14px rgba(18, 24, 29, 0.12);
+  cursor: pointer;
+}
+
+.phase-bar span {
+  position: absolute;
+  left: 0.4rem;
+  top: 1.45rem;
+  width: max-content;
+  font: 700 0.82rem/1.1 Bahnschrift, "Trebuchet MS", sans-serif;
+  color: var(--ink);
+}
+
+.phase-ink {
+  background: #0d0d10;
+}
+
+.phase-lime {
+  background: var(--accent-lime);
+}
+
+.phase-spring {
+  background: var(--accent-spring);
+}
+
+.phase-cyan {
+  background: var(--accent-cyan);
+}
+
+.phase-blue {
+  background: var(--accent-blue);
+}
+
+.timeline-marker {
+  position: absolute;
+  top: 2.4rem;
+  width: 1rem;
+  height: 1rem;
+  margin-left: -0.5rem;
+  z-index: 3;
+}
+
+.marker-diamond {
+  background: #000;
+  transform: rotate(45deg);
+}
+
+.marker-gold-diamond {
+  background: var(--accent-gold);
+  transform: rotate(45deg);
+  z-index: 4;
+}
+
+.marker-gold-line {
+  top: 2.55rem;
+  height: 0.7rem;
+  margin-left: 0;
+  border-radius: 999px;
+  background: var(--accent-gold);
+  z-index: 2;
+}
+
+.marker-arrow::before,
+.marker-arrow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.marker-arrow::before {
+  width: 1.7rem;
+  height: 0.7rem;
+  top: 0.15rem;
+  background: var(--accent-gold);
+  border-radius: 999px 0 0 999px;
+}
+
+.marker-arrow::after {
+  width: 0.95rem;
+  height: 0.95rem;
+  left: 1.15rem;
+  top: 0.07rem;
+  background: var(--accent-gold);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.milestone-callout {
+  position: absolute;
+  top: 3.4rem;
+  width: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.milestone-callout-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: var(--label-offset);
+  background: rgba(22, 32, 38, 0.48);
+}
+
+.milestone-callout-label {
+  position: absolute;
+  top: calc(var(--label-offset) + 0.25rem);
+  max-width: 8.5rem;
+  font: 700 0.82rem/1.15 Bahnschrift, "Trebuchet MS", sans-serif;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.milestone-callout.align-left .milestone-callout-label {
+  left: 0;
+  text-align: left;
+}
+
+.milestone-callout.align-center .milestone-callout-label {
+  left: 0;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.milestone-callout.align-right .milestone-callout-label {
+  left: 0;
+  transform: translateX(-100%);
+  text-align: right;
+}
+
+.timeline-legend,
+.document-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.timeline-legend {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.legend-card,
+.document-card {
+  background: var(--panel-strong);
+  border: 1px solid rgba(22, 32, 38, 0.08);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.legend-card h3,
+.document-card h3 {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.legend-card p,
+.document-excerpt {
+  margin: 0;
+  color: var(--muted);
+}
+
+.document-grid {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.document-card h3 {
+  margin-top: 0.35rem;
+}
+
+.document-excerpt {
+  margin-top: 0.35rem;
+}
+
+.document-actions {
+  margin-top: 0.9rem;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 17, 20, 0.58);
+  backdrop-filter: blur(6px);
+}
+
+.modal-card {
+  position: relative;
+  width: min(980px, calc(100% - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: 1rem auto;
+  border-radius: var(--radius-lg);
+  background: #f8f4ed;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(22, 32, 38, 0.08);
+}
+
+.modal-header h3 {
+  margin: 0.35rem 0 0;
+  font-size: 1.45rem;
+}
+
+.modal-close {
+  appearance: none;
+  border: 0;
+  background: rgba(22, 32, 38, 0.08);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.7rem 0.95rem;
+  font: 700 0.84rem/1 Bahnschrift, "Trebuchet MS", sans-serif;
+  cursor: pointer;
+}
+
+.modal-body {
+  max-height: calc(100vh - 8rem);
+  overflow: auto;
+  padding: 1.25rem;
+}
+
+.document-preview {
+  color: #1f2a30;
+}
+
+.document-preview > :first-child {
+  margin-top: 0;
+}
+
+.document-preview code {
+  font-family: "Cascadia Code", Consolas, monospace;
+  background: rgba(22, 32, 38, 0.08);
+  padding: 0.12rem 0.32rem;
+  border-radius: 0.35rem;
+}
+
+.document-preview pre {
+  overflow: auto;
+  background: #1b2329;
+  color: #ecf0f1;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+}
+
+.document-preview ul,
+.document-preview ol {
+  padding-left: 1.35rem;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    width: min(100%, calc(100% - 1rem));
+    padding-top: 0.5rem;
+  }
+
+  .panel {
+    padding: 1.1rem 0;
+  }
+
+  .timeline-frame {
+    overflow-x: auto;
+  }
+
+  .month-row,
+  .timeline-board {
+    min-width: 860px;
+  }
+
+  .timeline-board {
+    min-height: 31rem;
+  }
+
+  .modal-card {
+    width: calc(100% - 1rem);
+    margin: 0.5rem auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    max-width: none;
+  }
+
+  .month-cell {
+    font-size: 0.82rem;
+  }
+}
