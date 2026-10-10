@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apply | WTC USA Regional Founders</title>
+  <meta name="description" content="Apply to found a regional team, start a provisional group, or join as an affiliate with WTC USA Kill Team.">
+
+  <link rel="stylesheet" href="./founders.css">
+</head>
+<body>
+  <nav class="site-nav" aria-label="Primary">
+    <div class="shell">
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">USA</span>WTC USA Kill Team</a>
+      <div class="nav-links">
+        <a href="./">Regional Founders</a>
+        <a class="nav-hide-sm" href="../kill-team-review/">Review hub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="shell">
+    <header class="apply-header">
+      <p class="eyebrow">Regional Founders application</p>
+      <h1>Put your region on the map</h1>
+      <p class="lede">Tell us about your scene, draw where you play, and share your doctrine. Answers save on this device as you go.</p>
+    </header>
+
+    <div class="apply-layout">
+      <ol class="stepper" id="stepper" aria-label="Application steps"></ol>
+      <main>
+        <form class="form-card" id="application-form" novalidate>
+          <div id="step-content" aria-live="polite"></div>
+          <div class="form-nav" id="form-nav">
+            <button class="button" type="button" id="back-button">Back</button>
+            <span class="save-note" id="save-note"></span>
+            <button class="button button-primary" type="submit" id="next-button">Continue</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="shell">
+      <span>WTC USA Kill Team &middot; Regional Foundings draft, year one</span>
+      <a href="./">Back to Regional Founders</a>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+  <script src="./founders-config.js"></script>
+  <script src="./application-questions.js"></script>
+  <script src="./region-map.js"></script>
+  <script src="./apply.js"></script>
+</body>
+</html>
