@@ -85,14 +85,17 @@
       afterBar.style.width = `calc(${100 - end}% - 0.35rem)`;
     }
 
-    const now = new Date();
-    if (now >= seasonStart && now < seasonEnd) {
-      const marker = document.createElement('div');
-      marker.className = 'calendar-today';
+    const marker = document.createElement('div');
+    marker.className = 'calendar-today';
+    track.appendChild(marker);
+
+    // Returned so the marker can be repositioned as the date changes.
+    return function updateToday() {
+      const now = new Date();
+      marker.hidden = now < seasonStart || now >= seasonEnd;
       marker.style.left = `${percent(now)}%`;
       marker.title = `Today, ${formatDate(now)}`;
-      track.appendChild(marker);
-    }
+    };
   }
 
   // ---------- paths ----------
@@ -186,8 +189,20 @@
       });
   }
 
-  renderWindowStatus();
-  renderCalendar();
+  const updateToday = renderCalendar();
+
+  // Keep the today marker and countdown current if the page stays open across days.
+  function refreshDates() {
+    renderWindowStatus();
+    updateToday();
+  }
+
+  refreshDates();
+  setInterval(refreshDates, 60 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshDates();
+  });
+
   renderPaths();
   renderMap();
 })();
