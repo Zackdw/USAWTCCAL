@@ -1,7 +1,9 @@
+// Shared by the founders landing page (map, paths) and the founding page (calendar).
+// Each section renders only when its elements are on the page.
 (function () {
   const config = window.foundersConfig ?? {};
   const application = window.foundersApplication ?? { paths: [] };
-  const { PATH_STYLES } = window.RegionMap;
+  const PATH_STYLES = window.RegionMap?.PATH_STYLES ?? {};
   const DRAFT_KEY = 'wtc-founders-application-draft';
   const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -36,6 +38,7 @@
   function renderWindowStatus() {
     const status = document.getElementById('window-status');
     const text = document.getElementById('window-status-text');
+    if (!status) return;
     const { opens, closes } = config.foundingWindow ?? {};
     if (!opens || !closes) {
       status.hidden = true;
@@ -63,6 +66,7 @@
     const track = document.getElementById('calendar-track');
     const windowBar = document.getElementById('calendar-window');
     const afterBar = document.getElementById('calendar-after');
+    if (!track) return () => {};
     const seasonStart = parseLocalDate(config.seasonStart ?? '2026-09-01');
     const seasonEnd = new Date(seasonStart.getFullYear(), seasonStart.getMonth() + 12, 1);
     const span = seasonEnd - seasonStart;
@@ -171,12 +175,17 @@
     const usMap = window.RegionMap.createUsMap(element);
     usMap.ready
       .then(() => {
-        published.forEach((feature) => {
+        const showRegions = (features) => features.forEach((feature) => {
           addRegion(feature.geometry, {
             color: PATH_STYLES[feature.properties?.path]?.color ?? '#b24133',
             html: regionTooltip(feature.properties ?? {}),
           });
         });
+        showRegions(published);
+        // Approved regions come from the database; the map still works if that request fails.
+        if (window.FoundersStore?.isConfigured()) {
+          window.FoundersStore.loadRegions().then(showRegions).catch(() => {});
+        }
         if (draftGeometry) {
           addRegion(draftGeometry, {
             className: 'is-draft',
@@ -203,6 +212,6 @@
     if (!document.hidden) refreshDates();
   });
 
-  renderPaths();
-  renderMap();
+  if (document.getElementById('path-grid')) renderPaths();
+  if (document.getElementById('landing-map')) renderMap();
 })();

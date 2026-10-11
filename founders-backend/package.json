@@ -1,0 +1,17 @@
+{
+  "name": "founders-backend",
+  "private": true,
+  "type": "module",
+  "description": "Organizer tools for Regional Founder applications.",
+  "scripts": {
+    "pull": "node pull-applications.mjs",
+    "approve": "node review-application.mjs approve",
+    "decline": "node review-application.mjs decline",
+    "unpublish": "node review-application.mjs unpublish",
+    "delete": "node review-application.mjs delete",
+    "deploy-rules": "firebase deploy --only firestore:rules"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

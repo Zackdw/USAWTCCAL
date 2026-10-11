@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Applications submitted from the public site. Anyone may add one; nobody may read,
+    // change, or delete one from the web. Organizers read them with the admin tools.
+    match /founderApplications/{applicationId} {
+      allow create: if isValidApplication(applicationId);
+      allow read, update, delete: if false;
+    }
+
+    // Approved regions shown on the public map. Written only by the admin tools.
+    match /founderRegions/{regionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    function isValidApplication(applicationId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'applicationId', 'schemaVersion', 'status', 'path', 'regionName', 'homeBase',
+          'states', 'areaSqMi', 'replaces', 'createdAt', 'payload'
+        ])
+        && data.keys().hasAll([
+          'applicationId', 'schemaVersion', 'status', 'path', 'regionName', 'createdAt', 'payload'
+        ])
+        && applicationId.matches('^WTCF-[0-9]{8}-[A-Z0-9]{6}$')
+        && data.applicationId == applicationId
+        && data.schemaVersion is int
+        && data.status == 'pending'
+        && data.path in ['regional', 'provisional', 'affiliate']
+        && data.regionName is string && data.regionName.size() > 0 && data.regionName.size() <= 120
+        && data.createdAt == request.time
+        // The full application as JSON text. Map shapes are nested arrays, which Firestore
+        // cannot store as native fields.
+        && data.payload is string && data.payload.size() > 0 && data.payload.size() <= 200000
+        && (!('homeBase' in data) || (data.homeBase is string && data.homeBase.size() <= 120))
+        && (!('states' in data) || (data.states is list && data.states.size() <= 60))
+        && (!('areaSqMi' in data) || data.areaSqMi is number)
+        && (!('replaces' in data) || (data.replaces is string && data.replaces.size() <= 40));
+    }
+  }
+}

@@ -2,6 +2,7 @@
   const config = window.foundersConfig ?? {};
   const questions = window.foundersApplication;
   const RegionMap = window.RegionMap;
+  const store = window.FoundersStore;
   const DRAFT_KEY = 'wtc-founders-application-draft';
   const SCHEMA_VERSION = 1;
 
@@ -34,7 +35,7 @@
   // ---------- persistence ----------
 
   function freshState() {
-    return { answers: {}, stepIndex: 0, maxVisited: 0, status: 'draft', submission: null };
+    return { answers: {}, stepIndex: 0, maxVisited: 0, status: 'draft', submission: null, deliveredId: null, submitFailed: false };
   }
 
   function loadState() {
@@ -120,7 +121,8 @@
   function generateId() {
     const date = new Date();
     const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-    const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const random = Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => alphabet[n % alphabet.length]).join('');
     return `WTCF-${stamp}-${random}`;
   }
 
@@ -747,6 +749,15 @@
       <h2>Review &amp; submit</h2>
       <p class="step-intro">Check your answers before you send them. Organizers review each application against the founding standard and follow up on Discord or email.</p>
       ${sections}
+      <div class="privacy-notice">
+        <h3>What happens to your answers</h3>
+        <ul>
+          <li>Your application is sent to the USA Killteam organizers and stored privately. Only organizers can read it.</li>
+          <li>If your group is approved, your region's shape, name, path, home base city, and the states it touches appear on the public map.</li>
+          <li>Emails, Discord handles, the people you listed, and your written answers are never published.</li>
+          <li>By submitting, you confirm the people you listed know you are sharing their details with the organizers.</li>
+        </ul>
+      </div>
     `;
   }
 
@@ -780,7 +791,7 @@
     });
     if (answers.members) answers.members = filledPeople(answers.members);
 
-    const id = state.submission?.id ?? generateId();
+    const id = generateId();
     const centroid = geometry ? RegionMap.centroidOf(geometry) : null;
 
     return {
@@ -820,43 +831,40 @@
 
   async function submitApplication() {
     const submission = buildSubmission();
-    const endpoint = config.submission?.endpoint;
-    nextButton.disabled = true;
-    nextButton.textContent = 'Submitting…';
+    state.submission = submission;
 
-    let delivered = false;
-    let errorMessage = '';
-    if (endpoint) {
-      try {
-        // text/plain avoids a CORS preflight, which keeps simple endpoints like Apps Script working.
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(submission),
-        });
-        if (!response.ok) throw new Error(`Server responded ${response.status}`);
-        delivered = true;
-      } catch (error) {
-        errorMessage = error.message;
-      }
-    }
-
-    nextButton.disabled = false;
-    if (endpoint && !delivered) {
-      state.submission = submission;
+    if (!store.isConfigured()) {
+      state.status = 'saved';
       saveState({ immediate: true });
-      renderStep();
-      const notice = document.createElement('div');
-      notice.className = 'notice is-error';
-      notice.setAttribute('role', 'alert');
-      notice.innerHTML = `We could not reach the application server (${escapeHtml(errorMessage)}). Your answers are still saved. Try again, or <button type="button" class="link-button" data-download>download your application</button> and send it to the organizers.`;
-      content.appendChild(notice);
-      notice.querySelector('[data-download]').addEventListener('click', () => downloadSubmission(submission));
+      renderConfirmation();
       return;
     }
 
-    state.status = delivered ? 'submitted' : 'saved';
-    state.submission = submission;
+    nextButton.disabled = true;
+    nextButton.textContent = 'Submitting…';
+    try {
+      // An edited application is stored as a new record that points at the one it replaces.
+      await store.submitApplication(submission, { replaces: state.deliveredId });
+    } catch (error) {
+      nextButton.disabled = false;
+      state.submitFailed = true;
+      saveState({ immediate: true });
+      renderStep({ keepScroll: true });
+      const notice = document.createElement('div');
+      notice.className = 'notice is-error';
+      notice.setAttribute('role', 'alert');
+      notice.innerHTML = 'We could not send your application. Your answers are still saved on this device. Check your connection and try again, or <button type="button" class="link-button" data-download>download your application</button> and send it to the organizers.';
+      content.appendChild(notice);
+      notice.querySelector('[data-download]').addEventListener('click', () => downloadSubmission(submission));
+      notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      console.error('Application submission failed', error);
+      return;
+    }
+
+    nextButton.disabled = false;
+    state.status = 'submitted';
+    state.deliveredId = submission.id;
+    state.submitFailed = false;
     saveState({ immediate: true });
     renderConfirmation();
   }
@@ -876,9 +884,9 @@
           ? `Thanks for stepping up for ${escapeHtml(name)}. Organizers will review your application against the founding standard and reach out on Discord or email.`
           : `Online submission is not open yet, so your application for ${escapeHtml(name)} is saved on this device. Download it and send it to the organizers.`}</p>
         <div class="app-id">${escapeHtml(submission?.id ?? '')}</div>
-        ${delivered ? '' : `<div class="notice">${escapeHtml(config.submission?.contactNote ?? 'Send the downloaded file to the WTC USA Kill Team organizers.')}</div>`}
+        ${delivered ? '' : `<div class="notice">${escapeHtml(config.submission?.contactNote ?? 'Send the downloaded file to the USA Killteam organizers.')}</div>`}
         <div class="confirmation-actions">
-          <button type="button" class="button ${delivered ? '' : 'button-primary'}" data-action="download">Download application</button>
+          <button type="button" class="button ${delivered ? '' : 'button-primary'}" data-action="download">${delivered ? 'Download a copy' : 'Download application'}</button>
           <button type="button" class="button" data-action="copy">Copy as text</button>
           <a class="button" href="./">Back to Regional Founders</a>
         </div>
@@ -941,7 +949,7 @@
     if (step === REVIEW_STEP) {
       content.innerHTML = renderReview();
       mountReviewMap();
-      nextButton.textContent = state.submission && config.submission?.endpoint ? 'Try again' : 'Submit application';
+      nextButton.textContent = state.submitFailed ? 'Try again' : 'Submit application';
     } else {
       content.innerHTML = `
         <p class="section-kicker">Step ${state.stepIndex + 1} of ${steps.length}</p>

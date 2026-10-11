@@ -541,6 +541,17 @@ h4 {
   align-self: flex-start;
 }
 
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+
+.page-header {
+  padding-bottom: var(--space-12);
+}
+
 .two-col {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1285,6 +1296,27 @@ h4 {
 
 .review-people li + li {
   margin-top: 0.25rem;
+}
+
+.privacy-notice {
+  margin-top: var(--space-8);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: rgba(29, 47, 74, 0.06);
+}
+
+.privacy-notice h3 {
+  margin: 0 0 var(--space-3);
+  font-size: 1.125rem;
+}
+
+.privacy-notice ul {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .review-empty {

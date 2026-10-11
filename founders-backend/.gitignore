@@ -1,0 +1,6 @@
+# This repository is public. Applications contain personal details and must never be committed.
+applications/
+service-account.json
+node_modules/
+.firebase/
+*.log
