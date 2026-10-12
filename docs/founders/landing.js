@@ -163,7 +163,7 @@
     }
 
     function addRegion(geometry, { color, className, html }) {
-      usMap.regionsLayer.append('path')
+      return usMap.regionsLayer.append('path')
         .attr('class', className ?? null)
         .attr('d', usMap.regionPath(geometry))
         .attr('fill', color ?? null)
@@ -172,15 +172,47 @@
         .on('pointerleave', hideTooltip);
     }
 
+    const pathOrder = Object.keys(PATH_STYLES);
+    const pathRank = (feature) => {
+      const rank = pathOrder.indexOf(feature.properties?.path);
+      return rank === -1 ? pathOrder.length : rank;
+    };
+
+    // One card per approved region under the map. Hovering a card or its shape highlights both.
+    function addRegionCard(properties, color, shape) {
+      const list = document.getElementById('region-list');
+      const card = document.createElement('article');
+      card.className = 'region-card';
+      card.style.setProperty('--path-color', color);
+      const meta = [PATH_STYLES[properties.path]?.label, properties.homeBase].filter(Boolean).map(escapeHtml).join(' &middot; ');
+      card.innerHTML = `
+        <h3>${escapeHtml(properties.name ?? 'Unnamed region')}</h3>
+        <p>${meta}</p>
+        <div class="state-chips">${(properties.states ?? []).map((abbr) => `<span class="chip">${escapeHtml(abbr)}</span>`).join('')}</div>
+      `;
+      const setActive = (active) => {
+        card.classList.toggle('is-active', active);
+        shape.classed('is-active', active);
+      };
+      card.addEventListener('pointerenter', () => setActive(true));
+      card.addEventListener('pointerleave', () => setActive(false));
+      shape.on('pointerenter.card', () => setActive(true)).on('pointerleave.card', () => setActive(false));
+      list.appendChild(card);
+      list.hidden = false;
+    }
+
     const usMap = window.RegionMap.createUsMap(element);
     usMap.ready
       .then(() => {
-        const showRegions = (features) => features.forEach((feature) => {
-          addRegion(feature.geometry, {
-            color: PATH_STYLES[feature.properties?.path]?.color ?? '#b24133',
-            html: regionTooltip(feature.properties ?? {}),
+        const showRegions = (features) => features
+          .slice()
+          .sort((a, b) => pathRank(a) - pathRank(b) || String(a.properties?.name).localeCompare(String(b.properties?.name)))
+          .forEach((feature) => {
+            const properties = feature.properties ?? {};
+            const color = PATH_STYLES[properties.path]?.color ?? '#b24133';
+            const shape = addRegion(feature.geometry, { color, html: regionTooltip(properties) });
+            addRegionCard(properties, color, shape);
           });
-        });
         showRegions(published);
         // Approved regions come from the database; the map still works if that request fails.
         if (window.FoundersStore?.isConfigured()) {

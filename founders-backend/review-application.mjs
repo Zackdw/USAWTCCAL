@@ -34,16 +34,16 @@ if (action === 'approve') {
   }
   await regionRef.set({
     applicationId,
-    name: properties.name,
+    name: String(properties.name ?? '').trim(),
     path: properties.path,
-    homeBase: properties.homeBase ?? '',
+    homeBase: String(properties.homeBase ?? '').trim(),
     states: properties.states ?? [],
     // Stored as JSON text: map shapes are nested arrays, which Firestore cannot hold natively.
     geometry: JSON.stringify(geometry),
     approvedAt: FieldValue.serverTimestamp(),
   });
   await applicationRef.update({ status: 'approved', reviewedAt: FieldValue.serverTimestamp() });
-  console.log(`Approved ${applicationId}. "${properties.name}" is now on the public map.`);
+  console.log(`Approved ${applicationId}. "${String(properties.name ?? '').trim()}" is now on the public map.`);
 } else if (action === 'decline') {
   await regionRef.delete();
   await applicationRef.update({ status: 'declined', reviewedAt: FieldValue.serverTimestamp() });

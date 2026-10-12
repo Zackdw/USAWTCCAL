@@ -315,7 +315,8 @@ h4 {
   cursor: default;
 }
 
-.map-regions path:hover {
+.map-regions path:hover,
+.map-regions path.is-active {
   fill-opacity: 0.5;
 }
 
@@ -358,6 +359,45 @@ h4 {
   border-radius: 3px;
   margin-right: 0.35rem;
   vertical-align: -0.1rem;
+}
+
+.region-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+.region-card {
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--panel-strong);
+  border: 2px solid transparent;
+  transition: border-color 160ms ease;
+}
+
+.region-card.is-active {
+  border-color: var(--path-color);
+}
+
+.region-card h3 {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.region-card p {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.region-card .chip {
+  background: rgba(22, 32, 38, 0.07);
+  color: var(--ink);
 }
 
 .hero-copy {
@@ -491,7 +531,8 @@ h4 {
 }
 
 .path-card h3::before,
-.path-option h3::before {
+.path-option h3::before,
+.region-card h3::before {
   content: "";
   flex: none;
   width: 0.75rem;

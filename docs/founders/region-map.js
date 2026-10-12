@@ -188,6 +188,7 @@
 
   let topologyPromise = null;
   let statesPromise = null;
+  let mapCount = 0;
 
   function loadTopology() {
     if (!topologyPromise) {
@@ -250,7 +251,11 @@
     const root = svg.append('g');
     const statesLayer = root.append('g').attr('class', 'map-states');
     const borders = root.append('path').attr('class', 'map-borders');
-    const regionsLayer = root.append('g').attr('class', 'map-regions');
+    // Published regions are clipped to the US outline so they do not spill into the ocean or
+    // across the border. The drawing layer is left unclipped.
+    const landClipId = `us-land-${mapCount += 1}`;
+    const landClip = svg.append('defs').append('clipPath').attr('id', landClipId).append('path');
+    const regionsLayer = root.append('g').attr('class', 'map-regions').attr('clip-path', `url(#${landClipId})`);
     const drawLayer = root.append('g').attr('class', 'map-draw');
     const projection = d3.geoAlbersUsa();
     const path = d3.geoPath(projection);
@@ -281,6 +286,7 @@
         .sort((a, b) => a.properties.name.localeCompare(b.properties.name));
       statesLayer.selectAll('path').data(stateFeatures).join('path').attr('d', path);
       borders.attr('d', path(topojson.mesh(topology, topology.objects.states, (a, b) => a !== b)));
+      landClip.attr('d', path(topojson.merge(topology, topology.objects.states.geometries)));
       return stateFeatures;
     });
 
