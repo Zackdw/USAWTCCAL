@@ -259,10 +259,10 @@
       const actions = document.createElement('div');
       actions.className = 'document-actions';
       actions.appendChild(
-        buildButton('Review draft', 'button button-primary', () => {
+        buildButton('Read document', 'button button-primary', () => {
           openModal({
             title: doc.title,
-            kicker: 'Markdown draft',
+            kicker: 'Document',
             html: `<div class="document-preview">${renderMarkdown(doc.markdown)}</div>`,
           });
         }),
