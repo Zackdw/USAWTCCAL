@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pairing Stream Redesign</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@800;900&display=swap">
+<style>
+  /* Layout: regional-site proposal page; a scaled 1920x1080 broadcast canvas is the centerpiece.
+     Single light theme on purpose: it mirrors docs/founders, which has no dark mode. */
+  :root {
+    color-scheme: light;
+    --bg: #d6dee1;
+    --panel: rgba(252, 248, 241, 0.76);
+    --panel-strong: #fbf7f0;
+    --ink: #162026;
+    --muted: #51606a;
+    --line: rgba(22, 32, 38, 0.12);
+    --flag-blue: #0a3161;
+    --flag-red: #b31942;
+    --accent-red: #b24133;
+    --accent-red-bright: #d0543f;
+    --accent-gold: #f0b735;
+    --accent-blue: #3c6dcb;
+    --success: #2f8a4a;
+    --old-orange: #ff6118;
+    --old-black: #0e0e11;
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --headline: "Nunito", "Arial Rounded MT Bold", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 400 1rem/1.55 var(--body);
+    background:
+      radial-gradient(circle at top left, rgba(178, 65, 51, 0.14), transparent 26%),
+      radial-gradient(circle at top right, rgba(60, 109, 203, 0.12), transparent 30%),
+      linear-gradient(180deg, #d5dde0 0%, #cfd9dc 100%);
+    background-color: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .site-nav {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: rgba(214, 222, 225, 0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px); z-index: 21; background: #d6dee1;
+  }
+  .site-nav .shell {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; min-height: 3.75rem; flex-wrap: wrap;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 0.6rem;
+    font: 900 1rem/1 var(--headline); letter-spacing: 0.02em; text-transform: uppercase;
+    text-decoration: none; color: var(--ink);
+  }
+  .brand-mark {
+    display: inline-flex; align-items: flex-start; justify-content: center;
+    width: 2.5rem; height: 1.8rem; padding-top: 0.22rem; border-radius: 5px; overflow: hidden;
+    background:
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 0.15rem, #fff 0.15rem 0.3rem);
+    box-shadow: inset 0 0 0 1px rgba(22, 32, 38, 0.18);
+    color: #fff; font-size: 0.66rem; letter-spacing: 0.06em;
+  }
+  .nav-links { display: flex; gap: 1.1rem; flex-wrap: wrap; font: 500 0.9375rem/1 var(--body); }
+  .nav-links a { color: var(--muted); text-decoration: none; }
+  .nav-links a:hover { color: var(--ink); }
+
+  .eyebrow {
+    margin: 0; font: 700 0.8125rem/1.2 var(--body);
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-red);
+  }
+  h1, h2, h3 { font-family: var(--headline); text-wrap: balance; margin: 0; }
+  h1, h2 { font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
+  h3 { font-weight: 800; }
+  h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.02; }
+  h1 em { font-style: normal; color: var(--accent-red); }
+  h2 { font-size: clamp(1.7rem, 3.6vw, 2.4rem); line-height: 1.08; }
+  .lede { font-size: 1.2rem; line-height: 1.45; color: var(--muted); max-width: 58ch; margin: 0; }
+  p { margin: 0; }
+  code { font: 500 0.88em/1 ui-monospace, "SF Mono", Menlo, monospace; background: rgba(22,32,38,0.07); padding: 0.12em 0.35em; border-radius: 5px; }
+
+  .hero { padding-block: 3.5rem 2.5rem; display: grid; gap: 1.1rem; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem;
+    border-radius: 104px; background: rgba(22, 32, 38, 0.07);
+    font: 600 0.82rem/1.2 var(--body); color: var(--ink);
+  }
+  .chip i { width: 0.6rem; height: 0.6rem; border-radius: 3px; display: inline-block; }
+
+  section.band { padding-block: 3rem; display: grid; gap: 1.5rem; }
+  .section-heading { display: grid; gap: 0.6rem; max-width: 62ch; }
+  .section-heading p:not(.eyebrow) { color: var(--muted); font-size: 1.05rem; }
+
+  .panel {
+    background: var(--panel-strong); border-radius: var(--radius-lg);
+    padding: clamp(1.1rem, 3vw, 2rem); box-shadow: 0 18px 40px rgba(29, 38, 44, 0.08);
+  }
+
+  /* ---------- findings ---------- */
+  .findings { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .shot { margin: 0; display: grid; gap: 0.5rem; }
+  .shot img { display: block; width: 100%; border-radius: var(--radius-md); box-shadow: 0 10px 28px rgba(22,32,38,0.18); }
+  .shot figcaption { font-size: 0.85rem; color: var(--muted); }
+  .shot-stack { display: grid; gap: 1.25rem; }
+  .issue-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+  .issue { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 0.8rem; padding: 1rem; border-radius: var(--radius-md); background: var(--panel-strong); }
+  .issue-n { width: 2.2rem; height: 2.2rem; border-radius: 10px; display: grid; place-items: center; background: var(--accent-red); color: #fff; font: 900 1rem/1 var(--headline); }
+  .issue h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+  .issue p { color: var(--muted); font-size: 0.94rem; }
+
+  .px-scale { display: grid; gap: 0.45rem; margin-top: 0.4rem; }
+  .px-row { display: grid; grid-template-columns: 8.5rem 4rem minmax(0, 1fr); gap: 0.6rem; align-items: center; font-size: 0.85rem; }
+  .px-row span:first-child { color: var(--muted); }
+  .px-row b { font-variant-numeric: tabular-nums; }
+  .px-bar { height: 0.5rem; border-radius: 4px; background: var(--accent-red); }
+
+  /* ---------- stream mockup ---------- */
+  .stage-tools { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+  .seg { display: inline-flex; padding: 0.25rem; border-radius: 14px; background: rgba(22,32,38,0.08); gap: 0.25rem; }
+  .seg button, .btn {
+    appearance: none; border: 1px solid transparent; background: transparent; color: var(--ink);
+    font: 600 0.9rem/1 var(--body); padding: 0.6rem 0.9rem; border-radius: 10px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 3px rgba(22,32,38,0.15); }
+  .btn { border-color: var(--ink); background: #fff; border-radius: var(--radius-sm); }
+  .btn-primary { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
+  .btn-primary:hover { background: var(--accent-red-bright); border-color: var(--accent-red-bright); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .stepper { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .stepper-label { font: 600 0.9rem/1.2 var(--body); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 6.5rem; }
+  :focus-visible { outline: 3px solid rgba(60, 109, 203, 0.55); outline-offset: 2px; }
+
+  .canvas-scroll { overflow-x: auto; border-radius: var(--radius-md); }
+  .canvas-wrap { container-type: inline-size; min-width: 720px; }
+  .tv {
+    --u: calc(100cqw / 1920);
+    --tv-bg: linear-gradient(180deg, #d5dde0 0%, #cfd9dc 100%);
+    --tv-ink: #162026;
+    --tv-muted: #51606a;
+    --tv-card: #fbf7f0;
+    --tv-card-line: rgba(22, 32, 38, 0.1);
+    --tv-slot: rgba(22, 32, 38, 0.06);
+    --a: #0a3161;
+    --a-soft: rgba(60, 109, 203, 0.16);
+    --b: #b31942;
+    --b-soft: rgba(179, 25, 66, 0.12);
+    --gold: #f0b735;
+    position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+    background: var(--tv-bg); color: var(--tv-ink);
+    font-family: var(--body);
+    padding: calc(var(--u) * 48);
+    display: grid;
+    grid-template-columns: calc(var(--u) * 380) minmax(0, 1fr) calc(var(--u) * 380);
+    grid-template-rows: calc(var(--u) * 132) minmax(0, 1fr) calc(var(--u) * 112);
+    gap: calc(var(--u) * 24);
+    box-shadow: 0 24px 60px rgba(22, 32, 38, 0.25);
+  }
+  .tv.broadcast {
+    --tv-bg: radial-gradient(circle at 15% 0%, rgba(60,109,203,0.28), transparent 40%), radial-gradient(circle at 90% 10%, rgba(179,25,66,0.22), transparent 38%), linear-gradient(180deg, #0f203a 0%, #0a1628 100%);
+    --tv-ink: #fbf7f0;
+    --tv-muted: #b9c3cf;
+    --tv-card: #fbf7f0;
+    --tv-card-line: rgba(255, 255, 255, 0.12);
+    --tv-slot: rgba(255, 255, 255, 0.07);
+  }
+  .tv.transparent {
+    --tv-bg: repeating-conic-gradient(#c9cfd2 0 25%, #e4e8ea 0 50%) 0 0 / calc(var(--u) * 48) calc(var(--u) * 48);
+  }
+  .safe {
+    position: absolute; inset: calc(var(--u) * 48); pointer-events: none;
+    border: calc(var(--u) * 2) dashed rgba(178, 65, 51, 0.6); border-radius: calc(var(--u) * 8);
+  }
+  .safe span {
+    position: absolute; top: calc(var(--u) * -30); right: 0;
+    font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-red);
+  }
+
+  .tv-top { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: calc(var(--u) * 36); align-items: center; }
+  .tv-brand { display: flex; align-items: center; gap: calc(var(--u) * 16); font: 900 calc(var(--u) * 26)/1.05 var(--headline); text-transform: uppercase; letter-spacing: 0.02em; }
+  .tv-brand .brand-mark { width: calc(var(--u) * 78); height: calc(var(--u) * 54); padding-top: calc(var(--u) * 7); font-size: calc(var(--u) * 20); border-radius: calc(var(--u) * 8);
+    background:
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 calc(var(--u) * 4.5), #fff calc(var(--u) * 4.5) calc(var(--u) * 9));
+  }
+  .tv-brand small { display: block; font: 700 calc(var(--u) * 18)/1.3 var(--body); letter-spacing: 0.08em; color: var(--tv-muted); }
+  .tv-step { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 24); padding: calc(var(--u) * 18) calc(var(--u) * 30); display: grid; gap: calc(var(--u) * 4); border-left: calc(var(--u) * 12) solid var(--step-color, var(--accent-red)); transition: border-color 300ms ease; }
+  .tv-step .k { font: 700 calc(var(--u) * 18)/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--step-color, var(--accent-red)); }
+  .tv-step .t { font: 900 calc(var(--u) * 44)/1.02 var(--headline); text-transform: uppercase; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tv-score { text-align: right; display: grid; gap: calc(var(--u) * 6); }
+  .tv-score b { font: 900 calc(var(--u) * 52)/1 var(--headline); font-variant-numeric: tabular-nums; }
+  .tv-score span { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
+
+  .tv-col { grid-row: 2 / 3; display: grid; grid-template-rows: auto repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 12); transition: opacity 300ms ease; }
+  .tv-col.idle { opacity: 0.55; }
+  .tv-col-head { border-radius: calc(var(--u) * 18); padding: calc(var(--u) * 16) calc(var(--u) * 22); color: #fff; display: grid; gap: calc(var(--u) * 6); }
+  .tv-col.a .tv-col-head { background: var(--a); }
+  .tv-col.b .tv-col-head { background: var(--b); }
+  .tv-col.acting .tv-col-head { box-shadow: 0 0 0 calc(var(--u) * 5) var(--gold), 0 0 calc(var(--u) * 40) rgba(240, 183, 53, 0.5); }
+  .tv-col-head .n { font: 900 calc(var(--u) * 36)/1 var(--headline); text-transform: uppercase; }
+  .tv-col-head .r { display: flex; justify-content: space-between; align-items: center; font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
+  .role { padding: calc(var(--u) * 5) calc(var(--u) * 12); border-radius: 999px; background: rgba(255,255,255,0.2); }
+
+  .rc { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 16); padding: 0 calc(var(--u) * 20); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 10); font: 800 calc(var(--u) * 28)/1.05 var(--headline); border: calc(var(--u) * 3) solid transparent; transition: opacity 300ms ease, border-color 300ms ease, transform 300ms ease; }
+  .rc .tag { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; padding: calc(var(--u) * 6) calc(var(--u) * 10); border-radius: calc(var(--u) * 8); white-space: nowrap; }
+  .tv-col.a .rc.hot { border-color: var(--a); transform: translateX(calc(var(--u) * 10)); }
+  .tv-col.b .rc.hot { border-color: var(--b); transform: translateX(calc(var(--u) * -10)); }
+  .tv-col.a .rc .tag { background: var(--a-soft); color: var(--a); }
+  .tv-col.b .rc .tag { background: var(--b-soft); color: var(--b); }
+  .rc.used { opacity: 0.38; }
+  .rc.used .tag { background: rgba(47,138,74,0.14) !important; color: var(--success) !important; }
+
+  .tv-mid { grid-row: 2 / 3; display: grid; grid-template-rows: minmax(0, 1fr) calc(var(--u) * 360); gap: calc(var(--u) * 24); min-width: 0; }
+  .tv-action { min-width: 0; overflow: hidden; border-radius: calc(var(--u) * 24); background: var(--tv-slot); display: grid; place-items: center; padding: calc(var(--u) * 24); }
+  .act { display: flex; gap: calc(var(--u) * 28); align-items: center; justify-content: center; }
+  .act-note { font: 700 calc(var(--u) * 22)/1.3 var(--body); color: var(--tv-muted); text-align: center; max-width: calc(var(--u) * 640); }
+  .big { width: calc(var(--u) * 256); min-height: calc(var(--u) * 170); border-radius: calc(var(--u) * 20); background: var(--tv-card); color: #162026; display: grid; align-content: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 22); border-top: calc(var(--u) * 12) solid var(--c, var(--gold)); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); animation: deal 380ms ease both; }
+  .big .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, #8a6410); }
+  .big .t { font: 900 calc(var(--u) * 30)/1.05 var(--headline); }
+  .big.a { --c: var(--a); }
+  .big.b { --c: var(--b); }
+  .big.m { --c: #b5850f; }
+  .big.ghost { opacity: 0.4; border-top-style: dashed; }
+  .vs { font: 900 calc(var(--u) * 40)/1 var(--headline); color: var(--tv-muted); }
+  @keyframes deal { from { transform: translateY(calc(var(--u) * 24)); opacity: 0.2; } to { transform: none; opacity: 1; } }
+
+  .tables { min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 16); }
+  .tbl { border-radius: calc(var(--u) * 20); background: var(--tv-slot); border: calc(var(--u) * 3) dashed var(--tv-card-line); display: grid; grid-template-rows: auto auto minmax(0, 1fr); padding: calc(var(--u) * 18); gap: calc(var(--u) * 8); color: var(--tv-ink); transition: background 300ms ease, border-color 300ms ease; }
+  .tbl .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
+  .tbl .map { font: 700 calc(var(--u) * 24)/1.15 var(--body); }
+  .tbl .pair { align-self: end; display: grid; gap: calc(var(--u) * 6); }
+  .tbl .side { font: 800 calc(var(--u) * 24)/1.1 var(--headline); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 10); color: #fff; }
+  .tbl .side.a { background: var(--a); }
+  .tbl .side.b { background: var(--b); }
+  .tbl .mission { display: inline-flex; align-self: start; justify-self: start; font: 700 calc(var(--u) * 20)/1 var(--body); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 10); background: var(--gold); color: #3a2a05; }
+  .tbl.target { border-style: solid; border-color: var(--gold); background: rgba(240, 183, 53, 0.16); }
+  .tbl.locked { border-style: solid; border-color: transparent; background: var(--tv-card); color: #162026; animation: flip 420ms ease both; }
+  .tbl.locked .k { color: var(--success); }
+  @keyframes flip { from { transform: rotateY(70deg); } to { transform: none; } }
+
+  .tv-bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 20); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
+  .tv-bottom .k { font: 900 calc(var(--u) * 24)/1 var(--headline); text-transform: uppercase; margin-right: calc(var(--u) * 10); }
+  .ms { font: 700 calc(var(--u) * 22)/1 var(--body); padding: calc(var(--u) * 14) calc(var(--u) * 18); border-radius: calc(var(--u) * 12); background: var(--tv-card); color: #162026; border-bottom: calc(var(--u) * 5) solid var(--gold); white-space: nowrap; }
+  .ms.banned { text-decoration: line-through; opacity: 0.5; border-bottom-color: var(--b); }
+  .ms.lockedm { background: rgba(47,138,74,0.16); color: var(--tv-ink); border-bottom-color: var(--success); }
+  .ms small { font: 700 calc(var(--u) * 16)/1 var(--body); letter-spacing: 0.06em; margin-left: calc(var(--u) * 6); }
+  .ms.pick { outline: calc(var(--u) * 4) solid var(--gold); outline-offset: calc(var(--u) * 3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .big, .tbl.locked { animation: none; }
+    .rc, .tv-col, .tbl, .tv-step { transition: none; }
+  }
+
+  /* ---------- tables + plan ---------- */
+  .twocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 700 0.75rem/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; }
+  .sw { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 4px; vertical-align: -0.12rem; margin-right: 0.4rem; box-shadow: inset 0 0 0 1px rgba(22,32,38,0.15); }
+  .arrow { color: var(--muted); padding-inline: 0.2rem; }
+
+  .views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+  .view-card { display: grid; gap: 0.6rem; align-content: start; }
+  .view-card ul { margin: 0; padding-left: 1.1rem; color: var(--muted); display: grid; gap: 0.3rem; }
+  .view-card .eyebrow { color: var(--accent-blue); }
+
+  .plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8rem; counter-reset: s; }
+  .plan li { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: 0.9rem; align-items: start; padding: 1rem 1.1rem; background: var(--panel-strong); border-radius: var(--radius-md); }
+  .plan li::before { counter-increment: s; content: counter(s); width: 2.2rem; height: 2.2rem; border-radius: 10px; display: grid; place-items: center; background: var(--flag-blue); color: #fff; font: 900 1rem/1 var(--headline); }
+  .plan h3 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+  .plan p { color: var(--muted); font-size: 0.93rem; }
+  .size { font: 700 0.75rem/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.4rem 0.6rem; border-radius: 104px; background: rgba(22,32,38,0.07); white-space: nowrap; }
+  .size.ship { background: rgba(47,138,74,0.14); color: var(--success); }
+
+  .questions { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.5rem; color: var(--ink); }
+  footer { padding-block: 2.5rem 4rem; color: var(--muted); font-size: 0.88rem; }
+
+  @media (max-width: 860px) {
+    .findings, .twocol, .views { grid-template-columns: 1fr; }
+    .plan li { grid-template-columns: 2.2rem minmax(0, 1fr); }
+    .plan .size { grid-column: 2; justify-self: start; }
+  }
+</style>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Sections">
+    <div class="shell">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">USA</span>USA Killteam</a>
+      <div class="nav-links">
+        <a href="#today">Today</a>
+        <a href="#stream">Stream view</a>
+        <a href="#brand">Branding</a>
+        <a href="#plan">Plan</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="shell" id="top">
+    <header class="hero">
+      <p class="eyebrow">Proposal · Pairing Simulator</p>
+      <h1>Make pairings <em>readable on stream.</em></h1>
+      <p class="lede">A stream view for the pairing simulator, built as a fixed 1080p board that viewers can read, in the same look as the Regional Founders site. The pairing rules and step order stay as they are.</p>
+      <div class="hero-meta">
+        <span class="chip">File: <code>docs/pairing-simulator.html</code></span>
+        <span class="chip"><i style="background:var(--flag-blue)"></i>Team A navy</span>
+        <span class="chip"><i style="background:var(--flag-red)"></i>Team B red</span>
+        <span class="chip"><i style="background:var(--accent-gold)"></i>Missions gold</span>
+      </div>
+    </header>
+
+    <section class="band" id="today" aria-labelledby="today-title">
+      <div class="section-heading">
+        <p class="eyebrow">What's wrong today</p>
+        <h2 id="today-title">Five problems on a 1080p capture</h2>
+        <p>Screenshots of the current page in Chromium at 1920×1080, with random rosters and the round just started.</p>
+      </div>
+      <div class="findings">
+        <div class="shot-stack">
+          <figure class="shot">
+            <img src="./before-1080p.jpg" alt="Current pairing simulator at 1920 by 1080: the live board is small, sits mid-page, and uses tiny orange-on-black text" width="1920" height="1080">
+            <figcaption>The full 1080p frame once the round starts. The board fills about 1410×692px and the rest is page chrome.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="./before-zoom.jpg" alt="Close-up of the mission deck at two times zoom, where labels are only a few pixels tall" width="680" height="250">
+            <figcaption>The mission deck and the Banned/Locked boxes, zoomed 2×. Labels are 3–5px tall at native size.</figcaption>
+          </figure>
+        </div>
+        <ol class="issue-list">
+          <li class="issue"><span class="issue-n">1</span><div>
+            <h3>Text is far too small</h3>
+            <p><code>html { font-size: 50% }</code> makes 1rem = 8px, and the live board then shrinks text again.</p>
+            <div class="px-scale" aria-label="Rendered text sizes on the live board">
+              <div class="px-row"><span>Team names</span><b>7.4px</b><i class="px-bar" style="width:26%"></i></div>
+              <div class="px-row"><span>Section kickers</span><b>4.6px</b><i class="px-bar" style="width:16%"></i></div>
+              <div class="px-row"><span>Count pills</span><b>3.8px</b><i class="px-bar" style="width:13%"></i></div>
+              <div class="px-row"><span>Roster status</span><b>2.7px</b><i class="px-bar" style="width:9.5%"></i></div>
+              <div class="px-row"><span>Proposed minimum</span><b>18px</b><i class="px-bar" style="width:64%;background:var(--success)"></i></div>
+            </div>
+          </div></li>
+          <li class="issue"><span class="issue-n">2</span><div>
+            <h3>The board is buried</h3>
+            <p>The playmat sits under the hero and the full setup panel, so the operator scrolls on air. About half the frame isn't the board.</p>
+          </div></li>
+          <li class="issue"><span class="issue-n">3</span><div>
+            <h3>It doesn't look like USA Killteam</h3>
+            <p>Orange on black with Bebas Neue, Oswald and IBM Plex. The regional site is navy, red and cream with Nunito and Inter.</p>
+          </div></li>
+          <li class="issue"><span class="issue-n">4</span><div>
+            <h3>Sides are hard to tell apart</h3>
+            <p>Attacker and defender differ only by a faint blue or gold border, so a viewer can't see who's acting.</p>
+          </div></li>
+          <li class="issue"><span class="issue-n">5</span><div>
+            <h3>Small bugs and stale copy</h3>
+            <p>"Waiting for rosters" stays visible during a live round. The hero still describes a past change ("the interface is now a drag-and-drop playmat").</p>
+          </div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="band" id="stream" aria-labelledby="stream-title">
+      <div class="section-heading">
+        <p class="eyebrow">Proposed · Stream view</p>
+        <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
+        <p>Step through a sample pairing below. Team A stays on the left in navy and Team B on the right in red for the whole round. The side that's acting gets a gold ring, and the other side dims. Team names and rosters are examples.</p>
+      </div>
+
+      <div class="stage-tools">
+        <div class="stepper">
+          <button class="btn" id="prev" type="button">Previous</button>
+          <button class="btn btn-primary" id="next" type="button">Next step</button>
+          <span class="stepper-label" id="step-count" aria-live="polite">Step 1 of 7</span>
+        </div>
+        <div class="seg" role="group" aria-label="Background">
+          <button type="button" data-bg="site" aria-pressed="false">Site</button>
+          <button type="button" data-bg="broadcast" aria-pressed="true">Broadcast</button>
+          <button type="button" data-bg="transparent" aria-pressed="false">Transparent</button>
+        </div>
+        <div class="seg" role="group" aria-label="Overlay">
+          <button type="button" id="safe-toggle" aria-pressed="false">Show safe area</button>
+        </div>
+      </div>
+
+      <div class="canvas-scroll">
+        <div class="canvas-wrap">
+          <div class="tv broadcast" id="tv" role="img" aria-label="Mockup of the proposed stream view at 1920 by 1080">
+            <div class="tv-top">
+              <div class="tv-brand"><span class="brand-mark" aria-hidden="true">USA</span><div>USA Killteam<small>Team pairings</small></div></div>
+              <div class="tv-step" id="tv-step"><span class="k" id="tv-step-k"></span><span class="t" id="tv-step-t"></span></div>
+              <div class="tv-score"><b id="tv-locked">0 / 5</b><span>Pairings locked</span></div>
+            </div>
+            <div class="tv-col a" id="col-a"></div>
+            <div class="tv-mid">
+              <div class="tv-action" id="tv-action"></div>
+              <div class="tables" id="tables"></div>
+            </div>
+            <div class="tv-col b" id="col-b"></div>
+            <div class="tv-bottom" id="missions"></div>
+            <div class="safe" id="safe" hidden><span>48px safe area</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="views">
+        <div class="panel view-card">
+          <p class="eyebrow">Setup view · operator</p>
+          <h3>Normal page in the regional style</h3>
+          <ul>
+            <li>Team library, roster picks, missions, swap sides</li>
+            <li>Results, Excel export and action history</li>
+            <li>Settings: team display names, background, transparent mode</li>
+            <li>A <b>Go live</b> button opens the stream view</li>
+          </ul>
+        </div>
+        <div class="panel view-card">
+          <p class="eyebrow">Stream view · on air</p>
+          <h3>Fixed 16:9 canvas for OBS</h3>
+          <ul>
+            <li>Opens at <code>pairing-simulator.html#stream</code> or with the <code>S</code> key</li>
+            <li>Scales to any window and never scrolls</li>
+            <li>Click to act on air; dragging stays in setup</li>
+            <li>A second window mirrors it over <code>BroadcastChannel</code>, so you can capture one and drive from the other</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="brand" aria-labelledby="brand-title">
+      <div class="section-heading">
+        <p class="eyebrow">Branding</p>
+        <h2 id="brand-title">Swap to the regional tokens</h2>
+        <p>Move the <code>:root</code> block from <code>docs/founders/founders.css</code> into a shared <code>docs/assets/brand.css</code>, then load it in both the founders pages and the pairing tool.</p>
+      </div>
+      <div class="twocol">
+        <div class="panel table-scroll">
+          <table>
+            <thead><tr><th>Today</th><th></th><th>Regional</th><th>Used for</th></tr></thead>
+            <tbody>
+              <tr><td><span class="sw" style="background:var(--old-orange)"></span>Orange</td><td class="arrow">→</td><td><span class="sw" style="background:var(--accent-red)"></span><code>--accent-red</code></td><td>Primary buttons, active drop</td></tr>
+              <tr><td><span class="sw" style="background:#7dbef5"></span>Attacker blue</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-blue)"></span><code>--flag-blue</code></td><td>Team A, every step</td></tr>
+              <tr><td><span class="sw" style="background:#f5ca67"></span>Defender gold</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-red)"></span><code>--flag-red</code></td><td>Team B, every step</td></tr>
+              <tr><td><span class="sw" style="background:#8bd18f"></span>Mission green</td><td class="arrow">→</td><td><span class="sw" style="background:var(--accent-gold)"></span><code>--accent-gold</code></td><td>Mission cards</td></tr>
+              <tr><td>None</td><td class="arrow">→</td><td><span class="sw" style="background:var(--success)"></span><code>--success</code></td><td>Locked pairing</td></tr>
+              <tr><td><span class="sw" style="background:var(--old-black)"></span>Black panels</td><td class="arrow">→</td><td><span class="sw" style="background:var(--panel-strong)"></span><code>--panel-strong</code></td><td>Cards and panels</td></tr>
+              <tr><td>Bebas Neue, Oswald</td><td class="arrow">→</td><td>Nunito 800/900</td><td>Headlines, team names</td></tr>
+              <tr><td>IBM Plex Sans</td><td class="arrow">→</td><td>Inter 400–700</td><td>Everything else</td></tr>
+              <tr><td>999px pill buttons</td><td class="arrow">→</td><td>12px <code>.button</code></td><td>Pills only for chips</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel table-scroll">
+          <table>
+            <thead><tr><th>Stream role</th><th>Size at 1080p</th><th>Face</th></tr></thead>
+            <tbody>
+              <tr><td>Step title</td><td class="num">44–46px</td><td>Nunito 900, caps</td></tr>
+              <tr><td>Team column name</td><td class="num">36px</td><td>Nunito 900, caps</td></tr>
+              <tr><td>Roster card, table team</td><td class="num">24–28px</td><td>Nunito 800</td></tr>
+              <tr><td>Map and mission names</td><td class="num">22–24px</td><td>Inter 700</td></tr>
+              <tr><td>Labels and badges</td><td class="num">18px</td><td>Inter 700, caps, 0.08em</td></tr>
+              <tr><td>Anything else</td><td class="num">≥ 18px</td><td>Nothing smaller on air</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:0.9rem;color:var(--muted);font-size:0.9rem">The setup view drops <code>font-size: 50%</code> and uses the regional scale (16px body) as is.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="plan" aria-labelledby="plan-title">
+      <div class="section-heading">
+        <p class="eyebrow">Plan</p>
+        <h2 id="plan-title">Six steps; the first two ship alone</h2>
+        <p>Only the presentation changes. The pairing state, step order and Excel export stay as they are.</p>
+      </div>
+      <ol class="plan">
+        <li><div><h3>Shared brand tokens</h3><p>Create <code>docs/assets/brand.css</code> from the founders <code>:root</code> block and import it from <code>founders.css</code>, so the regional site doesn't change.</p></div><span class="size ship">Ships alone</span></li>
+        <li><div><h3>Restyle setup</h3><p>Remove the orange theme, the 50% root size, the grid overlay and three font families. Map the existing button, panel, pill and card classes to the regional look. Fix the stale copy and the stuck "Waiting for rosters" chip.</p></div><span class="size ship">Ships alone</span></li>
+        <li><div><h3>Stream view</h3><p>Add a <code>#stream</code> section with its own markup and a render function that reads the existing <code>state</code>. Use click targets on air.</p></div><span class="size">Largest step</span></li>
+        <li><div><h3>Two-window sync</h3><p>Post state changes over <code>BroadcastChannel('pairing')</code> so a capture window and a control window mirror each other.</p></div><span class="size">Small</span></li>
+        <li><div><h3>Stream settings</h3><p>Add team display names, background (site, broadcast, transparent) and safe-area preview, saved in <code>localStorage</code>.</p></div><span class="size">Small</span></li>
+        <li><div><h3>Screenshot checks</h3><p>Use Playwright to capture setup and every stream step at 1920×1080, plus a 1280×720 downscale to check readability.</p></div><span class="size">Small</span></li>
+      </ol>
+    </section>
+
+    <section class="band" aria-labelledby="q-title">
+      <div class="section-heading">
+        <p class="eyebrow">Open questions</p>
+        <h2 id="q-title">Decisions before building</h2>
+      </div>
+      <div class="panel">
+        <ol class="questions">
+          <li>Should the stream view show the attack and defense history for the round, or only the current step?</li>
+          <li>Whose names go on screen: the national team against one opponent, or regional teams scrimming each other?</li>
+          <li>Does a sponsor or event logo need a fixed spot on the canvas?</li>
+          <li>Should the five map names stay fixed (Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5) or be editable per event?</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell">Written proposal: <code>docs/pairing-redesign/PROPOSAL.md</code>. The mockup above is static HTML and isn't connected to the simulator.</footer>
+
+<script>
+(() => {
+  const teamA = { name: 'Team USA', roster: ['Angels of Death', 'Kasrkin', 'Hand of the Archon', 'Vespid Stingwings', 'Plague Marines'] };
+  const teamB = { name: 'Team Belgium', roster: ['Deathwatch', 'Canoptek Circle', 'Raveners', 'Celestian Insidiants', 'Hernkyn Yaegirs'] };
+  const maps = ['Volkus 25:6', 'Volkus 25:2', 'Volkus 25:5', 'WTC ITC:1', 'Tomb World:5'];
+  const missions = ['Secure', 'Loot', 'Transmission', 'Orb', 'Reboot', 'Energy Cells', 'Download', 'Stake Claim', 'Data'];
+
+  const finalTables = [
+    { a: 'Kasrkin', b: 'Deathwatch', m: 'Secure' },
+    { a: 'Hand of the Archon', b: 'Raveners', m: 'Loot' },
+    { a: 'Angels of Death', b: 'Canoptek Circle', m: 'Reboot' },
+    { a: 'Vespid Stingwings', b: 'Hernkyn Yaegirs', m: 'Download' },
+    { a: 'Plague Marines', b: 'Celestian Insidiants', m: 'Stake Claim' },
+  ];
+
+  // Each step: who acts, banner text, and the board state shown.
+  const steps = [
+    { k: 'Opening bans', t: 'Defender (Belgium) bans a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb'], pickMission: 'Data', action: { note: 'Belgium is choosing a second mission to ban.', cards: [{ c: 'm', k: 'Banning', t: 'Data' }] } },
+    { k: 'Pairing 1 · Reveal', t: 'Defender (Belgium) reveals one Kill Team', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], hotB: ['Deathwatch'], action: { cards: [{ c: 'b', k: 'Belgium reveals', t: 'Deathwatch' }] } },
+    { k: 'Pairing 1 · Offer', t: 'Attacker (USA) offers two Kill Teams', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], hotA: ['Kasrkin', 'Plague Marines'], hotB: ['Deathwatch'],
+      action: { cards: [{ c: 'b', k: 'Revealed', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA offers', t: 'Kasrkin' }, { c: 'a', k: 'USA offers', t: 'Plague Marines' }] } },
+    { k: 'Pairing 1 · Pick', t: 'Defender (Belgium) picks the matchup', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'],
+      action: { cards: [{ c: 'b', k: 'Belgium', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA', t: 'Kasrkin' }, { c: 'a ghost', k: 'Returned', t: 'Plague Marines' }] } },
+    { k: 'Pairing 1 · Map', t: 'Attacker (USA) chooses a table', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'], target: 0,
+      action: { cards: [{ c: 'b', k: 'Belgium', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA', t: 'Kasrkin' }], note: 'USA picks Table 1 · Volkus 25:6' } },
+    { k: 'Pairing 1 · Mission', t: 'Defender (Belgium) chooses a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], locked: 1, pickMission: 'Secure', usedA: ['Kasrkin'], usedB: ['Deathwatch'],
+      action: { cards: [{ c: 'm', k: 'Table 1 mission', t: 'Secure' }], note: 'Pairing 1 locked: Kasrkin vs Deathwatch on Volkus 25:6' } },
+    { k: 'Round complete', t: 'All five pairings locked', acting: null, roleA: 'Done', roleB: 'Done',
+      banned: ['Orb', 'Data'], locked: 5, usedA: teamA.roster, usedB: teamB.roster,
+      action: { note: 'Five tables set. Export and history stay in the setup view.' } },
+  ];
+
+  let i = 0;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function column(team, side, s) {
+    const hot = new Set(s['hot' + side.toUpperCase()] || []);
+    const used = new Set(s['used' + side.toUpperCase()] || []);
+    const role = side === 'a' ? s.roleA : s.roleB;
+    const acting = s.acting === side;
+    const head = `<div class="tv-col-head"><span class="r"><span>${acting ? 'Acting now' : s.acting === null ? 'Round done' : 'Waiting'}</span><span class="role">${esc(role)}</span></span><span class="n">${esc(team.name)}</span></div>`;
+    const cards = team.roster.map((name) => {
+      const cls = used.has(name) ? 'used' : hot.has(name) ? 'hot' : '';
+      const tag = used.has(name) ? 'Paired' : hot.has(name) ? (side === 'a' ? 'Offered' : 'Revealed') : '';
+      return `<div class="rc ${cls}"><span>${esc(name)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
+    }).join('');
+    const el = $('col-' + side);
+    el.innerHTML = head + cards;
+    el.classList.toggle('acting', acting);
+    el.classList.toggle('idle', s.acting !== null && !acting);
+  }
+
+  function render() {
+    const s = steps[i];
+    $('tv-step-k').textContent = `Step ${i + 1} / ${steps.length} · ${s.k}`;
+    $('tv-step-t').textContent = s.t;
+    $('tv-step').style.setProperty('--step-color', s.acting === 'a' ? 'var(--a)' : s.acting === 'b' ? 'var(--b)' : 'var(--success)');
+    $('tv-locked').textContent = `${s.locked || 0} / 5`;
+    column(teamA, 'a', s);
+    column(teamB, 'b', s);
+
+    const act = s.action || {};
+    const cards = (act.cards || []).map((c) => c === 'vs' ? '<span class="vs">VS</span>'
+      : `<div class="big ${c.c}"><span class="k">${esc(c.k)}</span><span class="t">${esc(c.t)}</span></div>`).join('');
+    $('tv-action').innerHTML = `<div style="display:grid;gap:calc(var(--u)*22);justify-items:center">${cards ? `<div class="act">${cards}</div>` : ''}${act.note ? `<p class="act-note">${esc(act.note)}</p>` : ''}</div>`;
+
+    $('tables').innerHTML = maps.map((map, n) => {
+      const locked = n < (s.locked || 0);
+      const p = finalTables[n];
+      const cls = locked ? 'locked' : s.target === n ? 'target' : '';
+      return `<div class="tbl ${cls}"><span class="k">Table ${n + 1}${locked ? ' ✓' : s.target === n ? ' · Chosen' : ''}</span><span class="map">${esc(map)}</span>${
+        locked ? `<div class="pair"><span class="mission">${esc(p.m)}</span><span class="side a">${esc(p.a)}</span><span class="side b">${esc(p.b)}</span></div>` : ''}</div>`;
+    }).join('');
+
+    const usedM = new Map(finalTables.slice(0, s.locked || 0).map((p, n) => [p.m, n + 1]));
+    $('missions').innerHTML = '<span class="k">Missions</span>' + missions.map((m) => {
+      if ((s.banned || []).includes(m)) return `<span class="ms banned">${esc(m)}</span>`;
+      if (usedM.has(m)) return `<span class="ms lockedm">${esc(m)}<small>T${usedM.get(m)}</small></span>`;
+      return `<span class="ms${s.pickMission === m ? ' pick' : ''}">${esc(m)}</span>`;
+    }).join('');
+
+    $('step-count').textContent = `Step ${i + 1} of ${steps.length}`;
+    $('prev').disabled = i === 0;
+    $('next').textContent = i === steps.length - 1 ? 'Start over' : 'Next step';
+  }
+
+  $('next').addEventListener('click', () => { i = (i + 1) % steps.length; render(); });
+  $('prev').addEventListener('click', () => { if (i > 0) { i -= 1; render(); } });
+
+  document.querySelectorAll('[data-bg]').forEach((btn) => btn.addEventListener('click', () => {
+    const tv = $('tv');
+    tv.classList.toggle('broadcast', btn.dataset.bg === 'broadcast');
+    tv.classList.toggle('transparent', btn.dataset.bg === 'transparent');
+    document.querySelectorAll('[data-bg]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+  }));
+  $('safe-toggle').addEventListener('click', (e) => {
+    const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+    e.currentTarget.setAttribute('aria-pressed', String(on));
+    $('safe').hidden = !on;
+  });
+
+  i = 2;
+  render();
+})();
+</script>
+</body>
+</html>
