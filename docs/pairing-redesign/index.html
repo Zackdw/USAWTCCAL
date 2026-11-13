@@ -222,7 +222,7 @@
   .tv-col.a .tv-col-head { background: var(--a); }
   .tv-col.b .tv-col-head { background: var(--b); }
   .tv-col.acting .tv-col-head { box-shadow: 0 0 0 calc(var(--u) * 5) var(--gold), 0 0 calc(var(--u) * 40) rgba(240, 183, 53, 0.5); }
-  .tv-col-head .n { font: 900 calc(var(--u) * 36)/1 var(--headline); text-transform: uppercase; }
+  .tv-col-head .n { font: 900 calc(var(--u) * 32)/1.02 var(--headline); text-transform: uppercase; text-wrap: balance; }
   .tv-col-head .r { display: flex; justify-content: space-between; align-items: center; font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
   .role { padding: calc(var(--u) * 5) calc(var(--u) * 12); border-radius: 999px; background: rgba(255,255,255,0.2); }
 
@@ -264,7 +264,8 @@
   @keyframes flip { from { transform: rotateY(70deg); } to { transform: none; } }
 
   .tv-bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 20); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
-  .tv-bottom .k { font: 900 calc(var(--u) * 24)/1 var(--headline); text-transform: uppercase; margin-right: calc(var(--u) * 10); }
+  .tv-bottom .k { font: 900 calc(var(--u) * 24)/1 var(--headline); text-transform: uppercase; margin-right: calc(var(--u) * 10); display: grid; gap: calc(var(--u) * 6); white-space: nowrap; }
+  .tv-bottom .mc { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.04em; text-transform: none; color: var(--tv-muted); }
   .ms { font: 700 calc(var(--u) * 22)/1 var(--body); padding: calc(var(--u) * 14) calc(var(--u) * 18); border-radius: calc(var(--u) * 12); background: var(--tv-card); color: #162026; border-bottom: calc(var(--u) * 5) solid var(--gold); white-space: nowrap; }
   .ms.banned { text-decoration: line-through; opacity: 0.5; border-bottom-color: var(--b); }
   .ms.lockedm { background: rgba(47,138,74,0.16); color: var(--tv-ink); border-bottom-color: var(--success); }
@@ -388,7 +389,7 @@
       <div class="section-heading">
         <p class="eyebrow">Proposed · Stream view</p>
         <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
-        <p>Step through a sample pairing below. Team A stays on the left in navy and Team B on the right in red for the whole round. The side that's acting gets a gold ring, and the other side dims. Team names and rosters are examples.</p>
+        <p>The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
       </div>
 
       <div class="stage-tools">
@@ -434,7 +435,7 @@
           <ul>
             <li>Team library, roster picks, missions, swap sides</li>
             <li>Results, Excel export and action history</li>
-            <li>Settings: team display names, background, transparent mode</li>
+            <li>Settings: the two team names (state or regional teams), background, transparent mode</li>
             <li>A <b>Go live</b> button opens the stream view</li>
           </ul>
         </div>
@@ -502,23 +503,27 @@
         <li><div><h3>Restyle setup</h3><p>Remove the orange theme, the 50% root size, the grid overlay and three font families. Map the existing button, panel, pill and card classes to the regional look. Fix the stale copy and the stuck "Waiting for rosters" chip.</p></div><span class="size ship">Ships alone</span></li>
         <li><div><h3>Stream view</h3><p>Add a <code>#stream</code> section with its own markup and a render function that reads the existing <code>state</code>. Use click targets on air.</p></div><span class="size">Largest step</span></li>
         <li><div><h3>Two-window sync</h3><p>Post state changes over <code>BroadcastChannel('pairing')</code> so a capture window and a control window mirror each other.</p></div><span class="size">Small</span></li>
-        <li><div><h3>Stream settings</h3><p>Add team display names, background (site, broadcast, transparent) and safe-area preview, saved in <code>localStorage</code>.</p></div><span class="size">Small</span></li>
+        <li><div><h3>Stream settings</h3><p>Add the two team names, background (site, broadcast, transparent) and safe-area preview, saved in <code>localStorage</code>. Long regional names wrap to two lines in the column header.</p></div><span class="size">Small</span></li>
         <li><div><h3>Screenshot checks</h3><p>Use Playwright to capture setup and every stream step at 1920×1080, plus a 1280×720 downscale to check readability.</p></div><span class="size">Small</span></li>
       </ol>
     </section>
 
     <section class="band" aria-labelledby="q-title">
       <div class="section-heading">
-        <p class="eyebrow">Open questions</p>
-        <h2 id="q-title">Decisions before building</h2>
+        <p class="eyebrow">Decided</p>
+        <h2 id="q-title">Scope for the build</h2>
       </div>
-      <div class="panel">
-        <ol class="questions">
-          <li>Should the stream view show the attack and defense history for the round, or only the current step?</li>
-          <li>Whose names go on screen: the national team against one opponent, or regional teams scrimming each other?</li>
-          <li>Does a sponsor or event logo need a fixed spot on the canvas?</li>
-          <li>Should the five map names stay fixed (Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5) or be editable per event?</li>
-        </ol>
+      <div class="panel table-scroll">
+        <table>
+          <thead><tr><th>Question</th><th>Decision</th></tr></thead>
+          <tbody>
+            <tr><td>What the stream shows</td><td>Current pairings, open, banned and locked missions, and which Kill Teams are picked or still available</td></tr>
+            <tr><td>Round history on stream</td><td>Not shown; only the current step</td></tr>
+            <tr><td>Team names</td><td>Two names set in setup, for America's scrims between state and regional teams</td></tr>
+            <tr><td>Sponsor or event logo</td><td>None</td></tr>
+            <tr><td>Map names</td><td>Fixed: Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
   </main>
@@ -527,8 +532,8 @@
 
 <script>
 (() => {
-  const teamA = { name: 'Team USA', roster: ['Angels of Death', 'Kasrkin', 'Hand of the Archon', 'Vespid Stingwings', 'Plague Marines'] };
-  const teamB = { name: 'Team Belgium', roster: ['Deathwatch', 'Canoptek Circle', 'Raveners', 'Celestian Insidiants', 'Hernkyn Yaegirs'] };
+  const teamA = { name: 'New England Kill Team', roster: ['Angels of Death', 'Kasrkin', 'Hand of the Archon', 'Vespid Stingwings', 'Plague Marines'] };
+  const teamB = { name: 'DFW Kill Team', roster: ['Deathwatch', 'Canoptek Circle', 'Raveners', 'Celestian Insidiants', 'Hernkyn Yaegirs'] };
   const maps = ['Volkus 25:6', 'Volkus 25:2', 'Volkus 25:5', 'WTC ITC:1', 'Tomb World:5'];
   const missions = ['Secure', 'Loot', 'Transmission', 'Orb', 'Reboot', 'Energy Cells', 'Download', 'Stake Claim', 'Data'];
 
@@ -542,25 +547,25 @@
 
   // Each step: who acts, banner text, and the board state shown.
   const steps = [
-    { k: 'Opening bans', t: 'Defender (Belgium) bans a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
-      banned: ['Orb'], pickMission: 'Data', action: { note: 'Belgium is choosing a second mission to ban.', cards: [{ c: 'm', k: 'Banning', t: 'Data' }] } },
-    { k: 'Pairing 1 · Reveal', t: 'Defender (Belgium) reveals one Kill Team', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
-      banned: ['Orb', 'Data'], hotB: ['Deathwatch'], action: { cards: [{ c: 'b', k: 'Belgium reveals', t: 'Deathwatch' }] } },
-    { k: 'Pairing 1 · Offer', t: 'Attacker (USA) offers two Kill Teams', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
+    { k: 'Opening bans', t: 'Defender (DFW) bans a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb'], pickMission: 'Data', action: { note: 'DFW is choosing a second mission to ban.', cards: [{ c: 'm', k: 'Banning', t: 'Data' }] } },
+    { k: 'Pairing 1 · Reveal', t: 'Defender (DFW) reveals one Kill Team', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      banned: ['Orb', 'Data'], hotB: ['Deathwatch'], action: { cards: [{ c: 'b', k: 'DFW reveals', t: 'Deathwatch' }] } },
+    { k: 'Pairing 1 · Offer', t: 'Attacker (New England) offers two', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin', 'Plague Marines'], hotB: ['Deathwatch'],
-      action: { cards: [{ c: 'b', k: 'Revealed', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA offers', t: 'Kasrkin' }, { c: 'a', k: 'USA offers', t: 'Plague Marines' }] } },
-    { k: 'Pairing 1 · Pick', t: 'Defender (Belgium) picks the matchup', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      action: { cards: [{ c: 'b', k: 'Revealed', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England offers', t: 'Kasrkin' }, { c: 'a', k: 'New England offers', t: 'Plague Marines' }] } },
+    { k: 'Pairing 1 · Pick', t: 'Defender (DFW) picks the matchup', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'],
-      action: { cards: [{ c: 'b', k: 'Belgium', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA', t: 'Kasrkin' }, { c: 'a ghost', k: 'Returned', t: 'Plague Marines' }] } },
-    { k: 'Pairing 1 · Map', t: 'Attacker (USA) chooses a table', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
+      action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }, { c: 'a ghost', k: 'Returned', t: 'Plague Marines' }] } },
+    { k: 'Pairing 1 · Map', t: 'Attacker (New England) chooses a table', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'], target: 0,
-      action: { cards: [{ c: 'b', k: 'Belgium', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'USA', t: 'Kasrkin' }], note: 'USA picks Table 1 · Volkus 25:6' } },
-    { k: 'Pairing 1 · Mission', t: 'Defender (Belgium) chooses a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+      action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }], note: 'New England picks Table 1 · Volkus 25:6' } },
+    { k: 'Pairing 1 · Mission', t: 'Defender (DFW) chooses a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
       banned: ['Orb', 'Data'], locked: 1, pickMission: 'Secure', usedA: ['Kasrkin'], usedB: ['Deathwatch'],
       action: { cards: [{ c: 'm', k: 'Table 1 mission', t: 'Secure' }], note: 'Pairing 1 locked: Kasrkin vs Deathwatch on Volkus 25:6' } },
     { k: 'Round complete', t: 'All five pairings locked', acting: null, roleA: 'Done', roleB: 'Done',
       banned: ['Orb', 'Data'], locked: 5, usedA: teamA.roster, usedB: teamB.roster,
-      action: { note: 'Five tables set. Export and history stay in the setup view.' } },
+      action: { note: 'Five tables set. Export stays in the setup view.' } },
   ];
 
   let i = 0;
@@ -572,7 +577,8 @@
     const used = new Set(s['used' + side.toUpperCase()] || []);
     const role = side === 'a' ? s.roleA : s.roleB;
     const acting = s.acting === side;
-    const head = `<div class="tv-col-head"><span class="r"><span>${acting ? 'Acting now' : s.acting === null ? 'Round done' : 'Waiting'}</span><span class="role">${esc(role)}</span></span><span class="n">${esc(team.name)}</span></div>`;
+    const left = team.roster.length - used.size;
+    const head = `<div class="tv-col-head"><span class="r"><span>${acting ? 'Acting now' : s.acting === null ? 'Round done' : 'Waiting'}</span><span class="role">${esc(role)}</span></span><span class="n">${esc(team.name)}</span><span class="r"><span>${left} of 5 available</span></span></div>`;
     const cards = team.roster.map((name) => {
       const cls = used.has(name) ? 'used' : hot.has(name) ? 'hot' : '';
       const tag = used.has(name) ? 'Paired' : hot.has(name) ? (side === 'a' ? 'Offered' : 'Revealed') : '';
@@ -607,7 +613,8 @@
     }).join('');
 
     const usedM = new Map(finalTables.slice(0, s.locked || 0).map((p, n) => [p.m, n + 1]));
-    $('missions').innerHTML = '<span class="k">Missions</span>' + missions.map((m) => {
+    const nBan = (s.banned || []).length, nLock = usedM.size, nOpen = missions.length - nBan - nLock;
+    $('missions').innerHTML = `<span class="k">Missions<small class="mc">${nOpen} open · ${nBan} banned · ${nLock} locked</small></span>` + missions.map((m) => {
       if ((s.banned || []).includes(m)) return `<span class="ms banned">${esc(m)}</span>`;
       if (usedM.has(m)) return `<span class="ms lockedm">${esc(m)}<small>T${usedM.get(m)}</small></span>`;
       return `<span class="ms${s.pickMission === m ? ' pick' : ''}">${esc(m)}</span>`;

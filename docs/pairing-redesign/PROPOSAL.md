@@ -6,7 +6,7 @@ Browse the visual version at `docs/pairing-redesign/index.html`. It has before s
 
 ## Summary
 
-- Add a **Stream view**: a fixed 16:9 canvas with no scrolling. It shows the current step, both rosters, the five tables and the mission deck at sizes a viewer can read after stream compression.
+- Add a **Stream view**: a fixed 16:9 canvas with no scrolling, built for America's scrims between state and regional teams. It shows only the current state: the current step, the pairings locked so far, which missions are open, banned or locked, and which Kill Teams each side has picked or still has available. Sizes are readable after stream compression.
 - Keep a separate **Setup view** for the operator (roster picking, missions, exports), restyled to match the regional site.
 - Replace the orange-on-black theme with the regional tokens: flag navy and red, cream panels, Nunito headlines, Inter body.
 - Leave the pairing logic (step order, state, Excel export) as it is. This is a presentation change.
@@ -31,7 +31,7 @@ Measured from a 1920×1080 capture of the current page in Chromium.
 |---|---|---|
 | Who sees it | Organizer's own screen | Captured by OBS as a browser source or window |
 | Layout | Normal scrolling page, regional-site look | Fixed 1920×1080 canvas, scaled to fit the window, no scroll |
-| Contents | Team library, roster pick, mission deck, swap sides, results, export, history | Step banner, both rosters, five tables, mission strip, last action |
+| Contents | Team library, roster pick, mission deck, swap sides, results, export, history | Current step, both rosters (picked vs available), five tables with current pairings, mission strip (open / banned / locked). No round history. |
 | Entry | `pairing-simulator.html` | `pairing-simulator.html#stream`, or a **Go live** button, or the `S` key |
 
 Both views read the same state. The operator can run the round from the stream view by clicking, or from a second window in setup view. The two windows stay in sync through `BroadcastChannel`, so one can be captured and the other used to drive.
@@ -45,6 +45,7 @@ Both views read the same state. The operator can run the round from the stream v
 ├───────────┬──────────────────────────────────────────────────┬───────────┤
 │ TEAM A    │              ACTION STAGE                        │ TEAM B    │
 │ Attacker  │   offered / revealed cards shown large           │ Defender  │
+│ 4 of 5    │                                                  │ 4 of 5    │
 │           │                                                  │           │
 │ 5 roster  ├──────────────────────────────────────────────────┤ 5 roster  │ 760
 │ cards     │  TABLE 1   TABLE 2   TABLE 3   TABLE 4   TABLE 5 │ cards     │
@@ -52,7 +53,7 @@ Both views read the same state. The operator can run the round from the stream v
 │           │  mission   mission   …                           │           │
 │           │  A vs B    A vs B                                │           │
 ├───────────┴──────────────────────────────────────────────────┴───────────┤
-│ MISSIONS  Secure  Loot  ~~Orb~~ (banned)  Reboot ✓T1  …                   │ 120
+│ MISSIONS 6 open·2 banned·1 locked  Secure ✓T1  Loot  ~~Orb~~  Reboot …    │ 120
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -60,7 +61,10 @@ Both views read the same state. The operator can run the round from the stream v
 - **Team A on the left in navy, Team B on the right in red.** This holds for the whole round. "Attacker" and "Defender" are badges on the column, not colors, so the colors don't flip when roles change.
 - **Acting side highlighted**: the active column gets a solid colored header and a soft glow, and the inactive one dims to 55%.
 - **Lock-in moment**: when a pairing commits, its table tile fills with both team colors and a short 400ms flip. This is skipped under `prefers-reduced-motion`.
-- **Team names configurable** (e.g. "Team USA" and "Team Belgium") instead of "Team A/B". They default to A/B.
+- **Two team names set in setup** (e.g. "New England Kill Team" and "DFW Kill Team") instead of "Team A/B". Long regional names wrap to two lines in the column header.
+- **Roster status**: each roster card shows whether it's available, offered or revealed, or already paired. The column header shows how many are still available.
+- **Mission status**: every mission is shown as open, banned (struck through) or locked to a table (T1–T5), with counts.
+- **Map names stay fixed**: Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5.
 
 ### Type scale at 1080p
 
@@ -101,14 +105,17 @@ The stream view gets two backgrounds: **Site** (blue-gray, as on the regional si
 2. **Setup restyle.** In `pairing-simulator.html`, remove the orange theme, the `font-size: 50%` root, the grid-paper overlay and the three Google font families. Map the existing classes (`.primary-button`, `.ghost-button`, `.panel`, `.count-pill`, `.sim-card.*`) onto the regional look. Fix the stale hero copy and the "Waiting for rosters" chip.
 3. **Stream view.** Add a `#stream` section with its own markup and a render function that reads the existing `state`. Click targets replace drag-and-drop on air, and drag stays available in setup.
 4. **Sync.** Post state changes over `BroadcastChannel('pairing')` so a capture window and a control window mirror each other.
-5. **Config.** Team display names, background mode and the transparent option go in a small settings row in setup, saved to `localStorage`.
+5. **Config.** The two team names, background mode and the transparent option go in a small settings row in setup, saved to `localStorage`.
 6. **Check.** Playwright screenshots of setup and of every stream step at 1920×1080, plus a 1280×720 downscale to check readability.
 
 Steps 1–2 can ship on their own. Steps 3–5 are the bulk of the work.
 
-## Open questions
+## Decisions
 
-- Should the stream view show an attacker/defender history ("Round 2: A attacks") or only the current step?
-- Real team names: the national team vs one opponent, or regional teams scrimming each other?
-- Any sponsor or event logo that needs a fixed spot on the canvas?
-- Keep the five map names as they are (Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5) or make them editable per event?
+| Question | Decision |
+|---|---|
+| What the stream shows | Current pairings; open, banned and locked missions; Kill Teams picked vs available |
+| Round history on stream | Not shown; only the current step |
+| Team names | Two names set in setup, for America's scrims between state and regional teams |
+| Sponsor or event logo | None |
+| Map names | Fixed, no per-event editing |
