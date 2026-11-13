@@ -65,6 +65,7 @@ Both views read the same state. The operator can run the round from the stream v
 - **Roster status**: each roster card shows whether it's available, offered or revealed, or already paired. The column header shows how many are still available.
 - **Mission status**: every mission is shown as open, banned (struck through) or locked to a table (T1–T5), with counts.
 - **Map names stay fixed**: Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5.
+- **Map images**: each table tile has an image slot above its pairing. Images live in `docs/assets/maps/` as `volkus-25-6.jpg`, `volkus-25-2.jpg`, `volkus-25-5.jpg`, `wtc-itc-1.jpg` and `tomb-world-5.jpg`. Supply them landscape (30:22, at least 800px wide). The tile turns them to portrait so they fill its height, and the map name sits over the bottom edge. A drawn placeholder shows until an image exists.
 
 ### Type scale at 1080p
 
@@ -89,12 +90,12 @@ Move the token block from `docs/founders/founders.css` into a shared `docs/asset
 | `--orange #ff6118` | `--accent-red #b24133` | Primary buttons, active drop zone |
 | `--blue #7dbef5` (attacker) | `--flag-blue #0a3161` / `--accent-blue #3c6dcb` | Team A, always |
 | `--gold #f5ca67` (defender) | `--flag-red #b31942` | Team B, always |
-| `--green #8bd18f` (mission) | `--accent-gold #f0b735` | Mission cards |
+| `--green #8bd18f` (mission) | `--mission #a9e0e4` light teal, black text, `--accent-cyan #2b9aa6` edge | Mission cards |
 | — | `--success #2f8a4a` | Locked pairing tick |
 | `--panel rgba(18,18,18,.9)` | `--panel-strong` cream | Cards and panels |
 | Bebas Neue / Oswald | Nunito 800/900 | Headlines, team names |
 | IBM Plex Sans | Inter 400–700 | Everything else |
-| Pill buttons (999px) | 12px buttons, pills only for chips | Matches `.button` on the regional site |
+| Pill buttons (999px), 18–28px cards | Radii halved from the regional set: 6px buttons, 8px cards, 12px panels; pills only for chips | Every rectangle |
 | — | `.brand-mark` USA flag chip | Top-left of both views |
 
 The stream view gets two backgrounds: **Site** (blue-gray, as on the regional site) and **Broadcast** (deep navy `#0d1b30` with cream cards, easier on the eyes on a dark stream layout). Both use the same tokens. A `?bg=transparent` option drops the background so the board can sit over a camera or a custom overlay.
