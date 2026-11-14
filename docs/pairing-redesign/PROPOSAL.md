@@ -53,7 +53,7 @@ Both views read the same state. The operator can run the round from the stream v
 │           │  mission   mission   …                           │           │
 │           │  A vs B    A vs B                                │           │
 ├───────────┴──────────────────────────────────────────────────┴───────────┤
-│ MISSIONS 6 open·2 banned·1 locked  Secure ✓T1  Loot  ~~Orb~~  Reboot …    │ 120
+│        Secure ✓T1   Loot   ~~Orb~~   Reboot   Energy Cells   …              │ 120
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -66,7 +66,7 @@ Both views read the same state. The operator can run the round from the stream v
 - **Lock-in moment**: when a pairing commits, its table tile fills with both team colors and a short 400ms flip. This is skipped under `prefers-reduced-motion`.
 - **Two team names set in setup** (e.g. "New England Kill Team" and "DFW Kill Team") instead of "Team A/B". Long regional names wrap to two lines in the column header.
 - **Roster status**: each roster card shows whether it's available, offered or revealed, or already paired. The column header shows how many are still available.
-- **Mission status**: every mission is shown as open, banned (struck through) or locked to a table (T1–T5), with counts.
+- **Mission status**: every mission is shown as open, banned (struck through) or locked to a table (T1–T5). The strip has no label or counts; the chips are centered.
 - **Map names stay fixed**: Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5.
 - **Map images**: each table tile has an image slot above its pairing. Images live in `docs/assets/maps/` as `volkus-25-6.jpg`, `volkus-25-2.jpg`, `volkus-25-5.jpg`, `wtc-itc-1.jpg` and `tomb-world-5.jpg`. Supply them landscape (30:22, at least 800px wide). The tile turns them to portrait so they fill its height, and the map name sits over the bottom edge. A drawn placeholder shows until an image exists.
 

@@ -276,9 +276,7 @@
   .tbl.locked .k { color: var(--success); }
   @keyframes flip { from { transform: rotateY(70deg); } to { transform: none; } }
 
-  .tv-bottom { isolation: isolate; grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 10); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
-  .tv-bottom .k { font: 900 calc(var(--u) * 24)/1 var(--headline); text-transform: uppercase; margin-right: calc(var(--u) * 10); display: grid; gap: calc(var(--u) * 6); white-space: nowrap; }
-  .tv-bottom .mc { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.04em; text-transform: none; color: var(--tv-muted); }
+  .tv-bottom { isolation: isolate; grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 10); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
   .ms { font: 700 calc(var(--u) * 22)/1 var(--body); padding: calc(var(--u) * 14) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); background: var(--mission); color: var(--mission-ink); border-bottom: calc(var(--u) * 5) solid var(--mission-edge); white-space: nowrap; }
   .ms.banned { text-decoration: line-through; opacity: 0.5; background: var(--tv-card); color: #162026; border-bottom-color: var(--b); }
   .ms.lockedm { background: rgba(47,138,74,0.16); color: var(--tv-ink); border-bottom-color: var(--success); }
@@ -685,8 +683,7 @@
     }).join('');
 
     const usedM = new Map(finalTables.slice(0, s.locked || 0).map((p, n) => [p.m, n + 1]));
-    const nBan = (s.banned || []).length, nLock = usedM.size, nOpen = missions.length - nBan - nLock;
-    $('missions').innerHTML = `<span class="k">Missions<small class="mc">${nOpen} open · ${nBan} banned · ${nLock} locked</small></span>` + missions.map((m) => {
+    $('missions').innerHTML = missions.map((m) => {
       if ((s.banned || []).includes(m)) return `<span class="ms banned">${esc(m)}</span>`;
       if (usedM.has(m)) return `<span class="ms lockedm">${esc(m)}<small>T${usedM.get(m)}</small></span>`;
       return `<span class="ms${s.pickMission === m ? ' pick' : ''}">${esc(m)}</span>`;
