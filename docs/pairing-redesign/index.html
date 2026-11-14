@@ -242,14 +242,13 @@
   .tv-action { min-width: 0; overflow: hidden; border-radius: calc(var(--u) * 12); background: var(--tv-slot); display: grid; place-items: center; padding: calc(var(--u) * 24); }
   .act { display: flex; gap: calc(var(--u) * 28); align-items: center; justify-content: center; }
   .act-note { font: 700 calc(var(--u) * 22)/1.3 var(--body); color: var(--tv-muted); text-align: center; max-width: calc(var(--u) * 640); }
-  .big { width: calc(var(--u) * 256); min-height: calc(var(--u) * 170); border-radius: calc(var(--u) * 10); background: var(--tv-card); color: #162026; display: grid; align-content: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 22); border-top: calc(var(--u) * 12) solid var(--c, var(--gold)); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); animation: deal 380ms ease both; }
+  .big { width: calc(var(--u) * 256); min-height: calc(var(--u) * 140); border-radius: calc(var(--u) * 10); background: var(--tv-card); color: #162026; display: grid; align-content: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 22); border-top: calc(var(--u) * 12) solid var(--c, var(--gold)); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); animation: deal 380ms ease both; }
   .big .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, #8a6410); }
   .big .t { font: 900 calc(var(--u) * 30)/1.05 var(--headline); }
   .big.a { --c: var(--a); }
   .big.b { --c: var(--b); }
   .big.m { --c: var(--mission-edge); background: var(--mission); color: var(--mission-ink); }
   .big.m .k { color: #0d4f56; }
-  .big.ghost { opacity: 0.4; border-top-style: dashed; }
   .vs { font: 900 calc(var(--u) * 40)/1 var(--headline); color: var(--tv-muted); }
   @keyframes deal { from { transform: translateY(calc(var(--u) * 24)); opacity: 0.2; } to { transform: none; opacity: 1; } }
 
@@ -563,15 +562,15 @@
     { k: 'Pairing 1 · Offer', t: 'Attacker (New England) offers two', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin', 'Plague Marines'], hotB: ['Deathwatch'],
       action: { cards: [{ c: 'b', k: 'Revealed', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England offers', t: 'Kasrkin' }, { c: 'a', k: 'New England offers', t: 'Plague Marines' }] } },
-    { k: 'Pairing 1 · Pick', t: 'Defender (DFW) picks the matchup', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
+    { k: 'Pairing 1 · Pick', t: 'Defender (DFW) picks the matchup', acting: 'b', roleA: 'Attacker', roleB: 'Defender', hotTag: 'Matched',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'],
-      action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }, { c: 'a ghost', k: 'Returned', t: 'Plague Marines' }] } },
-    { k: 'Pairing 1 · Map', t: 'Attacker (New England) chooses a table', acting: 'a', roleA: 'Attacker', roleB: 'Defender',
+      action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }], note: 'DFW takes Kasrkin. Plague Marines goes back to the New England roster.' } },
+    { k: 'Pairing 1 · Map', t: 'Attacker (New England) chooses a table', acting: 'a', roleA: 'Attacker', roleB: 'Defender', hotTag: 'Matched',
       banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'], target: 0,
       action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }], note: 'New England picks Table 1 · Volkus 25:6' } },
-    { k: 'Pairing 1 · Mission', t: 'Defender (DFW) chooses a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender',
-      banned: ['Orb', 'Data'], locked: 1, pickMission: 'Secure', usedA: ['Kasrkin'], usedB: ['Deathwatch'],
-      action: { cards: [{ c: 'm', k: 'Table 1 mission', t: 'Secure' }], note: 'Pairing 1 locked: Kasrkin vs Deathwatch on Volkus 25:6' } },
+    { k: 'Pairing 1 · Mission', t: 'Defender (DFW) chooses a mission', acting: 'b', roleA: 'Attacker', roleB: 'Defender', hotTag: 'Matched',
+      banned: ['Orb', 'Data'], hotA: ['Kasrkin'], hotB: ['Deathwatch'], target: 0, pickMission: 'Secure',
+      action: { cards: [{ c: 'b', k: 'DFW', t: 'Deathwatch' }, 'vs', { c: 'a', k: 'New England', t: 'Kasrkin' }], note: 'Table 1 · Volkus 25:6 · DFW picks from the open missions' } },
     { k: 'Round complete', t: 'All five pairings locked', acting: null, roleA: 'Done', roleB: 'Done',
       banned: ['Orb', 'Data'], locked: 5, usedA: teamA.roster, usedB: teamB.roster,
       action: { note: 'Five tables set. Export stays in the setup view.' } },
@@ -590,7 +589,7 @@
     const head = `<div class="tv-col-head"><span class="r"><span>${acting ? 'Acting now' : s.acting === null ? 'Round done' : 'Waiting'}</span><span class="role">${esc(role)}</span></span><span class="n">${esc(team.name)}</span><span class="r"><span>${left} of 5 available</span></span></div>`;
     const cards = team.roster.map((name) => {
       const cls = used.has(name) ? 'used' : hot.has(name) ? 'hot' : '';
-      const tag = used.has(name) ? 'Paired' : hot.has(name) ? (side === 'a' ? 'Offered' : 'Revealed') : '';
+      const tag = used.has(name) ? 'Paired' : hot.has(name) ? (s.hotTag || (side === 'a' ? 'Offered' : 'Revealed')) : '';
       return `<div class="rc ${cls}"><span>${esc(name)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
     }).join('');
     const el = $('col-' + side);
@@ -626,13 +625,13 @@
     const act = s.action || {};
     const cards = (act.cards || []).map((c) => c === 'vs' ? '<span class="vs">VS</span>'
       : `<div class="big ${c.c}"><span class="k">${esc(c.k)}</span><span class="t">${esc(c.t)}</span></div>`).join('');
-    $('tv-action').innerHTML = `<div style="display:grid;gap:calc(var(--u)*22);justify-items:center">${cards ? `<div class="act">${cards}</div>` : ''}${act.note ? `<p class="act-note">${esc(act.note)}</p>` : ''}</div>`;
+    $('tv-action').innerHTML = `<div style="display:grid;gap:calc(var(--u)*14);justify-items:center">${cards ? `<div class="act">${cards}</div>` : ''}${act.note ? `<p class="act-note">${esc(act.note)}</p>` : ''}</div>`;
 
     $('tables').innerHTML = maps.map((map, n) => {
       const locked = n < (s.locked || 0);
       const p = finalTables[n];
       const cls = locked ? 'locked' : s.target === n ? 'target' : '';
-      return `<div class="tbl ${cls}"><span class="k">Table ${n + 1}${locked ? ' ✓' : s.target === n ? ' · Chosen' : ''}</span><div class="shot">${boardSvg(n)}<span class="map">${esc(map)}</span></div>${
+      return `<div class="tbl ${cls}"><span class="k">Table ${n + 1}${locked ? ' ✓' : ''}</span><div class="shot">${boardSvg(n)}<span class="map">${esc(map)}</span></div>${
         locked ? `<div class="pair"><span class="mission">${esc(p.m)}</span><span class="side a">${esc(p.a)}</span><span class="side b">${esc(p.b)}</span></div>` : ''}</div>`;
     }).join('');
 
