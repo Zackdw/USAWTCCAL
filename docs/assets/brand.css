@@ -1,0 +1,23 @@
+/* USA Killteam brand tokens, shared by the regional site and the pairing simulator.
+   Colors and type only; each page sets its own radii and layout. */
+:root {
+  --bg: #d6dee1;
+  --panel: rgba(252, 248, 241, 0.76);
+  --panel-strong: rgba(251, 247, 240, 0.94);
+  --ink: #162026;
+  --muted: #51606a;
+  --line: rgba(22, 32, 38, 0.12);
+  --navy: #1d2f4a;
+  --flag-blue: #0a3161;
+  --flag-red: #b31942;
+  --accent-red: #b24133;
+  --accent-red-bright: #d0543f;
+  --accent-gold: #f0b735;
+  --accent-blue: #3c6dcb;
+  --accent-cyan: #2b9aa6;
+  --success: #2f8a4a;
+
+  --headline: "Nunito", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}

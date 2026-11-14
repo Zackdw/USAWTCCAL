@@ -3,1727 +3,496 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Interactive team pairing simulator for the 2026 team event, built around the round-by-round pairing process.">
-<title>Team Pairing Simulator</title>
+<title>Pairing Simulator | USA Killteam</title>
+<meta name="description" content="Run a five-table Kill Team pairing round between two teams, with a 1080p stream view for broadcasts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@800;900&display=swap">
+<link rel="stylesheet" href="./assets/brand.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&family=Oswald:wght@400;500;600;700&display=swap');
-
+  /* Page radii are half the regional set: 6 / 8 / 12px. */
   :root {
-    --panel: rgba(18, 18, 18, 0.9);
-    --panel-soft: rgba(28, 28, 28, 0.8);
-    --line: rgba(255, 106, 28, 0.22);
-    --line-strong: rgba(255, 106, 28, 0.42);
-    --text: #f0e6d7;
-    --muted: #b8ac9c;
-    --cream: #f3d3ab;
-    --orange: #ff6118;
-    --orange-deep: #b93b04;
-    --blue: #7dbef5;
-    --green: #8bd18f;
-    --gold: #f5ca67;
-    --danger: #f59b80;
-    --shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
-    --radius: 24px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --mission: #a9e0e4;
+    --mission-edge: #2b9aa6;
+    --mission-ink: #071417;
   }
 
-  * {
-    box-sizing: border-box;
-  }
-
-  html {
-    font-size: 50%;
-  }
-
-  html,
-  body {
-    margin: 0;
-    min-height: 100%;
-    background:
-      radial-gradient(circle at top left, rgba(255, 97, 24, 0.18), transparent 28%),
-      radial-gradient(circle at 82% 12%, rgba(125, 190, 245, 0.12), transparent 24%),
-      linear-gradient(180deg, #050505 0%, #0e0e11 52%, #090909 100%);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
-  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   body {
-    padding: 28px 18px 54px;
-  }
-
-  a {
-    color: inherit;
-  }
-
-  button {
-    font: inherit;
-  }
-
-  .shell {
-    width: min(1460px, 100%);
-    margin: 0 auto;
-    display: grid;
-    gap: 22px;
-  }
-
-  .hero,
-  .panel {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: calc(var(--radius) + 4px);
-    background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent 42%),
-      linear-gradient(180deg, rgba(255, 97, 24, 0.06), rgba(0, 0, 0, 0.08)),
-      var(--panel);
-    box-shadow: var(--shadow);
-  }
-
-  .hero {
-    padding: 28px;
-  }
-
-  .hero::before,
-  .panel::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      repeating-linear-gradient(90deg, transparent 0 62px, rgba(255, 106, 28, 0.04) 62px 63px),
-      repeating-linear-gradient(0deg, transparent 0 62px, rgba(255, 106, 28, 0.03) 62px 63px);
-    opacity: 0.5;
-    mix-blend-mode: screen;
-  }
-
-  .hero > *,
-  .panel > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .top-nav,
-  .nav-group,
-  .panel-head,
-  .section-head,
-  .section-tools,
-  .roster-head,
-  .setup-actions,
-  .mini-actions,
-  .sim-actions,
-  .selection-actions,
-  .offer-lane,
-  .context-grid,
-  .graveyard-grid,
-  .deck-row,
-  .card-badges,
-  .card-grid,
-  .library-grid,
-  .draft-grid,
-  .map-grid,
-  .resource-chip-row,
-  .history-list,
-  .deck-stack {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .top-nav,
-  .panel-head,
-  .section-head,
-  .roster-head {
-    justify-content: space-between;
-    align-items: start;
-  }
-
-  .section-tools {
-    align-items: center;
-    justify-content: flex-end;
-  }
-
-  .top-nav {
-    align-items: center;
-    gap: 14px;
-  }
-
-  .nav-link,
-  .primary-button,
-  .ghost-button,
-  .confirm-button,
-  .remove-button,
-  .card-remove {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 0 16px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--cream);
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .nav-link,
-  .ghost-button,
-  .confirm-button,
-  .remove-button,
-  .card-remove {
-    border-color: rgba(255, 106, 28, 0.18);
-  }
-
-  .primary-button {
-    border-color: rgba(255, 106, 28, 0.46);
-    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
-    color: #fff7ef;
-    box-shadow: 0 14px 30px rgba(255, 97, 24, 0.22);
-  }
-
-  .confirm-button {
-    border-color: rgba(125, 190, 245, 0.32);
-    background: linear-gradient(135deg, rgba(125, 190, 245, 0.2), rgba(72, 122, 167, 0.16));
-    color: #e9f6ff;
-  }
-
-  .primary-button:disabled,
-  .ghost-button:disabled,
-  .confirm-button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  .eyebrow,
-  .panel-kicker,
-  .step-label,
-  .side-tag,
-  .status-title,
-  .deck-kicker,
-  .drop-label,
-  .map-label {
     margin: 0;
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.86rem;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 106, 28, 0.3);
-    background: rgba(255, 97, 24, 0.08);
-    color: var(--cream);
-  }
-
-  .eyebrow::before {
-    content: "";
-    width: 40px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--orange), rgba(255, 97, 24, 0.18));
-  }
-
-  h1 {
-    margin: 18px 0 10px;
-    font-family: 'Bebas Neue', Impact, sans-serif;
-    font-size: clamp(4rem, 9vw, 6.4rem);
-    line-height: 0.9;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #fff4e6;
-  }
-
-  .panel h2,
-  .panel h3,
-  .card-title,
-  .drop-title,
-  .map-name {
-    margin: 0;
-    font-family: 'Oswald', sans-serif;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .panel h2 {
-    margin-top: 6px;
-    font-size: 2rem;
-    color: var(--cream);
-  }
-
-  .panel h3,
-  .drop-title,
-  .map-name {
-    font-size: 1.15rem;
-    color: var(--text);
-  }
-
-  .lede,
-  .panel-copy,
-  .setup-feedback,
-  .empty-state p,
-  .step-banner p,
-  .match-copy,
-  .mini-note,
-  .board-help,
-  .drop-copy,
-  .map-copy,
-  .card-subtitle,
-  .card-meta,
-  .history-list li {
-    color: var(--muted);
-    line-height: 1.65;
-  }
-
-  .lede {
-    margin: 0;
-    max-width: 78ch;
-    font-size: 1.02rem;
-  }
-
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
-
-  #primary-layout.live-mode {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .secondary {
-    grid-template-columns: 1fr;
-  }
-
-  .panel {
-    padding: 24px;
-  }
-
-  .panel-head {
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-
-  .setup-library,
-  .mission-strip,
-  .draft-zone,
-  .step-banner,
-  .action-context,
-  .board-help,
-  .sim-board,
-  .status-card,
-  .match-card,
-  .empty-state,
-  .deck-panel,
-  .dropzone,
-  .map-zone,
-  .action-area {
-    border-radius: 18px;
-    border: 1px solid rgba(255, 106, 28, 0.14);
-    background: rgba(255, 255, 255, 0.025);
-  }
-
-  .setup-library,
-  .mission-strip,
-  .draft-zone,
-  .step-banner,
-  .action-context,
-  .board-help,
-  .sim-board,
-  .status-card,
-  .match-card,
-  .empty-state,
-  .action-area {
-    padding: 18px;
-  }
-
-  .setup-library[hidden] {
-    display: none;
-  }
-
-  .setup-grid,
-  .graveyard-grid {
-    display: grid;
-    gap: 16px;
-  }
-
-  .setup-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    z-index: 3;
-  }
-
-  .graveyard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sim-board {
-    display: grid;
-    gap: 18px;
-  }
-
-  .board-section {
-    display: grid;
-    gap: 12px;
-    align-content: start;
-  }
-
-  .deck-row {
-    align-items: stretch;
-  }
-
-  .deck-panel {
-    flex: 1 1 280px;
-    padding: 16px;
+    color: var(--ink);
+    font: 400 1rem/1.55 var(--body);
+    letter-spacing: 0.005em;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
-      rgba(7, 7, 7, 0.55);
+      radial-gradient(circle at top left, rgba(178, 65, 51, 0.14), transparent 26%),
+      radial-gradient(circle at top right, rgba(60, 109, 203, 0.12), transparent 30%),
+      linear-gradient(180deg, #d5dde0 0%, #cfd9dc 100%);
+    background-color: var(--bg);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: inherit; }
+  button, input { font: inherit; }
+  :focus-visible { outline: 3px solid rgba(60, 109, 203, 0.55); outline-offset: 2px; }
 
-  .deck-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: start;
-    margin-bottom: 14px;
-  }
+  .shell { width: min(1320px, 100%); margin: 0 auto; padding-inline: 16px; }
 
-  .deck-stack,
-  .library-grid,
-  .draft-grid {
-    align-items: stretch;
-  }
-
-  .library-grid {
-    max-height: 520px;
-    overflow: auto;
-    padding-right: 4px;
-  }
-
-  .team-list {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    max-height: 540px;
-    overflow: auto;
-    padding-right: 4px;
-  }
-
-  .team-list-head {
-    margin: 14px 0 10px;
-    padding: 0 4px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-    align-items: center;
-    color: var(--muted);
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.82rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .team-list-head span:first-child {
-    margin-right: auto;
-  }
-
-  .team-list-head span:not(:first-child) {
-    text-align: center;
-    min-width: 32px;
-    padding: 6px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 106, 28, 0.18);
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .team-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    min-height: 76px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 106, 28, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .team-name {
-    flex: 1 1 auto;
-    font-size: 1.08rem;
-    line-height: 1.35;
-    color: var(--text);
-  }
-
-  .team-toggle-grid {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
-  }
-
-  .team-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 106, 28, 0.14);
-    background: rgba(7, 7, 7, 0.38);
-  }
-
-  .team-toggle.side-a.selected {
-    border-color: rgba(125, 190, 245, 0.42);
-    background: rgba(125, 190, 245, 0.12);
-  }
-
-  .team-toggle.side-b.selected {
-    border-color: rgba(245, 129, 129, 0.42);
-    background: rgba(245, 129, 129, 0.12);
-  }
-
-  .team-toggle.disabled {
-    opacity: 0.55;
-  }
-
-  .team-toggle.side-a input {
-    accent-color: var(--blue);
-  }
-
-  .team-toggle.side-b input {
-    accent-color: #f58181;
-  }
-
-  .team-toggle input {
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    cursor: pointer;
-  }
-
-  .team-toggle input:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-
-  .team-toggle-copy {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .deck-stack {
-    min-height: 72px;
-  }
-
-  .roster-stack {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px;
-    align-items: stretch;
-    min-height: 72px;
-  }
-
-  .mission-stack {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-    gap: 8px;
-    align-items: stretch;
-    min-height: 72px;
-  }
-
-  .card-grid {
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-    gap: 8px;
-    align-items: stretch;
-  }
-
-  .roster-stack > .sim-card,
-  .mission-stack > .sim-card,
-  .card-grid > .sim-card {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .draft-zone {
-    display: grid;
-    gap: 14px;
-  }
-
-  .setup-pick-list {
-    min-height: 176px;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 106, 28, 0.18);
-    background: rgba(7, 7, 7, 0.42);
-    display: grid;
-    gap: 12px;
-    align-content: start;
-  }
-
-  .pick-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  .pick-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: space-between;
-    gap: 14px;
-    min-height: 104px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 106, 28, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-    cursor: pointer;
-  }
-
-  .pick-row:hover,
-  .pick-row:focus-visible {
-    border-color: rgba(255, 106, 28, 0.32);
-    background: rgba(255, 97, 24, 0.08);
-    outline: none;
-  }
-
-  .pick-name {
-    display: block;
-    color: var(--text);
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-
-  .pick-hint {
-    color: var(--muted);
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .pick-empty {
-    margin: 0;
-    color: var(--muted);
-    grid-column: 1 / -1;
-  }
-
-  .setup-search {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    flex: 1 1 22rem;
-    align-items: start;
-    gap: 8px;
-    min-width: min(22rem, 100%);
-    position: relative;
-  }
-
-  .setup-search-field {
-    position: relative;
-    min-width: 0;
-  }
-
-  .setup-search-input {
-    width: 100%;
-    min-height: 42px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 106, 28, 0.18);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text);
-    font: inherit;
-  }
-
-  .setup-search-input::placeholder {
-    color: var(--muted);
-  }
-
-  .setup-search-input:focus {
-    outline: none;
-    border-color: rgba(255, 106, 28, 0.42);
-    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.14), 0 0 0 1px rgba(255, 106, 28, 0.12);
-  }
-
-  .setup-search-input:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-
-  .setup-search-suggestions {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    z-index: 20;
-    display: grid;
-    gap: 6px;
-    padding: 10px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 106, 28, 0.18);
-    background: rgba(18, 18, 18, 0.98);
-    box-shadow: var(--shadow);
-  }
-
-  .setup-search-suggestions[hidden] {
-    display: none;
-  }
-
-  .setup-search-option {
-    width: 100%;
-    justify-content: flex-start;
-    text-align: left;
-    border-color: rgba(255, 106, 28, 0.18);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text);
-  }
-
-  .setup-search-option:hover,
-  .setup-search-option:focus-visible {
-    border-color: rgba(255, 106, 28, 0.36);
-    background: rgba(255, 97, 24, 0.08);
-    outline: none;
-  }
-
-  .setup-search-empty {
-    margin: 0;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 106, 28, 0.12);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--muted);
-  }
-
-  .draft-drop {
-    min-height: 176px;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px dashed rgba(255, 106, 28, 0.24);
-    background: rgba(7, 7, 7, 0.42);
-    display: grid;
-    gap: 12px;
-    align-content: start;
-  }
-
-  .draft-drop.active,
-  .dropzone.active,
-  .map-zone.active {
-    border-color: rgba(255, 106, 28, 0.46);
-    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.18), 0 0 0 1px rgba(255, 106, 28, 0.12);
-  }
-
-  .draft-drop.drag-over,
-  .dropzone.drag-over,
-  .map-zone.drag-over {
-    background: rgba(255, 97, 24, 0.12);
-    border-color: rgba(255, 106, 28, 0.66);
-  }
-
-  .draft-drop.filled,
-  .dropzone.filled,
-  .map-zone.locked,
-  .map-zone.pending {
-    border-style: solid;
-  }
-
-  .count-pill,
-  .status-chip,
-  .info-chip,
-  .card-status,
-  .card-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 106, 28, 0.22);
-    background: rgba(255, 106, 28, 0.08);
-    color: var(--cream);
-    font-family: 'Oswald', sans-serif;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-  }
-
-  .info-chip {
-    text-transform: none;
-    letter-spacing: 0;
-    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text);
-    border-color: rgba(255, 106, 28, 0.16);
-  }
-
-  .card-badge {
-    min-height: 24px;
-    padding: 0 8px;
-    letter-spacing: 0.06em;
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #fff6ea;
-  }
-
-  .card-badges {
-    gap: 4px;
-  }
-
-  .card-badge.sticker {
-    min-height: 6px;
-    padding: 0 2px;
-    font-size: 0.32rem;
-    line-height: 1;
-    letter-spacing: 0.03em;
-  }
-
-  .card-badge.attacker {
-    border-color: rgba(125, 190, 245, 0.34);
-    background: rgba(125, 190, 245, 0.12);
-    color: #e7f5ff;
-  }
-
-  .card-badge.defender {
-    border-color: rgba(245, 202, 103, 0.32);
-    background: rgba(245, 202, 103, 0.12);
-    color: #fff1c3;
-  }
-
-  .card-badge.mission {
-    border-color: rgba(139, 209, 143, 0.3);
-    background: rgba(139, 209, 143, 0.12);
-    color: #e8ffe9;
-  }
-
-  .sim-card {
-    position: relative;
-    flex: 1 1 170px;
-    min-width: 150px;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  /* ---------- nav ---------- */
+  .site-nav { position: sticky; top: 0; z-index: 50; background: rgba(214, 222, 225, 0.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .site-nav .shell { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.75rem; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font: 900 1rem/1 var(--headline); letter-spacing: 0.02em; text-transform: uppercase; }
+  .brand-mark {
+    display: inline-flex; align-items: flex-start; justify-content: center;
+    width: 2.5rem; height: 1.8rem; padding-top: 0.22rem; border-radius: 3px; overflow: hidden;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
-      rgba(8, 8, 8, 0.78);
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 0.15rem, #fff 0.15rem 0.3rem);
+    box-shadow: inset 0 0 0 1px rgba(22, 32, 38, 0.18);
+    color: #fff; font-size: 0.66rem; letter-spacing: 0.06em;
+  }
+  .nav-links { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; font: 500 0.9375rem/1 var(--display); }
+  .nav-links a { color: var(--muted); text-decoration: none; }
+  .nav-links a:hover { color: var(--ink); }
+
+  /* ---------- type ---------- */
+  .eyebrow, .panel-kicker { margin: 0; font: 700 0.8125rem/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-red); }
+  h1, h2, h3, h4 { font-family: var(--headline); font-weight: 800; letter-spacing: -0.005em; text-wrap: balance; margin: 0; }
+  h1, h2 { font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 1.02; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.1; }
+  h3 { font-size: 1.15rem; line-height: 1.2; }
+  p { margin: 0; }
+  .lede { font-size: 1.15rem; line-height: 1.45; color: var(--muted); max-width: 62ch; }
+  .mini-note, .setup-feedback, .panel-copy { color: var(--muted); font-size: 0.92rem; }
+
+  /* ---------- buttons ---------- */
+  .primary-button, .ghost-button {
+    appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 2.6rem; padding: 0 1.1rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--ink); background: #fff; color: var(--ink);
+    font: 500 0.95rem/1 var(--display); letter-spacing: 0.016em; text-decoration: none; cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease;
+  }
+  .ghost-button:hover { background: rgba(255, 255, 255, 0.7); }
+  .primary-button { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
+  .primary-button:hover { background: var(--accent-red-bright); border-color: var(--accent-red-bright); }
+  .primary-button:disabled, .ghost-button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .count-pill, .status-chip {
+    display: inline-flex; align-items: center; min-height: 1.9rem; padding: 0 0.75rem; border-radius: 104px;
+    background: rgba(22, 32, 38, 0.07); font: 600 0.82rem/1 var(--display); white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  .seg { display: inline-flex; padding: 0.25rem; border-radius: var(--radius-sm); background: rgba(22, 32, 38, 0.08); gap: 0.25rem; }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--ink); font: 600 0.88rem/1 var(--display); padding: 0.55rem 0.8rem; border-radius: 4px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 3px rgba(22, 32, 38, 0.15); }
+
+  /* ---------- page layout ---------- */
+  .page-head { padding-block: 2.5rem 1.5rem; display: grid; gap: 0.75rem; }
+  .stack { display: grid; gap: 1.5rem; padding-bottom: 4rem; }
+  .panel { background: var(--panel-strong); border-radius: var(--radius-lg); padding: clamp(1rem, 2.5vw, 1.75rem); box-shadow: 0 18px 40px rgba(29, 38, 44, 0.08); display: grid; gap: 1.1rem; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem 1rem; }
+  .panel-head > div:first-child { display: grid; gap: 0.3rem; }
+  .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+  .secondary { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+
+  /* ---------- setup ---------- */
+  .names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 0.75rem; align-items: end; }
+  .field { display: grid; gap: 0.35rem; font: 600 0.82rem/1.2 var(--display); color: var(--muted); }
+  .field input, .setup-search-input {
+    width: 100%; min-height: 2.6rem; padding: 0 0.8rem; border-radius: var(--radius-sm);
+    border: 1px solid rgba(22, 32, 38, 0.2); background: #fff; color: var(--ink); font: 500 1rem/1 var(--body);
+  }
+  .field input:focus, .setup-search-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(60, 109, 203, 0.2); }
+
+  .setup-library { display: grid; gap: 0.8rem; padding: 1rem; border-radius: var(--radius-md); background: rgba(22, 32, 38, 0.04); }
+  .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 0.6rem; }
+  .section-head > div:first-child { display: grid; gap: 0.25rem; }
+  .section-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .team-list-head { display: none; }
+  .team-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.5rem; }
+  .team-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.45rem 0.5rem 0.45rem 0.8rem; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--line); min-width: 0; }
+  .team-name { font-weight: 600; font-size: 0.94rem; min-width: 0; overflow-wrap: anywhere; }
+  .team-toggle-grid { display: flex; gap: 0.35rem; flex: none; }
+  .team-toggle { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: var(--radius-sm); border: 1px solid rgba(22, 32, 38, 0.18); cursor: pointer; font: 700 0.85rem/1 var(--display); color: var(--muted); background: #fff; }
+  .team-toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .team-toggle:has(input:focus-visible) { outline: 3px solid rgba(60, 109, 203, 0.55); outline-offset: 2px; }
+  .team-toggle.selected { color: #fff; border-color: transparent; }
+  .team-toggle.side-a.selected { background: var(--flag-blue); }
+  .team-toggle.side-b.selected { background: var(--accent-red); }
+  .team-toggle.disabled { opacity: 0.35; cursor: not-allowed; }
+  .team-toggle.disabled input { cursor: not-allowed; }
+
+  .setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .draft-zone { display: grid; gap: 0.75rem; align-content: start; padding: 1rem; border-radius: var(--radius-md); background: rgba(22, 32, 38, 0.04); min-width: 0; }
+  .roster-head { display: flex; justify-content: space-between; align-items: start; gap: 0.6rem; }
+  .roster-head > div { display: grid; gap: 0.2rem; min-width: 0; }
+  .roster-head h3 { overflow-wrap: anywhere; }
+  .side-tag { margin: 0; font: 700 0.75rem/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .setup-pick-list { display: grid; gap: 0.5rem; }
+  .pick-grid { display: grid; gap: 0.4rem; }
+  .pick-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--line); cursor: pointer; }
+  .pick-row:hover { border-color: var(--accent-red); }
+  .pick-name { font: 800 1rem/1.2 var(--headline); }
+  .pick-hint { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .pick-empty { color: var(--muted); font-size: 0.9rem; }
+  .mini-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: start; }
+  .setup-search { display: flex; gap: 0.5rem; flex: 1 1 16rem; min-width: 0; }
+  .setup-search-field { position: relative; flex: 1; min-width: 0; }
+  .setup-search-suggestions { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; display: grid; gap: 2px; padding: 4px; border-radius: var(--radius-sm); background: #fff; box-shadow: 0 12px 28px rgba(22, 32, 38, 0.18); border: 1px solid var(--line); }
+  .setup-search-option { justify-content: flex-start; border: 0; min-height: 2.2rem; }
+  .setup-search-option:hover { background: rgba(22, 32, 38, 0.06); }
+  .setup-search-empty { padding: 0.5rem; color: var(--muted); font-size: 0.88rem; }
+  .mission-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .mission-chip { padding: 0.4rem 0.7rem; border-radius: var(--radius-sm); background: var(--mission); color: var(--mission-ink); border-bottom: 3px solid var(--mission-edge); font: 600 0.88rem/1.1 var(--display); }
+  .setup-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  #primary-layout.live-mode .setup-library { display: none; }
+
+  /* ---------- results + history ---------- */
+  .match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.75rem; }
+  .match-card { display: grid; gap: 0.5rem; padding: 0.9rem; border-radius: var(--radius-md); background: #fff; border: 1px solid var(--line); align-content: start; }
+  .match-card.match-empty { color: var(--muted); font-size: 0.92rem; }
+  .match-card .k { font: 700 0.75rem/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--success); }
+  .match-side { display: grid; gap: 0.15rem; padding: 0.5rem 0.65rem; border-radius: var(--radius-sm); color: #fff; }
+  .match-side small { font: 600 0.72rem/1.1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+  .match-side b { font: 800 1rem/1.15 var(--headline); }
+  .match-side.att { background: var(--flag-red); }
+  .match-side.def { background: var(--flag-blue); }
+  .match-meta { font-size: 0.86rem; color: var(--muted); }
+  .match-meta b { color: var(--ink); font-weight: 600; }
+  .history-list { margin: 0; padding-left: 2rem; display: grid; gap: 0.45rem; font-size: 0.9rem; color: var(--muted); max-height: 26rem; overflow: auto; }
+  .history-list .log-empty { list-style: none; margin-left: -2rem; }
+
+  /* ---------- board panel ---------- */
+  .board-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; justify-content: space-between; }
+  .board-scroll { overflow-x: auto; border-radius: var(--radius-md); }
+  .tv-frame { container-type: inline-size; min-width: 720px; width: 100%; }
+  .stream-exit { display: none; }
+
+  /* Stream mode: only the board, fitted 16:9 to the window, for OBS or a second screen. */
+  body.stream { overflow: hidden; background: #000; }
+  body.stream .site-nav, body.stream .page-head, body.stream .panel:not(.board-panel), body.stream .board-panel > :not(.board-scroll) { display: none !important; }
+  body.stream .board-panel { position: fixed; inset: 0; z-index: 100; padding: 0; border-radius: 0; background: #000; display: grid; place-items: center; box-shadow: none; }
+  body.stream .board-scroll { overflow: hidden; border-radius: 0; width: min(100vw, 177.78vh); }
+  body.stream .tv-frame { min-width: 0; }
+  body.stream .tv { box-shadow: none; }
+  body.stream.transparent-bg, body.stream.transparent-bg .board-panel { background: transparent; }
+  body.stream .stream-exit { display: inline-flex; position: fixed; z-index: 101; top: 10px; right: 10px; opacity: 0; transition: opacity 200ms ease; }
+  body.stream .stream-exit:hover, body.stream .stream-exit:focus-visible { opacity: 1; }
+
+  @media (max-width: 860px) {
+    .secondary, .setup-grid { grid-template-columns: 1fr; }
+    .names { grid-template-columns: 1fr; }
+  }
+
+  .tv {
+    --u: calc(100cqw / 1920);
+    --tv-bg: linear-gradient(180deg, #d5dde0 0%, #cfd9dc 100%);
+    --tv-ink: #162026;
+    --tv-muted: #51606a;
+    --tv-card: #fbf7f0;
+    --tv-card-line: rgba(22, 32, 38, 0.1);
+    --tv-slot: rgba(22, 32, 38, 0.06);
+    --tv-solid: #e2e8ea;
+    /* Colors follow the role, not the team: attacker red, defender blue. */
+    --red: #b31942;
+    --red-soft: rgba(179, 25, 66, 0.12);
+    --blue: #0a3161;
+    --blue-soft: rgba(60, 109, 203, 0.16);
+    --a: var(--red);
+    --a-soft: var(--red-soft);
+    --b: var(--blue);
+    --b-soft: var(--blue-soft);
+    --gold: #f0b735;
+    --mission: #a9e0e4;
+    --mission-edge: #2b9aa6;
+    --mission-ink: #071417;
+    position: relative; isolation: isolate; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+    --flag-ink: 10, 49, 97;
+    --flag-alpha: 0.09;
+    background: var(--tv-bg); color: var(--tv-ink);
+    font-family: var(--body);
+    padding: calc(var(--u) * 48);
     display: grid;
-    gap: 10px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    grid-template-columns: calc(var(--u) * 380) minmax(0, 1fr) calc(var(--u) * 380);
+    grid-template-rows: calc(var(--u) * 132) minmax(0, 1fr) calc(var(--u) * 112);
+    gap: calc(var(--u) * 24);
+    box-shadow: 0 24px 60px rgba(22, 32, 38, 0.25);
+  }
+  .tv.broadcast {
+    --flag-ink: 255, 255, 255;
+    --flag-alpha: 0.07;
+    --tv-bg: radial-gradient(circle at 15% 0%, rgba(60,109,203,0.28), transparent 40%), radial-gradient(circle at 90% 10%, rgba(179,25,66,0.22), transparent 38%), linear-gradient(180deg, #0f203a 0%, #0a1628 100%);
+    --tv-ink: #fbf7f0;
+    --tv-muted: #b9c3cf;
+    --tv-card: #fbf7f0;
+    --tv-card-line: rgba(255, 255, 255, 0.12);
+    --tv-slot: rgba(255, 255, 255, 0.07);
+    --tv-solid: #182940;
+  }
+  .tv.transparent {
+    --flag-alpha: 0;
+    --tv-bg: repeating-conic-gradient(#c9cfd2 0 25%, #e4e8ea 0 50%) 0 0 / calc(var(--u) * 48) calc(var(--u) * 48);
+  }
+  .safe {
+    position: absolute; inset: calc(var(--u) * 48); pointer-events: none;
+    border: calc(var(--u) * 2) dashed rgba(178, 65, 51, 0.6); border-radius: calc(var(--u) * 4);
+  }
+  .safe span {
+    position: absolute; top: calc(var(--u) * -30); right: 0;
+    font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-red);
   }
 
-  .sim-card.compact {
-    flex-basis: auto;
-    min-width: 0;
-    min-height: 62px;
-    padding: 7px 8px;
-    gap: 4px;
-    align-content: start;
-  }
-
-  .sim-card.compact .card-top {
-    gap: 6px;
-  }
-
-  .sim-card.compact .card-title {
-    font-size: 0.82rem;
-    line-height: 1.12;
-  }
-
-  .sim-card.compact .card-subtitle {
-    display: none;
-  }
-
-  .sim-card.compact .card-status {
-    min-height: 16px;
-    padding: 0 4px;
-    font-size: 0.52rem;
-  }
-
-  .sim-card.library {
-    border-color: rgba(255, 106, 28, 0.18);
-  }
-
-  .sim-card.defender {
-    border-color: rgba(245, 202, 103, 0.2);
+  .tv-top { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: calc(var(--u) * 36); align-items: center; }
+  .tv-brand { display: flex; align-items: center; gap: calc(var(--u) * 16); font: 900 calc(var(--u) * 26)/1.05 var(--headline); text-transform: uppercase; letter-spacing: 0.02em; }
+  .tv-brand .brand-mark { width: calc(var(--u) * 78); height: calc(var(--u) * 54); padding-top: calc(var(--u) * 7); font-size: calc(var(--u) * 20); border-radius: calc(var(--u) * 4);
     background:
-      linear-gradient(180deg, rgba(245, 202, 103, 0.08), rgba(255, 255, 255, 0.015)),
-      rgba(8, 8, 8, 0.8);
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 calc(var(--u) * 4.5), #fff calc(var(--u) * 4.5) calc(var(--u) * 9));
+  }
+  .tv-brand small { display: block; font: 700 calc(var(--u) * 18)/1.3 var(--body); letter-spacing: 0.08em; color: var(--tv-muted); }
+  .tv-step { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 12); padding: calc(var(--u) * 18) calc(var(--u) * 30); display: grid; gap: calc(var(--u) * 4); border-left: calc(var(--u) * 12) solid var(--step-color, var(--accent-red)); transition: border-color 300ms ease; }
+  .tv-step .k { font: 700 calc(var(--u) * 18)/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--step-color, var(--accent-red)); }
+  .tv-step .t { font: 900 calc(var(--u) * 44)/1.02 var(--headline); text-transform: uppercase; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tv-score { text-align: right; display: grid; gap: calc(var(--u) * 6); }
+  .tv-score b { font: 900 calc(var(--u) * 52)/1 var(--headline); font-variant-numeric: tabular-nums; }
+  .tv-score span { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
+
+  .tv-col { isolation: isolate; grid-row: 2 / 3; display: grid; grid-template-rows: auto repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 12); transition: opacity 300ms ease; }
+  .tv-col.idle { opacity: 0.55; }
+  .tv-col-head { border-radius: calc(var(--u) * 9); padding: calc(var(--u) * 16) calc(var(--u) * 22); color: #fff; display: grid; gap: calc(var(--u) * 6); }
+  .tv-col.a .tv-col-head { background: var(--a); }
+  .tv-col.b .tv-col-head { background: var(--b); }
+  .tv-col-head .n { font: 900 calc(var(--u) * 32)/1.02 var(--headline); text-transform: uppercase; text-wrap: balance; }
+  .tv-col-head .r { display: flex; justify-content: space-between; align-items: center; font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
+  .role { padding: calc(var(--u) * 5) calc(var(--u) * 12); border-radius: 999px; background: rgba(255,255,255,0.2); }
+
+  .rc { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 8); padding: 0 calc(var(--u) * 20); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 10); font: 800 calc(var(--u) * 28)/1.05 var(--headline); border: calc(var(--u) * 3) solid transparent; position: relative; left: 0; transition: opacity 300ms ease, border-color 300ms ease, left 300ms ease; }
+  .rc .tag { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; padding: calc(var(--u) * 6) calc(var(--u) * 10); border-radius: calc(var(--u) * 4); white-space: nowrap; }
+  .tv-col.a .rc.hot { left: calc(var(--u) * 10); }
+  .tv-col.b .rc.hot { left: calc(var(--u) * -10); }
+  .tv-col.a .rc .tag { background: var(--a-soft); color: var(--a); }
+  .tv-col.b .rc .tag { background: var(--b-soft); color: var(--b); }
+  .rc.used { opacity: 0.38; }
+  .rc.used .tag { background: rgba(47,138,74,0.14) !important; color: var(--success) !important; }
+
+  .tv-mid { grid-row: 2 / 3; display: grid; grid-template-rows: minmax(0, 1fr) calc(var(--u) * 430); gap: calc(var(--u) * 24); min-width: 0; }
+  .tv-action { min-width: 0; overflow: hidden; border-radius: calc(var(--u) * 12); background: var(--tv-slot); display: grid; place-items: center; padding: calc(var(--u) * 24); }
+  .act-wrap { width: 100%; display: grid; gap: calc(var(--u) * 14); justify-items: center; }
+  .act { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(var(--u) * 28); align-items: center; }
+  .act-a, .act-b { display: flex; gap: calc(var(--u) * 20); min-width: 0; }
+  .act-a { justify-content: flex-end; }
+  .act-b { justify-content: flex-start; }
+  .act-m { display: flex; justify-content: center; min-width: calc(var(--u) * 60); }
+  .act-note { font: 700 calc(var(--u) * 22)/1.3 var(--body); color: var(--tv-muted); text-align: center; max-width: calc(var(--u) * 640); }
+  .big { width: calc(var(--u) * 256); min-height: calc(var(--u) * 140); border-radius: calc(var(--u) * 10); background: var(--tv-card); color: #162026; display: grid; align-content: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 22); border-top: calc(var(--u) * 12) solid var(--c, var(--gold)); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); animation: deal 380ms ease both; }
+  .big .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, #8a6410); }
+  .big .t { font: 900 calc(var(--u) * 30)/1.05 var(--headline); }
+  .big.a { --c: var(--a); }
+  .big.b { --c: var(--b); }
+  .big.m { --c: var(--mission-edge); background: var(--mission); color: var(--mission-ink); }
+  .big.m .k { color: #0d4f56; }
+  .vs { font: 900 calc(var(--u) * 40)/1 var(--headline); color: var(--tv-muted); }
+  @keyframes deal { from { transform: translateY(calc(var(--u) * 24)); opacity: 0.2; } to { transform: none; opacity: 1; } }
+
+  .tables { isolation: isolate; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 16); }
+  .tbl { border-radius: calc(var(--u) * 10); background: var(--tv-slot); border: calc(var(--u) * 3) dashed var(--tv-card-line); display: grid; grid-template-rows: auto auto minmax(0, 1fr); padding: calc(var(--u) * 12); gap: calc(var(--u) * 8); color: var(--tv-ink); transition: background 300ms ease, border-color 300ms ease; }
+  .tbl .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
+  .tbl .shot { position: relative; aspect-ratio: 22 / 30; border-radius: calc(var(--u) * 4); overflow: hidden; background: #2a3a4c; }
+  .tbl .shot svg { display: block; width: 100%; height: 100%; }
+  /* Real images are supplied landscape (30:22) and turned to portrait to fill the tile. */
+  .tbl .shot img { position: absolute; top: 50%; left: 50%; width: 136.37%; height: 73.33%; object-fit: cover; transform: translate(-50%, -50%) rotate(90deg); }
+  .tbl .map { position: absolute; inset: auto 0 0 0; padding: calc(var(--u) * 18) calc(var(--u) * 10) calc(var(--u) * 8); background: linear-gradient(transparent, rgba(7, 14, 24, 0.85)); color: #fff; font: 700 calc(var(--u) * 22)/1.1 var(--body); }
+  .tbl .pair { align-self: end; display: grid; gap: calc(var(--u) * 6); }
+  .tbl .side { font: 800 calc(var(--u) * 22)/1.1 var(--headline); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); color: #fff; }
+  .tbl .side.a { margin-right: calc(var(--u) * 14); }
+  .tbl .side.b { margin-left: calc(var(--u) * 14); text-align: right; }
+  .tbl .mission { display: inline-flex; align-self: start; justify-self: start; font: 700 calc(var(--u) * 20)/1 var(--body); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); background: var(--mission); color: var(--mission-ink); }
+  .tbl.target { border-color: transparent; background: var(--tv-solid); }
+  .tbl.locked { border-style: solid; border-color: transparent; background: var(--tv-card); color: #162026; }
+  .tbl.locked.fresh { animation: flip 420ms ease both; }
+  .tbl.locked .k { color: var(--success); }
+  @keyframes flip { from { transform: rotateY(70deg); } to { transform: none; } }
+
+  .tv-bottom { isolation: isolate; grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 10); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
+  .ms { font: 700 calc(var(--u) * 22)/1 var(--body); padding: calc(var(--u) * 14) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); background: var(--mission); color: var(--mission-ink); border-bottom: calc(var(--u) * 5) solid var(--mission-edge); white-space: nowrap; }
+  .ms.banned { text-decoration: line-through; opacity: 0.5; background: var(--tv-card); color: #162026; border-bottom-color: var(--b); }
+  .ms.lockedm { background: rgba(47,138,74,0.16); color: var(--tv-ink); border-bottom-color: var(--success); }
+  .ms small { font: 700 calc(var(--u) * 16)/1 var(--body); letter-spacing: 0.06em; margin-left: calc(var(--u) * 6); }
+  .ms.pick { position: relative; }
+
+  /* Focus glow: a rotating stroke whose gradient spans 20 degrees of hue around the item's own
+     focus color, plus a blurred copy behind it. Team A = teal, Team B = light red, table = white. */
+  @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  .tv.a-def { --a: var(--blue); --a-soft: var(--blue-soft); --b: var(--red); --b-soft: var(--red-soft); }
+  .tbl .side.att, .fin-side.att { background: var(--red); }
+  .tbl .side.def, .fin-side.def { background: var(--blue); }
+  /* Glow is a lighter value of the role color: light red for the attacker, teal for the defender. */
+  .tv-col.a, .tv.a-def .tv-col.b { --fh: 352; --fs: 100%; --fl: 74%; }
+  .tv-col.b, .tv.a-def .tv-col.a { --fh: 184; --fs: 85%; --fl: 62%; }
+  .tbl.target { --fh: 200; --fs: 45%; --fl: 96%; }
+  .ms.pick { --fh: 178; --fs: 85%; --fl: 84%; }
+  .tv-col.acting .tv-col-head, .rc.hot, .tbl.target, .ms.pick { position: relative; }
+  .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before,
+  .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after {
+    content: ""; position: absolute; pointer-events: none;
+    inset: calc(var(--u) * -5); border-radius: calc(var(--u) * 12);
+    background: conic-gradient(from var(--spin),
+      hsl(calc(var(--fh) - 10) var(--fs) var(--fl)),
+      hsl(var(--fh) var(--fs) calc(var(--fl) + 8%)),
+      hsl(calc(var(--fh) + 10) var(--fs) var(--fl)),
+      hsl(var(--fh) var(--fs) calc(var(--fl) - 6%)),
+      hsl(calc(var(--fh) - 10) var(--fs) var(--fl)));
+    animation: spin 3.2s linear infinite;
+  }
+  /* Crisp stroke: the gradient masked down to a ring. */
+  .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before {
+    padding: calc(var(--u) * 4);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  /* Soft glow: the same gradient blurred, sitting behind the item. */
+  .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after {
+    z-index: -1; filter: blur(calc(var(--u) * 14)); opacity: 0.85;
+    animation: spin 3.2s linear infinite, breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes spin { to { --spin: 360deg; } }
+  @keyframes breathe { 50% { opacity: 0.45; } }
+
+
+
+  /* Ambient waving flag behind everything: one ink color, very low alpha, faded at the edges. */
+  .tv-flag {
+    position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none;
+    opacity: 1; transition: opacity 600ms ease;
+    -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 35%, transparent 100%);
+            mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 35%, transparent 100%);
   }
 
-  .sim-card.attacker {
-    border-color: rgba(125, 190, 245, 0.22);
+  /* ---------- final step: pairings only ---------- */
+  .tv-top, .tv-col, .tv-mid, .tv-bottom { transition: opacity 520ms ease, transform 620ms cubic-bezier(.6,0,.2,1), filter 520ms ease; }
+  .tv.is-final .tv-top { opacity: 0; transform: translateY(calc(var(--u) * -80)); }
+  .tv.is-final .tv-col.a { opacity: 0; transform: translateX(calc(var(--u) * -140)); }
+  .tv.is-final .tv-col.b { opacity: 0; transform: translateX(calc(var(--u) * 140)); }
+  .tv.is-final .tv-mid { opacity: 0; transform: scale(0.94); filter: blur(calc(var(--u) * 6)); }
+  .tv.is-final .tv-bottom { opacity: 0; transform: translateY(calc(var(--u) * 80)); }
+  .tv.is-final .tv-top, .tv.is-final .tv-col, .tv.is-final .tv-mid, .tv.is-final .tv-bottom { pointer-events: none; }
+
+  .final { position: absolute; inset: calc(var(--u) * 48); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: calc(var(--u) * 40); visibility: hidden; opacity: 0; transition: opacity 400ms ease, visibility 0s linear 400ms; }
+  .tv.is-final .final { visibility: visible; opacity: 1; transition: opacity 400ms ease 380ms, visibility 0s; }
+  .fin-head { display: grid; justify-items: center; gap: calc(var(--u) * 14); padding-top: calc(var(--u) * 8); }
+  .fin-brand { display: flex; align-items: center; gap: calc(var(--u) * 22); font: 900 calc(var(--u) * 56)/1 var(--headline); text-transform: uppercase; letter-spacing: 0.02em; color: var(--tv-ink); }
+  .fin-brand .brand-mark { width: calc(var(--u) * 116); height: calc(var(--u) * 80); padding-top: calc(var(--u) * 10); font-size: calc(var(--u) * 30); border-radius: calc(var(--u) * 6);
     background:
-      linear-gradient(180deg, rgba(125, 190, 245, 0.08), rgba(255, 255, 255, 0.015)),
-      rgba(8, 8, 8, 0.8);
-  }
-
-  .sim-card.mission {
-    border-color: rgba(139, 209, 143, 0.24);
-    background:
-      linear-gradient(180deg, rgba(139, 209, 143, 0.09), rgba(255, 255, 255, 0.015)),
-      rgba(8, 8, 8, 0.8);
-  }
-
-  .sim-card.matchup {
-    border-color: rgba(255, 106, 28, 0.24);
-    background:
-      linear-gradient(180deg, rgba(255, 106, 28, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(8, 8, 8, 0.8);
-  }
-
-  .sim-card.draggable {
-    cursor: grab;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 1px rgba(255, 106, 28, 0.08);
-  }
-
-  .sim-card.draggable:hover {
-    border-color: rgba(255, 106, 28, 0.42);
-    transform: translateY(-2px);
-  }
-
-  .sim-card.clickable-card {
-    cursor: pointer;
-  }
-
-  .sim-card.clickable-card:hover {
-    border-color: rgba(245, 155, 128, 0.46);
-    box-shadow: 0 0 0 1px rgba(245, 155, 128, 0.14), inset 0 0 0 1px rgba(245, 155, 128, 0.16);
-  }
-
-  .sim-card.selected {
-    border-color: rgba(255, 106, 28, 0.52);
-    box-shadow: 0 0 0 1px rgba(255, 106, 28, 0.12), inset 0 0 0 1px rgba(255, 106, 28, 0.18);
-  }
-
-  .sim-card.dim {
-    opacity: 0.42;
-  }
-
-  .card-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: start;
-  }
-
-  .card-title {
-    font-size: 1.1rem;
-    color: #fff5e8;
-  }
-
-  .card-subtitle,
-  .card-meta {
-    margin: 0;
-    font-size: 0.92rem;
-  }
-
-  .card-remove {
-    min-height: 28px;
-    padding: 0 10px;
-    align-self: start;
-    border-color: rgba(245, 155, 128, 0.34);
-    color: #ffd7cb;
-    background: rgba(245, 155, 128, 0.08);
-  }
-
-  .step-banner {
-    margin-bottom: 14px;
-  }
-
-  .step-banner h3 {
-    margin: 8px 0 10px;
-    font-size: 1.55rem;
-  }
-
-  .action-context,
-  .board-help {
-    margin-bottom: 14px;
-  }
-
-  .board-help {
-    background: rgba(255, 97, 24, 0.08);
-  }
-
-  .action-area {
-    display: grid;
-    gap: 14px;
-    background:
-      radial-gradient(circle at top, rgba(255, 106, 28, 0.08), transparent 48%),
-      rgba(7, 7, 7, 0.6);
-  }
-
-  .action-slot {
-    min-height: 136px;
-    align-content: start;
-  }
-
-  .dropzone {
-    padding: 16px;
-    display: grid;
-    gap: 12px;
-    min-height: 170px;
-    background: rgba(7, 7, 7, 0.5);
-    border-style: dashed;
-  }
-
-  .dropzone-body {
-    min-height: 88px;
-    display: grid;
-    gap: 10px;
-    align-content: start;
-  }
-
-  .drop-empty {
-    margin: 0;
-    color: rgba(240, 230, 215, 0.52);
-  }
-
-  .offer-lane {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .offer-lane .dropzone {
-    flex: 1 1 220px;
-  }
-
-  .offer-drop-body {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: stretch;
-  }
-
-  .offer-drop-body .drop-empty {
-    grid-column: 1 / -1;
-    text-align: center;
-  }
-
-  .map-panel {
-    display: grid;
-    gap: 14px;
-  }
-
-  .map-grid {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    align-items: stretch;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 6px;
-  }
-
-  .map-grid > .map-zone {
-    flex: 0 0 20rem;
-    min-width: 20rem;
-  }
-
-  .map-zone {
-    position: relative;
-    flex: 1 1 180px;
-    min-height: 190px;
-    padding: 16px;
-    display: grid;
-    gap: 10px;
-    align-content: start;
-    background:
-      radial-gradient(circle at 20% 20%, rgba(125, 190, 245, 0.12), transparent 35%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-      rgba(7, 7, 7, 0.55);
-    border-style: dashed;
-  }
-
-  .map-zone::after {
-    content: "";
-    position: absolute;
-    inset: 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    pointer-events: none;
-  }
-
-  .map-zone.available .map-copy {
-    color: #dfeefb;
-  }
-
-  .map-zone.locked {
-    border-color: rgba(139, 209, 143, 0.34);
-    background:
-      radial-gradient(circle at 20% 20%, rgba(139, 209, 143, 0.16), transparent 35%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-      rgba(7, 7, 7, 0.55);
-  }
-
-  .map-zone.pending {
-    border-color: rgba(245, 202, 103, 0.36);
-    background:
-      radial-gradient(circle at 20% 20%, rgba(245, 202, 103, 0.18), transparent 35%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-      rgba(7, 7, 7, 0.55);
-  }
-
-  .map-zone .sim-card {
-    min-width: 0;
-  }
-
-  #sim-live .sim-board {
-    gap: 4px 8px;
-    max-width: 1200px;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.9fr) minmax(0, 0.85fr);
-    grid-template-areas:
-      'attacker-roster attacker-roster attacker-roster'
-      'mission mission mission'
-      'attacker-selection maps defender-selection'
-      'defender-roster defender-roster defender-roster';
-    align-items: start;
-  }
-
-  #sim-live .attacker-roster-section {
-    grid-area: attacker-roster;
-  }
-
-  #sim-live .defender-roster-section {
-    grid-area: defender-roster;
-  }
-
-  #sim-live .attacker-selection-section {
-    grid-area: attacker-selection;
-  }
-
-  #sim-live .defender-selection-section {
-    grid-area: defender-selection;
-  }
-
-  #sim-live .mission-board-section {
-    grid-area: mission;
-  }
-
-  #sim-live .attacker-roster-section {
-    background:
-      linear-gradient(180deg, rgba(125, 190, 245, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(7, 7, 7, 0.55);
-    border-color: rgba(125, 190, 245, 0.24);
-  }
-
-  #sim-live .mission-board-section {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 13rem;
-    column-gap: 8px;
-    row-gap: 4px;
-    align-items: start;
-    background:
-      linear-gradient(180deg, rgba(139, 209, 143, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(7, 7, 7, 0.55);
-    border-color: rgba(139, 209, 143, 0.26);
-  }
-
-  #sim-live .mission-board-section .deck-head {
-    grid-column: 1 / -1;
-  }
-
-  #sim-live .defender-roster-section {
-    background:
-      linear-gradient(180deg, rgba(245, 129, 129, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(7, 7, 7, 0.55);
-    border-color: rgba(245, 129, 129, 0.24);
-  }
-
-  #sim-live .roster-panel[data-role="attacker"] {
-    background:
-      linear-gradient(180deg, rgba(125, 190, 245, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(7, 7, 7, 0.55);
-    border-color: rgba(125, 190, 245, 0.24);
-  }
-
-  #sim-live .roster-panel[data-role="defender"] {
-    background:
-      linear-gradient(180deg, rgba(245, 129, 129, 0.12), rgba(255, 255, 255, 0.015)),
-      rgba(7, 7, 7, 0.55);
-    border-color: rgba(245, 129, 129, 0.24);
-  }
-
-  #sim-live .live-map-section {
-    grid-area: maps;
-  }
-
-  #sim-live .deck-panel,
-  #sim-live .action-area,
-  #sim-live .status-card,
-  #sim-live .map-zone,
-  #sim-live .dropzone {
-    padding: 8px;
-  }
-
-  #sim-live .board-section,
-  #sim-live .action-area,
-  #sim-live .map-zone {
-    gap: 6px;
-  }
-
-  #sim-live .deck-head,
-  #sim-live .section-head {
-    margin-bottom: 6px;
-  }
-
-  #sim-live .deck-stack {
-    min-height: 26px;
-  }
-
-  #sim-live .action-slot {
-    min-height: 38px;
-  }
-
-  #sim-live .action-slot {
-    padding: 4px;
-  }
-
-  #sim-live .dropzone {
-    min-height: 46px;
-    gap: 4px;
-  }
-
-  #sim-live .dropzone-body {
-    min-height: 16px;
-    gap: 4px;
-  }
-
-  #sim-live .graveyard-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-  }
-
-  #sim-live .mission-board-section .graveyard-grid {
-    grid-column: 2;
-    grid-row: 2;
-    grid-template-columns: 1fr;
-    gap: 4px;
-    align-content: start;
-  }
-
-  #sim-live .mission-board-section .status-card {
-    display: grid;
-    gap: 3px;
-    padding: 5px 6px;
-  }
-
-  #sim-live .mission-board-section .resource-chip-row {
-    display: grid;
-    gap: 2px;
-  }
-
-  #sim-live .mission-board-section .resource-chip {
-    justify-content: flex-start;
-    text-align: left;
-    min-height: 12px;
-    padding: 1px 4px;
-  }
-
-  #sim-live .mission-board-section .status-card:first-child .status-title {
-    color: #ffb6b6;
-  }
-
-  #sim-live .mission-board-section .status-card:last-child .status-title {
-    color: #b7dbff;
-  }
-
-  #sim-live .mission-board-section .resource-chip.banned {
-    border-color: rgba(245, 91, 91, 0.52);
-    background: rgba(245, 91, 91, 0.14);
-    color: #ffd2d2;
-  }
-
-  #sim-live .mission-board-section .resource-chip.used {
-    border-color: rgba(104, 170, 255, 0.52);
-    background: rgba(104, 170, 255, 0.14);
-    color: #d8ebff;
-  }
-
-  #sim-live .map-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
-    overflow: visible;
-    padding-bottom: 0;
-  }
-
-  #sim-live .map-grid > .map-zone {
-    flex: none;
-    min-width: 0;
-  }
-
-  #sim-live .map-zone {
-    min-height: 72px;
-    padding: 6px;
-    gap: 4px;
-  }
-
-  #sim-live .map-zone::after {
-    inset: 4px;
-    border-radius: 3px;
-  }
-
-  #sim-live .roster-stack,
-  #sim-live .mission-stack {
-    gap: 4px;
-    align-content: start;
-  }
-
-  #sim-live .active-source {
-    border-color: rgba(255, 106, 28, 0.62);
-    box-shadow: 0 0 0 1px rgba(255, 106, 28, 0.18), inset 0 0 0 1px rgba(255, 106, 28, 0.12);
-  }
-
-  #sim-live .roster-panel.deciding-side-a {
-    border-color: rgba(245, 91, 91, 0.72);
-    box-shadow: 0 0 0 1px rgba(245, 91, 91, 0.2), inset 0 0 0 1px rgba(245, 91, 91, 0.16), 0 0 12px rgba(245, 91, 91, 0.14);
-  }
-
-  #sim-live .roster-panel.deciding-side-b {
-    border-color: rgba(104, 170, 255, 0.72);
-    box-shadow: 0 0 0 1px rgba(104, 170, 255, 0.2), inset 0 0 0 1px rgba(104, 170, 255, 0.16), 0 0 12px rgba(104, 170, 255, 0.14);
-  }
-
-  #sim-live .step-banner,
-  #sim-live .action-context,
-  #sim-live .board-help,
-  #sim-live .deck-panel,
-  #sim-live .action-area,
-  #sim-live .status-card,
-  #sim-live .map-zone,
-  #sim-live .dropzone,
-  #sim-live .sim-card {
-    border-radius: 3px;
-  }
-
-  #sim-live .mission-stack {
-    grid-column: 1;
-    grid-row: 2;
-    grid-template-columns: repeat(auto-fit, minmax(4.4rem, 1fr));
-    gap: 2px;
-  }
-
-  #sim-live .panel-kicker,
-  #sim-live .deck-kicker,
-  #sim-live .status-title,
-  #sim-live .map-label,
-  #sim-live .drop-label {
-    font-size: 0.58rem;
-    letter-spacing: 0.08em;
-  }
-
-  #sim-live .board-section h3,
-  #sim-live .map-name {
-    font-size: 0.82rem;
-  }
-
-  #sim-live .count-pill,
-  #sim-live .card-status,
-  #sim-live .resource-chip {
-    min-height: 14px;
-    padding: 0 4px;
-    font-size: 0.48rem;
-  }
-
-  #sim-live .mini-note,
-  #sim-live .drop-copy,
-  #sim-live .map-copy,
-  #sim-live .card-meta,
-  #sim-live .resource-empty,
-  #sim-live .drop-empty {
-    font-size: 0.62rem;
-    line-height: 1.15;
-  }
-
-  #sim-live #map-help,
-  #sim-live .drop-copy {
-    display: none;
-  }
-
-  #sim-live .board-help {
-    border: none;
-    background: none;
-    padding: 0;
-    color: #ffffff;
-    margin-bottom: 6px;
-    font-size: 0.76rem;
-    line-height: 1.25;
-  }
-
-  #sim-live .resource-chip-row {
-    gap: 4px;
-  }
-
-  #sim-live .sim-card.compact {
-    min-height: 30px;
-    padding: 2px 4px;
-    gap: 1px;
-    place-items: center;
-    align-content: center;
-    text-align: center;
-  }
-
-  #sim-live .sim-card.compact .card-top {
-    gap: 2px;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-  }
-
-  #sim-live .sim-card.compact .card-title {
-    font-size: 0.92rem;
-    line-height: 1.05;
-    text-align: center;
-  }
-
-  #sim-live .sim-card.draggable {
-    border-color: rgba(255, 106, 28, 0.78);
-    box-shadow: inset 0 0 0 1px rgba(255, 106, 28, 0.24), 0 0 0 1px rgba(255, 106, 28, 0.2), 0 0 10px rgba(255, 97, 24, 0.14);
-  }
-
-  #sim-live .sim-card.compact .card-badges {
-    gap: 2px;
-  }
-
-  #sim-live .roster-stack > .sim-card.compact .card-top > div,
-  #sim-live .mission-stack > .sim-card.compact .card-top > div {
-    display: grid;
-    justify-items: center;
-    width: 100%;
-  }
-
-  #sim-live .roster-stack > .sim-card.compact .card-badges {
-    display: none;
-  }
-
-  #sim-live .roster-stack > .sim-card.compact .card-status {
-    position: absolute;
-    top: 2px;
-    right: 3px;
-    min-height: 10px;
-    padding: 0 2px;
-    font-size: 0.34rem;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact {
-    min-height: 22px;
-    padding: 2px 3px;
-    gap: 1px;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact .card-title {
-    font-size: 0.7rem;
-    line-height: 1.05;
-    letter-spacing: 0.06em;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact .card-top {
-    gap: 2px;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact .card-status,
-  #sim-live .mission-stack > .sim-card.compact .card-badges {
-    display: none;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact .card-status {
-    min-height: 10px;
-    padding: 0 2px;
-    font-size: 0.34rem;
-  }
-
-  #sim-live .mission-stack > .sim-card.compact .card-badge.sticker {
-    min-height: 4px;
-    padding: 0 1px;
-    font-size: 0.18rem;
-  }
-
-  #sim-live #mission-action-area[hidden] {
-    display: none;
-  }
-
-  @media (max-width: 820px) {
-    #sim-live .sim-board {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        'attacker-roster'
-        'mission'
-        'attacker-selection'
-        'maps'
-        'defender-selection'
-        'defender-roster';
-    }
-
-    #sim-live .mission-stack {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  #sim-live .action-area .empty-state {
-    gap: 2px;
-  }
-
-  #sim-live .action-area .empty-state strong {
-    font-size: 0.72rem;
-  }
-
-  #sim-live .action-area .empty-state p {
-    display: none;
-  }
-
-  .resource-chip-row,
-  .history-list,
-  .match-grid {
-    margin-top: 12px;
-  }
-
-  .resource-chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 106, 28, 0.18);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text);
-  }
-
-  .resource-chip.banned {
-    border-color: rgba(245, 202, 103, 0.34);
-    background: rgba(245, 202, 103, 0.08);
-    color: #fff1c3;
-  }
-
-  .resource-chip.used {
-    border-color: rgba(139, 209, 143, 0.3);
-    background: rgba(139, 209, 143, 0.08);
-    color: #e8ffe9;
-  }
-
-  .resource-empty,
-  .match-empty,
-  .log-empty,
-  .roster-empty {
-    color: var(--muted);
-  }
-
-  .match-grid {
-    display: grid;
-    gap: 12px;
-  }
-
-  .match-card h3 {
-    margin: 10px 0;
-  }
-
-  .match-meta {
-    display: grid;
-    gap: 8px;
-  }
-
-  .history-list {
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 10px;
-    max-height: 560px;
-    overflow: auto;
-    padding-right: 4px;
-  }
-
-  .history-list li {
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 106, 28, 0.12);
-  }
-
-  .empty-state {
-    display: grid;
-    gap: 8px;
-  }
-
-  .empty-state strong {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.15rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--cream);
-  }
-
-  .sim-empty-chip {
-    display: flex;
-    align-items: center;
-  }
-
-  @media (max-width: 1200px) {
-    .layout,
-    .secondary,
-    .setup-grid,
-    .graveyard-grid {
-      grid-template-columns: 1fr;
-    }
-
-    #primary-layout.live-mode {
-      grid-template-columns: 1fr;
-    }
-
-    .roster-stack {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-
-    .mission-stack,
-    .card-grid {
-      grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-    }
-
-    .pick-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 calc(var(--u) * 6.7), #fff calc(var(--u) * 6.7) calc(var(--u) * 13.4));
+  }
+  .fin-teams { display: flex; align-items: center; gap: calc(var(--u) * 18); font: 800 calc(var(--u) * 30)/1 var(--headline); text-transform: uppercase; }
+  .fin-teams .fa, .fin-teams .fb { padding: calc(var(--u) * 10) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); background: var(--tv-card); color: #162026; }
+  .fin-teams .fvs { color: var(--tv-muted); font-size: calc(var(--u) * 24); }
+  .fin-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 24); align-content: center; }
+  .fin-pair { align-self: end; display: grid; gap: calc(var(--u) * 10); }
+  .fin-card { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 10); padding: calc(var(--u) * 16); display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: calc(var(--u) * 14); box-shadow: 0 calc(var(--u) * 20) calc(var(--u) * 44) rgba(10, 22, 40, 0.25); opacity: 0; transform: translateY(calc(var(--u) * 60)); }
+  .tv.is-final .fin-card { animation: rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(520ms + var(--d) * 110ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(calc(var(--u) * 60)); } to { opacity: 1; transform: none; } }
+  .fin-k { font: 700 calc(var(--u) * 20)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--success); }
+  .fin-shot { position: relative; aspect-ratio: 30 / 22; border-radius: calc(var(--u) * 6); overflow: hidden; background: #2a3a4c; }
+  .fin-shot svg, .fin-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .fin-map { position: absolute; inset: auto 0 0 0; padding: calc(var(--u) * 22) calc(var(--u) * 12) calc(var(--u) * 10); background: linear-gradient(transparent, rgba(7, 14, 24, 0.85)); color: #fff; font: 700 calc(var(--u) * 26)/1.1 var(--body); }
+  .fin-mission { justify-self: start; font: 700 calc(var(--u) * 24)/1 var(--body); padding: calc(var(--u) * 10) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); background: var(--mission); color: var(--mission-ink); border-bottom: calc(var(--u) * 4) solid var(--mission-edge); }
+  .fin-side { display: grid; gap: calc(var(--u) * 6); padding: calc(var(--u) * 12) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); color: #fff; }
+  .fin-side small { font: 700 calc(var(--u) * 18)/1.1 var(--body); letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+  .fin-side b { font: 900 calc(var(--u) * 34)/1.05 var(--headline); }
+  .fin-side.a { margin-right: calc(var(--u) * 22); }
+  .fin-side.b { margin-left: calc(var(--u) * 22); text-align: right; }
+  .fin-vs { justify-self: center; font: 900 calc(var(--u) * 22)/1 var(--headline); text-transform: uppercase; color: var(--muted); margin-block: calc(var(--u) * -4); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tv-top, .tv-col, .tv-mid, .tv-bottom, .final { transition: none; }
+    .tv.is-final .fin-card { animation: none; opacity: 1; transform: none; }
+    .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before,
+    .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after { animation: none; }
+    .big, .tbl.locked { animation: none; }
+    .rc, .tv-col, .tbl, .tv-step { transition: none; }
+  }
+
+  /* ---------- live board interaction ---------- */
+  .tv [data-act] { cursor: pointer; }
+  .tv-col.a .rc[data-act]:hover, .tv-col.a .rc[data-act]:focus-visible { border-color: var(--a); }
+  .tv-col.b .rc[data-act]:hover, .tv-col.b .rc[data-act]:focus-visible { border-color: var(--b); }
+  .tbl[data-act]:hover, .tbl[data-act]:focus-visible { border-style: solid; border-color: var(--tv-ink); background: var(--tv-solid); }
+  .ms { transition: transform 160ms ease, box-shadow 160ms ease; }
+  .ms[data-act]:hover, .ms[data-act]:focus-visible { transform: translateY(calc(var(--u) * -4)); box-shadow: 0 calc(var(--u) * 8) calc(var(--u) * 18) rgba(10, 22, 40, 0.3); }
+  .big[data-act]:hover, .big[data-act]:focus-visible { box-shadow: 0 0 0 calc(var(--u) * 4) var(--c), 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); }
+  .tv [data-act]:focus-visible { outline: none; }
+  .no-deal .big { animation: none; }
+  .act-btn { appearance: none; border: 0; cursor: pointer; font: 800 calc(var(--u) * 26)/1 var(--headline); text-transform: uppercase; letter-spacing: 0.02em; padding: calc(var(--u) * 16) calc(var(--u) * 28); border-radius: calc(var(--u) * 6); background: var(--red); color: #fff; box-shadow: 0 calc(var(--u) * 10) calc(var(--u) * 24) rgba(10, 22, 40, 0.3); }
+  .act-btn:hover { filter: brightness(1.1); }
+  .tv.a-def .act-btn { background: var(--red); }
+
+  /* Before the round starts: just the logo and the two team names. */
+  .empty { position: absolute; inset: calc(var(--u) * 48); display: grid; place-content: center; justify-items: center; gap: calc(var(--u) * 26); visibility: hidden; opacity: 0; transition: opacity 400ms ease, visibility 0s linear 400ms; }
+  .tv.is-empty .empty { visibility: visible; opacity: 1; transition: opacity 400ms ease; }
+  .tv.is-empty .tv-top, .tv.is-empty .tv-col, .tv.is-empty .tv-mid, .tv.is-empty .tv-bottom { opacity: 0; visibility: hidden; }
+  .tv-step .t.long { font-size: calc(var(--u) * 36); }
+  .act-wrap .act-btn { margin-top: calc(var(--u) * 4); }
+  .empty-note { font: 700 calc(var(--u) * 24)/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
 
-    .team-list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .map-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 820px) {
-    body {
-      padding: 16px 12px 40px;
-    }
-
-    .hero,
-    .panel {
-      padding: 18px;
-      border-radius: 20px;
-    }
-
-    h1 {
-      font-size: clamp(3.2rem, 14vw, 5rem);
-    }
-
-    .top-nav,
-    .panel-head,
-    .section-head,
-    .roster-head,
-    .setup-actions,
-    .mini-actions,
-    .sim-actions,
-    .selection-actions {
-      align-items: stretch;
-    }
-
-    .nav-group,
-    .setup-actions,
-    .mini-actions,
-    .sim-actions,
-    .selection-actions {
-      flex-direction: column;
-    }
-
-    .nav-link,
-    .primary-button,
-    .ghost-button,
-    .confirm-button,
-    .remove-button {
-      width: 100%;
-    }
-
-    .deck-panel,
-    .map-zone,
-    .dropzone {
-      min-width: 100%;
-    }
-
-    .roster-stack,
-    .mission-stack,
-    .map-grid {
-      gap: 6px;
-    }
-
-    .roster-stack {
-      grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-    }
-
-    .mission-stack,
-    .card-grid {
-      grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
-    }
-
-    .pick-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .team-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .team-name {
-      font-size: 1rem;
-    }
-  }
 </style>
 </head>
 <body>
-  <main class="shell">
-    <section class="hero">
-      <div class="top-nav">
-        <div class="nav-group">
-          <a class="nav-link" href="./">Back to Calendar</a>
-          <a class="nav-link" href="./brussels-travel-brief.html">Travel Brief</a>
-        </div>
-        <div class="nav-group">
-          <span class="status-chip">5 Matches</span>
-        </div>
+  <nav class="site-nav" aria-label="Primary">
+    <div class="shell">
+      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">USA</span>USA Killteam</a>
+      <div class="nav-links">
+        <a href="./">Calendar</a>
+        <a href="./brussels-travel-brief.html">Travel Brief</a>
+        <a href="./founders/">Regional Founders</a>
       </div>
-      <p class="eyebrow">2026 Team Event</p>
-      <h1>Pairing Simulator</h1>
-      <p class="lede">The step order stays the same, but the interface is now a drag-and-drop playmat. Build both five-team rosters, then drag cards from the attacking deck, defending deck, and mission deck into the highlighted zones and onto the five map areas.</p>
-    </section>
+    </div>
+  </nav>
 
-    <section class="layout" id="primary-layout">
-      <article class="panel">
+  <main class="shell">
+    <header class="page-head">
+      <p class="eyebrow">Team pairings</p>
+      <h1>Pairing Simulator</h1>
+      <p class="lede">Name both teams and pick five Kill Teams each, then start the round and click through each step on the board. Use the stream view to put the board on a broadcast.</p>
+    </header>
+
+    <div class="stack">
+      <section class="panel" id="primary-layout" aria-labelledby="setup-title">
         <div class="panel-head">
           <div>
-            <p class="panel-kicker">Pre-Step</p>
-            <h2>Roster Setup</h2>
+            <p class="panel-kicker">Setup</p>
+            <h2 id="setup-title">Teams and rosters</h2>
           </div>
-          <button class="ghost-button" id="swap-sides-button" type="button">Swap Sides</button>
         </div>
-        <p class="panel-copy">Use the Team A and Team B checkboxes to build both five-team rosters. Opening attacker and defender roles are randomized each time you start the round.</p>
 
-        <section class="setup-library" id="setup-library">
+        <div class="names">
+          <label class="field" for="team-name-a">Team A name
+            <input id="team-name-a" type="text" maxlength="32" autocomplete="off" placeholder="Team A">
+          </label>
+          <label class="field" for="team-name-b">Team B name
+            <input id="team-name-b" type="text" maxlength="32" autocomplete="off" placeholder="Team B">
+          </label>
+          <button class="ghost-button" id="swap-sides-button" type="button">Swap rosters</button>
+        </div>
+
+        <section class="setup-library" id="setup-library" aria-labelledby="library-title">
           <div class="section-head">
             <div>
-              <p class="panel-kicker">Kill Team Library</p>
-              <h3>Checkbox Draft List</h3>
+              <p class="side-tag">Kill Team library</p>
+              <h3 id="library-title">Tick A or B to add a Kill Team</h3>
             </div>
             <div class="section-tools">
               <button class="ghost-button" id="toggle-declassified" type="button">Show Declassified Teams</button>
-              <span class="count-pill" id="library-count">0 Cards</span>
+              <span class="count-pill" id="library-count">0 Teams</span>
             </div>
           </div>
-          <p class="mini-note">The same team can appear on both sides, but not twice on the same side. Each card lets you tick A, B, or both. Declassified teams are hidden by default.</p>
-          <div class="team-list-head" aria-hidden="true">
-            <span>Kill Team</span>
-            <span>A</span>
-            <span>B</span>
-          </div>
+          <p class="mini-note">A Kill Team can be on both sides but only once per side. Declassified teams are hidden until you show them.</p>
           <div class="team-list" id="team-library"></div>
         </section>
 
@@ -1732,7 +501,7 @@
             <div class="roster-head">
               <div>
                 <p class="side-tag">Team A</p>
-                <h3 id="team-a-setup-heading">Team A Pool</h3>
+                <h3 id="team-a-setup-heading">Team A</h3>
               </div>
               <span class="count-pill" id="count-a">0 / 5</span>
             </div>
@@ -1740,7 +509,7 @@
             <div class="mini-actions">
               <div class="setup-search">
                 <div class="setup-search-field">
-                  <input class="setup-search-input" id="setup-search-a" type="search" autocomplete="off" placeholder="Add a team to Team A">
+                  <input class="setup-search-input" id="setup-search-a" type="search" autocomplete="off" placeholder="Add a Kill Team" aria-label="Add a Kill Team to Team A">
                   <div class="setup-search-suggestions" id="setup-search-suggestions-a" hidden></div>
                 </div>
                 <button class="ghost-button" id="add-search-a" type="button">Add</button>
@@ -1754,7 +523,7 @@
             <div class="roster-head">
               <div>
                 <p class="side-tag">Team B</p>
-                <h3 id="team-b-setup-heading">Team B Pool</h3>
+                <h3 id="team-b-setup-heading">Team B</h3>
               </div>
               <span class="count-pill" id="count-b">0 / 5</span>
             </div>
@@ -1762,7 +531,7 @@
             <div class="mini-actions">
               <div class="setup-search">
                 <div class="setup-search-field">
-                  <input class="setup-search-input" id="setup-search-b" type="search" autocomplete="off" placeholder="Add a team to Team B">
+                  <input class="setup-search-input" id="setup-search-b" type="search" autocomplete="off" placeholder="Add a Kill Team" aria-label="Add a Kill Team to Team B">
                   <div class="setup-search-suggestions" id="setup-search-suggestions-b" hidden></div>
                 </div>
                 <button class="ghost-button" id="add-search-b" type="button">Add</button>
@@ -1773,164 +542,105 @@
           </section>
         </div>
 
-        <section class="mission-strip">
-          <div class="section-head">
-            <div>
-              <p class="panel-kicker">Mission Deck</p>
-              <h3>Round Cards</h3>
-            </div>
+        <div class="section-head">
+          <div>
+            <p class="side-tag">Mission deck</p>
           </div>
-          <div class="card-grid" id="setup-missions"></div>
-        </section>
+        </div>
+        <div class="mission-row" id="setup-missions"></div>
 
         <div class="setup-actions">
-          <button class="primary-button" id="start-simulation" type="button">Start Pairing Simulation</button>
-          <button class="ghost-button" id="clear-both" type="button">Clear Both Rosters</button>
+          <button class="primary-button" id="start-simulation" type="button">Start round</button>
+          <button class="ghost-button" id="clear-both" type="button">Clear both rosters</button>
+          <p class="setup-feedback" id="setup-feedback">Pick five teams on each side to begin.</p>
         </div>
-        <p class="setup-feedback" id="setup-feedback">Pick five teams on each side to begin.</p>
-      </article>
+      </section>
 
-      <article class="panel">
+      <section class="panel board-panel" aria-labelledby="board-title">
         <div class="panel-head">
           <div>
-            <p class="panel-kicker">Live Playmat</p>
-            <h2>Simulation</h2>
+            <p class="panel-kicker">Board</p>
+            <h2 id="board-title">Live pairing</h2>
           </div>
-          <span class="status-chip" id="progress-chip">Not Started</span>
+          <span class="status-chip" id="progress-chip">Not started</span>
         </div>
-
-        <div id="sim-empty" class="sim-empty-chip">
-          <span class="status-chip">Waiting for rosters</span>
-        </div>
-
-        <div id="sim-live" hidden>
-          <div class="step-banner">
-            <p class="step-label" id="step-label"></p>
-            <h3 id="step-title"></h3>
-            <p id="step-copy"></p>
+        <div class="board-tools">
+          <div class="tools">
+            <button class="primary-button" id="go-live" type="button">Stream view</button>
+            <button class="ghost-button" id="open-stream-window" type="button">Open in new window</button>
+            <button class="ghost-button" id="restart-simulation" type="button">Restart round</button>
           </div>
-
-          <div class="action-context" id="action-context"></div>
-          <div class="board-help" id="board-help"></div>
-
-          <div class="sim-board">
-            <section class="deck-panel board-section roster-panel attacker-roster-section">
-              <div class="deck-head">
-                <div>
-                  <p class="deck-kicker">Roster</p>
-                  <h3 id="attacker-deck-title">Attacker Roster</h3>
-                </div>
-                <span class="count-pill" id="attacker-deck-count">0 Cards</span>
-              </div>
-              <div class="deck-stack roster-stack" id="attacker-deck"></div>
-            </section>
-
-            <section class="board-section selection-panel attacker-selection-section">
-              <div class="section-head">
-                <div>
-                  <p class="panel-kicker">Attacker Choice</p>
-                  <h3 id="attacker-selection-title">Attacker Selection Area</h3>
-                </div>
-              </div>
-              <div class="action-area action-slot" id="attacker-action-area"></div>
-            </section>
-
-            <section class="deck-panel board-section mission-panel mission-board-section">
-              <div class="deck-head">
-                <div>
-                  <p class="deck-kicker">Deck 3</p>
-                  <h3 id="mission-deck-title">Mission Cards</h3>
-                </div>
-                <span class="count-pill" id="mission-deck-count">0 Cards</span>
-              </div>
-              <div class="deck-stack mission-stack" id="mission-deck"></div>
-
-              <div class="graveyard-grid">
-                <section class="status-card">
-                  <p class="status-title">Banned Missions</p>
-                  <div class="resource-chip-row" id="missions-banned"></div>
-                </section>
-                <section class="status-card">
-                  <p class="status-title">Locked Missions</p>
-                  <div class="resource-chip-row" id="missions-used"></div>
-                </section>
-              </div>
-
-              <div class="action-area action-slot" id="mission-action-area" hidden></div>
-            </section>
-
-            <section class="map-panel board-section live-map-section">
-              <div class="section-head">
-                <div>
-                  <p class="panel-kicker">Table Maps</p>
-                  <h3>Five Play Areas</h3>
-                </div>
-              </div>
-              <p class="mini-note" id="map-help">These map spaces stay on the table for the whole round. Committed pairings stay pinned to their map with the chosen mission.</p>
-              <div class="map-grid" id="map-grid"></div>
-            </section>
-
-            <section class="board-section selection-panel defender-selection-section">
-              <div class="section-head">
-                <div>
-                  <p class="panel-kicker">Defender Choice</p>
-                  <h3 id="defender-selection-title">Defender Selection Area</h3>
-                </div>
-              </div>
-              <div class="action-area action-slot" id="defender-action-area"></div>
-            </section>
-
-            <section class="deck-panel board-section roster-panel defender-roster-section">
-              <div class="deck-head">
-                <div>
-                  <p class="deck-kicker">Roster</p>
-                  <h3 id="defender-deck-title">Defender Roster</h3>
-                </div>
-                <span class="count-pill" id="defender-deck-count">0 Cards</span>
-              </div>
-              <div class="deck-stack roster-stack" id="defender-deck"></div>
-            </section>
-          </div>
-
-          <div class="sim-actions">
-            <button class="ghost-button" id="restart-simulation" type="button">Restart Simulation</button>
+          <div class="tools">
+            <div class="seg" role="group" aria-label="Board background">
+              <button type="button" data-bg="site" aria-pressed="false">Site</button>
+              <button type="button" data-bg="broadcast" aria-pressed="true">Broadcast</button>
+              <button type="button" data-bg="transparent" aria-pressed="false">Transparent</button>
+            </div>
+            <div class="seg" role="group" aria-label="Overlay">
+              <button type="button" id="safe-toggle" aria-pressed="false">Safe area</button>
+            </div>
           </div>
         </div>
-      </article>
-    </section>
-
-    <section class="layout secondary">
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="panel-kicker">Results</p>
-            <h2>Completed Pairings</h2>
-          </div>
-          <div class="section-tools">
-            <span class="count-pill" id="session-record-count">0 Saved</span>
-            <button class="ghost-button" id="download-session-report" type="button" disabled>Download Excel</button>
-            <button class="ghost-button" id="clear-session-records" type="button" disabled>Clear Saved Rounds</button>
-          </div>
-        </div>
-        <p class="mini-note" id="export-status">Complete a full round to build the six-tab Excel workbook.</p>
-        <div class="match-grid" id="matchups"></div>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <p class="panel-kicker">Round Log</p>
-            <h2>Action History</h2>
+        <p class="mini-note">Click on the board to act: roster cards to reveal and offer, the offered cards to pick, a table to place the pairing, and a mission to ban or lock it. Stream view fills the window with just the board; press Esc or S to leave it.</p>
+        <div class="board-scroll">
+          <div class="tv-frame">
+            <div class="tv broadcast is-empty" id="tv">
+              <canvas class="tv-flag" id="tv-flag" aria-hidden="true"></canvas>
+              <div class="tv-top">
+                <div class="tv-brand"><span class="brand-mark" aria-hidden="true">USA</span><div>USA Killteam<small>Team pairings</small></div></div>
+                <div class="tv-step" id="tv-step"><span class="k" id="tv-step-k"></span><span class="t" id="tv-step-t"></span></div>
+                <div class="tv-score"><b id="tv-locked">0 / 5</b><span>Pairings locked</span></div>
+              </div>
+              <div class="tv-col a" id="col-a"></div>
+              <div class="tv-mid">
+                <div class="tv-action" id="tv-action"></div>
+                <div class="tables" id="tables"></div>
+              </div>
+              <div class="tv-col b" id="col-b"></div>
+              <div class="tv-bottom" id="missions"></div>
+              <div class="empty" id="tv-empty"></div>
+              <div class="final" id="final" aria-hidden="true"></div>
+              <div class="safe" id="safe" hidden><span>48px safe area</span></div>
+            </div>
           </div>
         </div>
-        <ol class="history-list" id="history-list"></ol>
-      </article>
-    </section>
+        <button class="ghost-button stream-exit" id="stream-exit" type="button">Exit stream view</button>
+      </section>
+
+      <div class="secondary">
+        <section class="panel" aria-labelledby="results-title">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Results</p>
+              <h2 id="results-title">Pairings</h2>
+            </div>
+            <div class="tools">
+              <span class="count-pill" id="session-record-count">0 Saved</span>
+              <button class="ghost-button" id="download-session-report" type="button" disabled>Download Excel</button>
+              <button class="ghost-button" id="clear-session-records" type="button" disabled>Clear saved rounds</button>
+            </div>
+          </div>
+          <p class="mini-note" id="export-status">Complete a full round to build the six-tab Excel workbook.</p>
+          <div class="match-grid" id="matchups"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="history-title">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Round log</p>
+              <h2 id="history-title">History</h2>
+            </div>
+          </div>
+          <ol class="history-list" id="history-list"></ol>
+        </section>
+      </div>
+    </div>
   </main>
 
   <script src="./team-pairing-teams.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
   <script>
+    const teamNames = { A: '', B: '' };
     const TEAM_OPTIONS = Array.isArray(window.TEAM_PAIRING_TEAMS) ? [...window.TEAM_PAIRING_TEAMS] : [];
     const DECLASSIFIED_TEAMS = new Set([
       'Blooded',
@@ -2125,11 +835,11 @@
     }
 
     function teamLabel(side) {
-      return `Team ${side}`;
+      return (teamNames[side] || '').trim() || `Team ${side}`;
     }
 
     function roleName(side, phase = null) {
-      return `${formatRole(getRoleForSide(side, phase))} (${side})`;
+      return `${formatRole(getRoleForSide(side, phase))} (${teamLabel(side)})`;
     }
 
     function getRoleSides(phase) {
@@ -2616,8 +1326,8 @@
         input.disabled = isFull;
         button.disabled = isFull;
         input.placeholder = isFull
-          ? `Team ${side} is full`
-          : `Add a team to Team ${side}`;
+          ? `${teamLabel(side)} is full`
+          : 'Add a Kill Team';
 
         if (isFull) {
           input.value = '';
@@ -2700,7 +1410,7 @@
         A: [...state.setup.A],
         B: [...state.setup.B]
       };
-      state.history.push(`Simulation started with Team ${state.openingDefenderSide} as the Defender side and Team ${getOpposingSide(state.openingDefenderSide)} as the Attacker side.`);
+      state.history.push(`Simulation started with ${teamLabel(state.openingDefenderSide)} as the Defender side and ${teamLabel(getOpposingSide(state.openingDefenderSide))} as the Attacker side.`);
       renderAll();
     }
 
@@ -2749,7 +1459,7 @@
         table: null,
         mission: null
       };
-      state.history.push(`${sequence.label}: Defender (${sequence.defender}) revealed ${team}.`);
+      state.history.push(`${sequence.label}: Defender (${teamLabel(sequence.defender)}) revealed ${team}.`);
       advancePhase();
     }
 
@@ -2776,7 +1486,7 @@
         return;
       }
       state.pendingMatch.offeredTeams = [...state.pendingOfferSelection];
-      state.history.push(`${sequence.label}: Attacker (${sequence.attacker}) offered ${state.pendingOfferSelection.join(' and ')}.`);
+      state.history.push(`${sequence.label}: Attacker (${teamLabel(sequence.attacker)}) offered ${state.pendingOfferSelection.join(' and ')}.`);
       advancePhase();
     }
 
@@ -2789,7 +1499,7 @@
       state.pendingMatch.returnedAttackerTeam = returnedTeam;
       state.pools[sequence.defender] = state.pools[sequence.defender].filter((team) => team !== state.pendingMatch.defenderTeam);
       state.pools[sequence.attacker] = state.pools[sequence.attacker].filter((team) => team !== selectedTeam);
-      state.history.push(`${sequence.label}: Defender (${sequence.defender}) selected ${selectedTeam}; ${returnedTeam} returned to Attacker (${sequence.attacker}).`);
+      state.history.push(`${sequence.label}: Defender (${teamLabel(sequence.defender)}) selected ${selectedTeam}; ${returnedTeam} returned to Attacker (${teamLabel(sequence.attacker)}).`);
       advancePhase();
     }
 
@@ -2799,7 +1509,7 @@
       }
       state.pendingMatch.table = table;
       state.availableTables = state.availableTables.filter((entry) => entry !== table);
-      state.history.push(`${sequence.label}: Attacker (${sequence.attacker}) selected ${table}.`);
+      state.history.push(`${sequence.label}: Attacker (${teamLabel(sequence.attacker)}) selected ${table}.`);
       advancePhase();
     }
 
@@ -2811,7 +1521,7 @@
       state.availableMissions = state.availableMissions.filter((entry) => entry !== mission);
       state.usedMissions.push(mission);
       state.matchups.push({ ...state.pendingMatch });
-      state.history.push(`${sequence.label}: Defender (${sequence.defender}) selected ${mission}. Match locked on ${state.pendingMatch.table}.`);
+      state.history.push(`${sequence.label}: Defender (${teamLabel(sequence.defender)}) selected ${mission}. Match locked on ${state.pendingMatch.table}.`);
       state.pendingMatch = null;
       advancePhase();
     }
@@ -2839,7 +1549,7 @@
         table,
         mission: chosenMission
       });
-      state.history.push(`Pairing 5: ${defenderTeam} and ${attackerTeam} automatically paired on ${table}. Defender (${sequence.defender}) selected ${chosenMission}.`);
+      state.history.push(`Pairing 5: ${defenderTeam} and ${attackerTeam} automatically paired on ${table}. Defender (${teamLabel(sequence.defender)}) selected ${chosenMission}.`);
       state.completed = true;
       state.phaseIndex = state.phases.length;
       saveCompletedRound();
@@ -2914,278 +1624,6 @@
       };
     }
 
-    function getBoardHelp(phase) {
-      if (!phase) {
-        return 'The round is complete. Review the five matchups below or restart the playmat.';
-      }
-
-      if (phase.type === 'mission-ban') {
-        return `Active deck: Mission Cards. Active side zone: ${formatRole(getRoleForSide(phase.side, phase))} side panel. ${roleName(phase.side, phase)} is acting.`;
-      }
-
-      const sequence = getSequence(phase.sequence);
-
-      if (phase.type === 'defender-reveal') {
-        return `Active deck: Defending Player Teams for ${teamLabel(sequence.defender)}. Drag one defender card into the reveal zone.`;
-      }
-
-      if (phase.type === 'attacker-offer') {
-        return `Active deck: Attacking Player Teams for ${teamLabel(sequence.attacker)}. Drag two cards into the offer zone.`;
-      }
-
-      if (phase.type === 'defender-pick') {
-        return `Active deck: the offered attacker cards. Drag the chosen card into the selection zone to lock the matchup.`;
-      }
-
-      if (phase.type === 'table-select') {
-        return 'Active piece: the current pairing card. Drag it onto one of the highlighted map areas.';
-      }
-
-      if (phase.type === 'mission-select') {
-        return 'Active deck: Mission Cards. Drag one mission into the active side lock zone to finish the pairing.';
-      }
-
-      return 'Active deck: Mission Cards. Drag the final mission into the active side lock zone to finish the last automatic pairing.';
-    }
-
-    function getMapHelp(phase) {
-      if (phase && phase.type === 'table-select') {
-        return 'The map step is active. Drag the current pairing card onto one of the highlighted open maps.';
-      }
-      return 'These map spaces stay on the table for the whole round. Once a pairing uses a map, that space stays locked.';
-    }
-
-    function renderChipList(container, items, className, emptyText) {
-      container.innerHTML = '';
-      if (!items.length) {
-        const empty = document.createElement('span');
-        empty.className = 'resource-empty';
-        empty.textContent = emptyText;
-        container.appendChild(empty);
-        return;
-      }
-
-      for (const item of items) {
-        const chip = document.createElement('span');
-        chip.className = className;
-        chip.textContent = item;
-        container.appendChild(chip);
-      }
-    }
-
-    function createBadge(label, tone, sticker = false) {
-      const badge = document.createElement('span');
-      badge.className = `card-badge${tone ? ` ${tone}` : ''}${sticker ? ' sticker' : ''}`;
-      badge.textContent = label;
-      return badge;
-    }
-
-    function makeDraggable(element, payload) {
-      element.draggable = true;
-      element.addEventListener('dragstart', (event) => {
-        const raw = JSON.stringify(payload);
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('application/json', raw);
-        event.dataTransfer.setData('text/plain', raw);
-      });
-    }
-
-    function readDragPayload(event) {
-      const raw = event.dataTransfer.getData('application/json') || event.dataTransfer.getData('text/plain');
-      if (!raw) {
-        return null;
-      }
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return null;
-      }
-    }
-
-    function attachDropTarget(element, onDrop) {
-      element.classList.add('active');
-      element.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        element.classList.add('drag-over');
-      });
-      element.addEventListener('dragleave', () => {
-        element.classList.remove('drag-over');
-      });
-      element.addEventListener('drop', (event) => {
-        event.preventDefault();
-        element.classList.remove('drag-over');
-        const payload = readDragPayload(event);
-        if (payload) {
-          onDrop(payload);
-        }
-      });
-    }
-
-    function createCard({
-      label,
-      subtitle = '',
-      tone = 'library',
-      status = '',
-      badges = [],
-      draggable = false,
-      payload = null,
-      compact = false,
-      selected = false,
-      dim = false,
-      meta = '',
-      removeLabel = '',
-      onRemove = null,
-      onClick = null
-    }) {
-      const card = document.createElement('article');
-      card.className = `sim-card ${tone}${compact ? ' compact' : ''}${draggable ? ' draggable' : ''}${selected ? ' selected' : ''}${dim ? ' dim' : ''}`;
-
-      if (payload?.kind) {
-        card.dataset.cardKind = payload.kind;
-      }
-      if (payload?.team) {
-        card.dataset.cardValue = payload.team;
-      }
-      if (payload?.mission) {
-        card.dataset.cardValue = payload.mission;
-      }
-      if (payload?.side) {
-        card.dataset.cardSide = payload.side;
-      }
-      if (payload?.sequence) {
-        card.dataset.cardSequence = String(payload.sequence);
-      }
-
-      const top = document.createElement('div');
-      top.className = 'card-top';
-
-      const content = document.createElement('div');
-      const title = document.createElement('h4');
-      title.className = 'card-title';
-      title.textContent = label;
-      content.appendChild(title);
-
-      if (subtitle) {
-        const subtitleEl = document.createElement('p');
-        subtitleEl.className = 'card-subtitle';
-        subtitleEl.textContent = subtitle;
-        content.appendChild(subtitleEl);
-      }
-
-      top.appendChild(content);
-
-      if (status) {
-        const statusEl = document.createElement('span');
-        statusEl.className = 'card-status';
-        statusEl.textContent = status;
-        top.appendChild(statusEl);
-      }
-
-      if (removeLabel && onRemove) {
-        const removeButton = document.createElement('button');
-        removeButton.className = 'card-remove';
-        removeButton.type = 'button';
-        removeButton.textContent = removeLabel;
-        removeButton.addEventListener('click', (event) => {
-          event.stopPropagation();
-          onRemove();
-        });
-        top.appendChild(removeButton);
-      }
-
-      card.appendChild(top);
-
-      if (badges.length) {
-        const badgeRow = document.createElement('div');
-        badgeRow.className = 'card-badges';
-        for (const badge of badges) {
-          badgeRow.appendChild(createBadge(badge.label, badge.tone, Boolean(badge.sticker)));
-        }
-        card.appendChild(badgeRow);
-      }
-
-      if (meta) {
-        const metaEl = document.createElement('p');
-        metaEl.className = 'card-meta';
-        metaEl.textContent = meta;
-        card.appendChild(metaEl);
-      }
-
-      if (draggable && payload) {
-        makeDraggable(card, payload);
-      }
-
-      if (onClick) {
-        card.classList.add('clickable-card');
-        card.tabIndex = 0;
-        card.addEventListener('click', onClick);
-        card.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onClick();
-          }
-        });
-      }
-
-      return card;
-    }
-
-    function createMatchupCard(match, options = {}) {
-      const card = createCard({
-        label: `${match.defenderTeam || 'TBD'} vs ${match.attackerTeam || 'TBD'}`,
-        subtitle: `Pairing ${match.sequence}`,
-        tone: 'matchup',
-        status: options.status || '',
-        badges: [
-          { label: `Defender ${teamLabel(match.defenderSide)}`, tone: 'defender', sticker: true },
-          { label: `Attacker ${teamLabel(match.attackerSide)}`, tone: 'attacker', sticker: true }
-        ],
-        draggable: Boolean(options.draggable),
-        payload: options.payload || null,
-        meta: options.meta !== undefined
-          ? options.meta
-          : (match.table ? `Map: ${match.table}${match.mission ? ` | Mission: ${match.mission}` : ''}` : ''),
-        compact: Boolean(options.compact)
-      });
-      return card;
-    }
-
-    function createDropZone({ id, title, copy, active = false, children = [] }) {
-      const zone = document.createElement('section');
-      zone.className = `dropzone${children.length ? ' filled' : ''}${active ? ' active' : ''}`;
-      zone.dataset.dropId = id;
-
-      const label = document.createElement('p');
-      label.className = 'drop-label';
-      label.textContent = id;
-      zone.appendChild(label);
-
-      const heading = document.createElement('h3');
-      heading.className = 'drop-title';
-      heading.textContent = title;
-      zone.appendChild(heading);
-
-      const copyEl = document.createElement('p');
-      copyEl.className = 'drop-copy';
-      copyEl.textContent = copy;
-      zone.appendChild(copyEl);
-
-      const body = document.createElement('div');
-      body.className = 'dropzone-body';
-      if (!children.length) {
-        const empty = document.createElement('p');
-        empty.className = 'drop-empty';
-        empty.textContent = 'Drop a card here.';
-        body.appendChild(empty);
-      } else {
-        for (const child of children) {
-          body.appendChild(child);
-        }
-      }
-      zone.appendChild(body);
-      return zone;
-    }
-
     function renderSetupLibrary() {
       elements.teamLibrary.innerHTML = '';
       const visibleTeams = getVisibleSetupTeams();
@@ -3225,14 +1663,14 @@
           input.disabled = isFull && !isSelected;
           input.dataset.team = team;
           input.dataset.side = side;
-          input.setAttribute('aria-label', `Add ${team} to Team ${side}`);
+          input.setAttribute('aria-label', `Add ${team} to ${teamLabel(side)}`);
           input.addEventListener('change', (event) => {
             setSetupTeamSelection(side, team, event.target.checked);
           });
 
           const copy = document.createElement('span');
           copy.className = 'team-toggle-copy';
-          copy.textContent = `Team ${side}`;
+          copy.textContent = side;
 
           toggle.appendChild(input);
           toggle.appendChild(copy);
@@ -3256,8 +1694,8 @@
       const note = document.createElement('p');
       note.className = 'mini-note';
       note.textContent = roster.length
-        ? 'Use the checkboxes above or click a team here to remove it from the five-team roster.'
-        : 'Use the checkboxes above to add up to five teams.';
+        ? 'Click a Kill Team to remove it.'
+        : 'Tick A or B in the library, search, or use Random 5.';
       container.appendChild(note);
 
       const grid = document.createElement('div');
@@ -3274,7 +1712,7 @@
           row.className = 'pick-row';
           row.tabIndex = 0;
           row.setAttribute('role', 'button');
-          row.setAttribute('aria-label', `Remove ${team} from Team ${side}`);
+          row.setAttribute('aria-label', `Remove ${team} from ${teamLabel(side)}`);
           row.addEventListener('click', () => removeSetupTeam(side, team));
           row.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -3301,29 +1739,19 @@
     }
 
     function renderSetupMissions() {
-      elements.setupMissions.innerHTML = '';
-      for (const mission of MISSIONS) {
-        const card = createCard({
-          label: mission,
-          subtitle: 'Mission Card',
-          tone: 'mission',
-          compact: true,
-          badges: [{ label: 'Deck', tone: 'mission' }]
-        });
-        elements.setupMissions.appendChild(card);
-      }
+      elements.setupMissions.innerHTML = MISSIONS.map((mission) => `<span class="mission-chip">${mission}</span>`).join('');
     }
 
     function renderSetupFeedback() {
       if (state.started) {
-        elements.setupFeedback.textContent = 'Simulation is live. Editing either roster resets the round.';
+        elements.setupFeedback.textContent = 'The round is live. Changing a roster restarts it.';
         return;
       }
       if (canStart()) {
-        elements.setupFeedback.textContent = 'Both sides are ready. Start the pairing simulation when you are ready.';
+        elements.setupFeedback.textContent = 'Both rosters are ready.';
         return;
       }
-      elements.setupFeedback.textContent = 'Pick five teams on each side to begin.';
+      elements.setupFeedback.textContent = 'Pick five Kill Teams for each team to start.';
     }
 
     function renderSetup() {
@@ -3334,616 +1762,10 @@
       renderSetupRoster('B');
       renderSetupSearchControls();
       renderSetupMissions();
+      document.getElementById('team-a-setup-heading').textContent = teamLabel('A');
+      document.getElementById('team-b-setup-heading').textContent = teamLabel('B');
       renderSetupFeedback();
       document.getElementById('start-simulation').disabled = !canStart();
-    }
-
-    function renderContext(phase) {
-      elements.actionContext.innerHTML = '';
-      const context = [];
-
-      if (phase && phase.sequence) {
-        const sequence = getSequence(phase.sequence);
-        context.push(`${sequenceRoleName(sequence, sequence.defender)} deck: ${state.pools[sequence.defender].length}`);
-        context.push(`${sequenceRoleName(sequence, sequence.attacker)} deck: ${state.pools[sequence.attacker].length}`);
-      }
-
-      if (state.pendingMatch?.defenderTeam) {
-        context.push(`Revealed: ${state.pendingMatch.defenderTeam}`);
-      }
-      if (state.pendingMatch?.offeredTeams?.length) {
-        context.push(`Offered: ${state.pendingMatch.offeredTeams.join(' / ')}`);
-      }
-      context.push(`Mission cards left: ${state.availableMissions.length}`);
-      context.push(`Open maps: ${state.availableTables.length}`);
-
-      const grid = document.createElement('div');
-      grid.className = 'context-grid';
-      for (const item of context) {
-        const chip = document.createElement('span');
-        chip.className = 'info-chip';
-        chip.textContent = item;
-        grid.appendChild(chip);
-      }
-
-      elements.actionContext.appendChild(grid);
-    }
-
-    function renderDeckTitles(phase) {
-      const sides = getRoleSides(phase);
-      elements.attackerDeckTitle.textContent = `${teamLabel('A')} Roster · ${formatRole(getRoleForSide('A', phase))}`;
-      elements.defenderDeckTitle.textContent = `${teamLabel('B')} Roster · ${formatRole(getRoleForSide('B', phase))}`;
-      elements.attackerSelectionTitle.textContent = `Attacker Selection Area · ${teamLabel(sides.attacker)}`;
-      elements.defenderSelectionTitle.textContent = `Defender Selection Area · ${teamLabel(sides.defender)}`;
-      elements.missionDeckCount.textContent = `${state.availableMissions.length} Cards`;
-      elements.attackerDeckCount.textContent = `${state.pools.A?.length || 0} Cards`;
-      elements.defenderDeckCount.textContent = `${state.pools.B?.length || 0} Cards`;
-    }
-
-    function renderTeamDeck(container, side, phase) {
-      container.innerHTML = '';
-      const role = getRoleForSide(side, phase);
-      const teams = state.pools[side] || [];
-
-      if (!teams.length) {
-        const empty = document.createElement('p');
-        empty.className = 'resource-empty';
-        empty.textContent = 'No cards remaining.';
-        container.appendChild(empty);
-        return;
-      }
-
-      const sequence = phase && phase.sequence ? getSequence(phase.sequence) : null;
-
-      for (const team of teams) {
-        let draggable = false;
-        let selected = false;
-        let dim = false;
-        let status = '';
-        const badges = [{ label: teamLabel(side), tone: role === 'defender' ? 'defender' : 'attacker', sticker: true }];
-
-        if (state.pendingMatch?.defenderTeam === team && role === 'defender') {
-          badges.push({ label: 'Revealed', tone: 'defender' });
-          status = 'Revealed';
-        }
-
-        if (phase?.type === 'defender-reveal' && sequence && side === sequence.defender) {
-          draggable = true;
-        }
-
-        if (phase?.type === 'attacker-offer' && sequence && side === sequence.attacker) {
-          draggable = !state.pendingOfferSelection.includes(team);
-          selected = state.pendingOfferSelection.includes(team);
-        }
-
-        if (phase?.type === 'defender-pick' && sequence && side === sequence.attacker) {
-          if (state.pendingMatch?.offeredTeams.includes(team)) {
-            draggable = true;
-          } else {
-            dim = true;
-          }
-        }
-
-        const card = createCard({
-          label: team,
-          subtitle: role === 'defender' ? 'Defending deck' : 'Attacking deck',
-          tone: role,
-          status,
-          badges,
-          draggable,
-          payload: { kind: 'team', team, side, role, sequence: sequence ? sequence.number : null },
-          compact: true,
-          selected,
-          dim
-        });
-        container.appendChild(card);
-      }
-    }
-
-    function renderMissionDeck(phase) {
-      elements.missionDeck.innerHTML = '';
-      if (!state.availableMissions.length) {
-        const empty = document.createElement('p');
-        empty.className = 'resource-empty';
-        empty.textContent = 'No mission cards remaining.';
-        elements.missionDeck.appendChild(empty);
-        return;
-      }
-
-      const active = phase && ['mission-ban', 'mission-select', 'final-pairing'].includes(phase.type);
-
-      for (const mission of state.availableMissions) {
-        const card = createCard({
-          label: mission,
-          subtitle: 'Mission Deck',
-          tone: 'mission',
-          badges: [{ label: 'Mission', tone: 'mission', sticker: true }],
-          draggable: active,
-          payload: { kind: 'mission', mission },
-          compact: true
-        });
-        elements.missionDeck.appendChild(card);
-      }
-    }
-
-    function renderDecks(phase) {
-      renderDeckTitles(phase);
-      getDeckSectionForSide('A')?.setAttribute('data-role', getRoleForSide('A', phase));
-      getDeckSectionForSide('B')?.setAttribute('data-role', getRoleForSide('B', phase));
-      renderTeamDeck(elements.attackerDeck, 'A', phase);
-      renderTeamDeck(elements.defenderDeck, 'B', phase);
-      renderMissionDeck(phase);
-    }
-
-    function createPendingSummaryCard(override = null) {
-      if (override) {
-        return createMatchupCard(override, {
-          status: override.table ? 'Ready' : 'Current Pairing',
-          compact: false,
-          meta: override.table ? `Map: ${override.table}` : 'Waiting for map selection'
-        });
-      }
-
-      if (!state.pendingMatch) {
-        return null;
-      }
-
-      return createMatchupCard({
-        sequence: state.pendingMatch.sequence,
-        defenderSide: state.pendingMatch.defenderSide,
-        attackerSide: state.pendingMatch.attackerSide,
-        defenderTeam: state.pendingMatch.defenderTeam,
-        attackerTeam: state.pendingMatch.attackerTeam || (state.pendingMatch.offeredTeams.length ? state.pendingMatch.offeredTeams.join(' / ') : 'Pending'),
-        table: state.pendingMatch.table,
-        mission: state.pendingMatch.mission
-      }, {
-        status: state.pendingMatch.table ? 'Map Locked' : 'Current Pairing',
-        compact: false,
-        meta: state.pendingMatch.table ? `Map: ${state.pendingMatch.table}` : 'Waiting for map selection'
-      });
-    }
-
-    function createAreaState(title, copy) {
-      const stateCard = document.createElement('div');
-      stateCard.className = 'empty-state';
-      stateCard.innerHTML = `<strong>${title}</strong><p>${copy}</p>`;
-      return stateCard;
-    }
-
-    function getDecidingSide(phase) {
-      if (!phase) {
-        return null;
-      }
-
-      if (phase.type === 'mission-ban') {
-        return phase.side;
-      }
-
-      const sequence = phase.sequence ? getSequence(phase.sequence) : null;
-      if (!sequence) {
-        return null;
-      }
-
-      if (phase.type === 'attacker-offer' || phase.type === 'table-select') {
-        return sequence.attacker;
-      }
-
-      return sequence.defender;
-    }
-
-    function updateActiveSourceHighlight(phase) {
-      const sourceAreas = [
-        elements.attackerDeck?.closest('section'),
-        elements.defenderDeck?.closest('section'),
-        elements.missionDeck?.closest('section'),
-        elements.attackerActionArea,
-        elements.defenderActionArea,
-        elements.mapGrid?.closest('section')
-      ];
-      const decidingDecks = [
-        getDeckSectionForSide('A'),
-        getDeckSectionForSide('B')
-      ];
-
-      for (const area of sourceAreas) {
-        area?.classList.remove('active-source');
-      }
-      for (const deck of decidingDecks) {
-        deck?.classList.remove('deciding-side-a', 'deciding-side-b');
-      }
-
-      if (!phase) {
-        return;
-      }
-
-      const highlightAreas = (...areas) => {
-        for (const area of areas) {
-          area?.classList.add('active-source');
-        }
-      };
-      const markDecidingDeck = (side) => {
-        const deckSection = getDeckSectionForSide(side);
-        deckSection?.classList.add(side === 'A' ? 'deciding-side-a' : 'deciding-side-b');
-      };
-
-      const decidingSide = getDecidingSide(phase);
-      if (decidingSide) {
-        markDecidingDeck(decidingSide);
-      }
-
-      if (phase.type === 'defender-reveal') {
-        const sequence = getSequence(phase.sequence);
-        highlightAreas(getDeckSectionForSide(sequence.defender), elements.defenderActionArea);
-        return;
-      }
-
-      if (phase.type === 'attacker-offer') {
-        const sequence = getSequence(phase.sequence);
-        highlightAreas(getDeckSectionForSide(sequence.attacker), elements.attackerActionArea);
-        return;
-      }
-
-      if (phase.type === 'defender-pick') {
-        const sequence = getSequence(phase.sequence);
-        highlightAreas(getDeckSectionForSide(sequence.attacker), elements.defenderActionArea);
-        return;
-      }
-
-      if (phase.type === 'table-select') {
-        highlightAreas(elements.attackerActionArea, elements.mapGrid?.closest('section'));
-        return;
-      }
-
-      if (phase.type === 'mission-ban') {
-        highlightAreas(elements.missionDeck?.closest('section'), getSideActionArea(phase.side, phase));
-        return;
-      }
-
-      if (phase.type === 'mission-select' || phase.type === 'final-pairing') {
-        const sequence = getSequence(phase.sequence);
-        highlightAreas(elements.missionDeck?.closest('section'), getSideActionArea(sequence.defender, phase));
-      }
-    }
-
-    function getSideActionArea(side, phase) {
-      const sides = getRoleSides(phase);
-      return side === sides.attacker ? elements.attackerActionArea : elements.defenderActionArea;
-    }
-
-    function getOpposingActionArea(side, phase) {
-      const sides = getRoleSides(phase);
-      return side === sides.attacker ? elements.defenderActionArea : elements.attackerActionArea;
-    }
-
-    function renderActionArea(phase) {
-      elements.attackerActionArea.innerHTML = '';
-      elements.missionActionArea.innerHTML = '';
-      elements.defenderActionArea.innerHTML = '';
-
-      elements.attackerActionArea.appendChild(createAreaState('Attacker Waiting', 'When the attacking side needs to choose a card or place a pairing on a map, that action appears here.'));
-      elements.defenderActionArea.appendChild(createAreaState('Defender Waiting', 'When the defending side needs to reveal, choose, or react, that action appears here.'));
-
-      if (!phase) {
-        elements.attackerActionArea.innerHTML = '';
-        const complete = document.createElement('div');
-        complete.className = 'empty-state';
-        complete.innerHTML = '<strong>Round Ready</strong><p>All five pairings are locked. Review the cards below or restart the playmat with the same rosters.</p>';
-        elements.attackerActionArea.appendChild(complete);
-        return;
-      }
-
-      if (phase.type === 'mission-ban') {
-        const actingArea = getSideActionArea(phase.side, phase);
-        actingArea.innerHTML = '';
-        const zone = createDropZone({
-          id: 'Ban Mission',
-          title: 'Drag a Mission Here',
-          copy: `${roleName(phase.side, phase)} removes one mission from the round.`
-        });
-        attachDropTarget(zone, (payload) => {
-          if (payload.kind === 'mission') {
-            banMission(payload.mission, phase.side, phase.detail);
-          }
-        });
-        actingArea.appendChild(zone);
-        return;
-      }
-
-      const sequence = getSequence(phase.sequence);
-
-      if (phase.type === 'defender-reveal') {
-        elements.defenderActionArea.innerHTML = '';
-        const zone = createDropZone({
-          id: 'Reveal Zone',
-          title: 'Reveal the Defender Card',
-          copy: `Drag one card from ${teamLabel(sequence.defender)}'s defender roster into this reveal zone.`
-        });
-        attachDropTarget(zone, (payload) => {
-          if (payload.kind === 'team' && payload.side === sequence.defender) {
-            revealDefenderTeam(sequence, payload.team);
-          }
-        });
-        elements.defenderActionArea.appendChild(zone);
-        return;
-      }
-
-      if (phase.type === 'attacker-offer') {
-        elements.attackerActionArea.innerHTML = '';
-        elements.defenderActionArea.innerHTML = '';
-
-        const children = state.pendingOfferSelection.map((team, index) => createCard({
-          label: team,
-          subtitle: `Offer Slot ${index + 1}`,
-          tone: 'attacker',
-          compact: true,
-          onClick: () => removeOfferedTeam(team)
-        }));
-
-        const zone = createDropZone({
-          id: 'Two-Card Offer',
-          title: state.pendingOfferSelection.length === 2 ? 'Two Attacker Cards Locked In' : `Offer Two Attacker Cards (${state.pendingOfferSelection.length}/2)`,
-          copy: state.pendingOfferSelection.length ? 'This single offer zone holds both attacker cards.' : 'Drag two attacker cards here from the highlighted roster.',
-          children,
-          active: state.pendingOfferSelection.length < 2
-        });
-        zone.classList.add('offer-dropzone');
-        zone.querySelector('.dropzone-body')?.classList.add('offer-drop-body');
-
-        if (state.pendingOfferSelection.length < 2) {
-          attachDropTarget(zone, (payload) => {
-            if (payload.kind === 'team' && payload.side === sequence.attacker) {
-              addOfferedTeam(payload.team);
-            }
-          });
-        }
-
-        elements.attackerActionArea.appendChild(zone);
-
-        const actions = document.createElement('div');
-        actions.className = 'selection-actions';
-
-        const confirm = document.createElement('button');
-        confirm.className = 'confirm-button';
-        confirm.type = 'button';
-        confirm.textContent = `Lock Two-Card Offer (${state.pendingOfferSelection.length}/2)`;
-        confirm.disabled = state.pendingOfferSelection.length !== 2;
-        confirm.addEventListener('click', () => confirmOfferedTeams(sequence));
-        actions.appendChild(confirm);
-
-        elements.attackerActionArea.appendChild(actions);
-        elements.defenderActionArea.appendChild(createPendingSummaryCard());
-        return;
-      }
-
-      if (phase.type === 'defender-pick') {
-        elements.defenderActionArea.innerHTML = '';
-        const summary = createPendingSummaryCard();
-        if (summary) {
-          elements.defenderActionArea.appendChild(summary);
-        }
-        const zone = createDropZone({
-          id: 'Match Choice',
-          title: 'Choose the Attacker Card',
-          copy: 'Drag one of the offered attacker cards into this zone to finalize the matchup.'
-        });
-        attachDropTarget(zone, (payload) => {
-          if (payload.kind === 'team' && state.pendingMatch?.offeredTeams.includes(payload.team)) {
-            pickAttackerTeam(sequence, payload.team);
-          }
-        });
-        elements.defenderActionArea.appendChild(zone);
-        return;
-      }
-
-      if (phase.type === 'table-select') {
-        elements.attackerActionArea.innerHTML = '';
-        elements.defenderActionArea.innerHTML = '';
-
-        const helper = document.createElement('p');
-        helper.className = 'mini-note';
-        helper.textContent = 'Drag the current pairing card onto one of the highlighted open maps below.';
-        elements.attackerActionArea.appendChild(helper);
-
-        if (state.pendingMatch) {
-          const pairingCard = createMatchupCard({
-            sequence: state.pendingMatch.sequence,
-            defenderSide: state.pendingMatch.defenderSide,
-            attackerSide: state.pendingMatch.attackerSide,
-            defenderTeam: state.pendingMatch.defenderTeam,
-            attackerTeam: state.pendingMatch.attackerTeam,
-            table: state.pendingMatch.table,
-            mission: state.pendingMatch.mission
-          }, {
-            draggable: true,
-            payload: { kind: 'matchup', sequence: state.pendingMatch.sequence },
-            compact: false,
-            meta: 'Drop this card onto one of the highlighted map spaces.'
-          });
-          elements.attackerActionArea.appendChild(pairingCard);
-          elements.defenderActionArea.appendChild(createPendingSummaryCard());
-        }
-        return;
-      }
-
-      if (phase.type === 'mission-select') {
-        const actingArea = getSideActionArea(sequence.defender, phase);
-        const otherArea = getOpposingActionArea(sequence.defender, phase);
-        actingArea.innerHTML = '';
-        otherArea.innerHTML = '';
-        const summary = createPendingSummaryCard();
-        if (summary) {
-          otherArea.appendChild(summary);
-        }
-        const zone = createDropZone({
-          id: 'Mission Lock',
-          title: 'Lock the Mission',
-          copy: `Drag one mission card here to finish ${sequence.label} on ${state.pendingMatch?.table || 'the selected map'}.`
-        });
-        attachDropTarget(zone, (payload) => {
-          if (payload.kind === 'mission') {
-            lockMission(sequence, payload.mission);
-          }
-        });
-        actingArea.appendChild(zone);
-        return;
-      }
-
-      const finalSequence = getSequence(5);
-      const actingArea = getSideActionArea(finalSequence.defender, phase);
-      const otherArea = getOpposingActionArea(finalSequence.defender, phase);
-      actingArea.innerHTML = '';
-      otherArea.innerHTML = '';
-      const finalSummary = {
-        sequence: finalSequence.number,
-        defenderSide: finalSequence.defender,
-        attackerSide: finalSequence.attacker,
-        defenderTeam: state.pools[finalSequence.defender][0],
-        attackerTeam: state.pools[finalSequence.attacker][0],
-        table: state.availableTables[0],
-        mission: null
-      };
-
-      otherArea.appendChild(createPendingSummaryCard(finalSummary));
-      const zone = createDropZone({
-        id: 'Final Mission Lock',
-        title: 'Finish the Last Pairing',
-        copy: 'Drag one remaining mission card here to close the final automatic matchup.'
-      });
-      attachDropTarget(zone, (payload) => {
-        if (payload.kind === 'mission') {
-          resolveFinalPairing(payload.mission);
-        }
-      });
-      actingArea.appendChild(zone);
-    }
-
-    function renderMapGrid(phase) {
-      elements.mapGrid.innerHTML = '';
-
-      for (const table of state.tableAssignments) {
-        const locked = state.matchups.find((match) => match.table === table);
-        const pending = state.pendingMatch && state.pendingMatch.table === table ? state.pendingMatch : null;
-        const available = state.availableTables.includes(table);
-        const zone = document.createElement('section');
-        zone.className = 'map-zone';
-        zone.dataset.mapName = table;
-
-        if (locked) {
-          zone.classList.add('locked');
-        } else if (pending) {
-          zone.classList.add('pending');
-        } else if (available) {
-          zone.classList.add('available');
-        }
-
-        const label = document.createElement('p');
-        label.className = 'map-label';
-        label.textContent = 'Map Area';
-        zone.appendChild(label);
-
-        const name = document.createElement('h3');
-        name.className = 'map-name';
-        name.textContent = table;
-        zone.appendChild(name);
-
-        if (locked) {
-          zone.appendChild(createMatchupCard({
-            sequence: locked.sequence,
-            defenderSide: locked.defenderSide,
-            attackerSide: locked.attackerSide,
-            defenderTeam: locked.defenderTeam,
-            attackerTeam: locked.attackerTeam,
-            table: locked.table,
-            mission: locked.mission
-          }, {
-            compact: true,
-            status: 'Locked',
-            meta: `Mission: ${locked.mission}`
-          }));
-        } else if (pending) {
-          zone.appendChild(createMatchupCard({
-            sequence: pending.sequence,
-            defenderSide: pending.defenderSide,
-            attackerSide: pending.attackerSide,
-            defenderTeam: pending.defenderTeam,
-            attackerTeam: pending.attackerTeam,
-            table: pending.table,
-            mission: pending.mission
-          }, {
-            compact: true,
-            status: 'Pending',
-            meta: 'Mission not locked yet.'
-          }));
-        }
-
-        if (phase?.type === 'table-select' && available) {
-          attachDropTarget(zone, (payload) => {
-            if (payload.kind === 'matchup' && state.pendingMatch && payload.sequence === state.pendingMatch.sequence) {
-              const sequence = getSequence(phase.sequence);
-              selectTable(sequence, table);
-            }
-          });
-        }
-
-        elements.mapGrid.appendChild(zone);
-      }
-    }
-
-    function renderLive() {
-      elements.progressChip.textContent = state.completed ? 'Complete' : state.started ? `${state.matchups.length} / 5 Locked` : 'Not Started';
-
-      if (!state.started) {
-        elements.simEmpty.hidden = false;
-        elements.simLive.hidden = true;
-        return;
-      }
-
-      elements.simEmpty.hidden = true;
-      elements.simLive.hidden = false;
-
-      const phase = getCurrentPhase();
-      const meta = getPhaseMeta(phase);
-
-      elements.stepLabel.textContent = meta.label;
-      elements.stepTitle.textContent = meta.title;
-      elements.stepCopy.textContent = meta.copy;
-      updateActiveSourceHighlight(phase);
-      elements.boardHelp.textContent = getBoardHelp(phase);
-      elements.mapHelp.textContent = getMapHelp(phase);
-
-      renderContext(phase);
-      renderDecks(phase);
-      renderActionArea(phase);
-      renderMapGrid(phase);
-      renderChipList(elements.missionsBanned, state.bannedMissions, 'resource-chip banned', 'No missions banned yet.');
-      renderChipList(elements.missionsUsed, state.usedMissions, 'resource-chip used', 'No missions locked yet.');
-    }
-
-    function renderMatchups() {
-      elements.matchups.innerHTML = '';
-      if (!state.matchups.length) {
-        const empty = document.createElement('div');
-        empty.className = 'match-card match-empty';
-        empty.textContent = 'No pairings locked yet.';
-        elements.matchups.appendChild(empty);
-        return;
-      }
-
-      for (const matchup of state.matchups) {
-        const card = document.createElement('article');
-        card.className = 'match-card';
-        card.innerHTML = `
-          <p class="status-title">Pairing ${matchup.sequence}</p>
-          <h3>${matchup.defenderTeam} vs ${matchup.attackerTeam}</h3>
-          <div class="match-meta">
-            <p class="match-copy"><strong>Defender:</strong> ${teamLabel(matchup.defenderSide)}</p>
-            <p class="match-copy"><strong>Attacker:</strong> ${teamLabel(matchup.attackerSide)}</p>
-            <p class="match-copy"><strong>Map:</strong> ${matchup.table}</p>
-            <p class="match-copy"><strong>Mission:</strong> ${matchup.mission}</p>
-          </div>
-        `;
-        elements.matchups.appendChild(card);
-      }
     }
 
     function renderHistory() {
@@ -3971,12 +1793,680 @@
       elements.exportStatus.textContent = state.exportFeedback;
     }
 
+
+    // ---------- team names ----------
+    const STORE_NAMES = 'usak.pairing.teamNames';
+    const STORE_BG = 'usak.pairing.background';
+
+    function readStore(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw === null ? fallback : JSON.parse(raw);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeStore(key, value) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        // Storage can be unavailable (private windows); names then last for this visit only.
+      }
+    }
+
+    Object.assign(teamNames, readStore(STORE_NAMES, {}));
+
+    // ---------- board helpers ----------
+    const $ = (id) => document.getElementById(id);
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const sideKey = (side) => side.toLowerCase();
+    const tableIndex = (table) => state.tableAssignments.indexOf(table);
+
+    function actingSide(phase) {
+      if (!phase) {
+        return null;
+      }
+      if (phase.type === 'mission-ban') {
+        return phase.side;
+      }
+      const sequence = getSequence(phase.sequence);
+      if (phase.type === 'attacker-offer' || phase.type === 'table-select') {
+        return sequence.attacker;
+      }
+      return sequence.defender;
+    }
+
+    function stepTitle(phase) {
+      if (!phase) {
+        return { k: 'Round complete', t: 'All five pairings locked' };
+      }
+      const acting = actingSide(phase);
+      const role = formatRole(getRoleForSide(acting, phase));
+      const who = teamLabel(acting);
+      if (phase.type === 'mission-ban') {
+        return { k: `${phase.stage} · ${role}`, t: `${who} bans a mission` };
+      }
+      const label = getSequence(phase.sequence).label;
+      const titles = {
+        'defender-reveal': `${who} reveals a Kill Team`,
+        'attacker-offer': `${who} offers two`,
+        'defender-pick': `${who} picks the matchup`,
+        'table-select': `${who} chooses a table`,
+        'mission-select': `${who} chooses a mission`,
+        'final-pairing': `${who} picks the last mission`
+      };
+      const steps = { 'defender-reveal': 'Reveal', 'attacker-offer': 'Offer', 'defender-pick': 'Pick', 'table-select': 'Table', 'mission-select': 'Mission', 'final-pairing': 'Automatic' };
+      return { k: `${label} · ${steps[phase.type]} · ${role}`, t: titles[phase.type] };
+    }
+
+    function pairedTeams(side) {
+      const teams = new Set();
+      for (const match of state.matchups) {
+        teams.add(match.defenderSide === side ? match.defenderTeam : match.attackerTeam);
+      }
+      return teams;
+    }
+
+    // Status of one roster card: paired, highlighted (with a tag) or available, and what a click does.
+    function rosterCard(side, team, phase) {
+      if (pairedTeams(side).has(team)) {
+        return { cls: 'used', tag: 'Paired' };
+      }
+      const pending = state.pendingMatch;
+      const type = phase?.type;
+      if (pending && side === pending.defenderSide && team === pending.defenderTeam) {
+        return { cls: 'hot', tag: pending.attackerTeam ? 'Matched' : 'Revealed' };
+      }
+      if (pending && side === pending.attackerSide) {
+        if (pending.attackerTeam === team) {
+          return { cls: 'hot', tag: 'Matched' };
+        }
+        if (!pending.attackerTeam && pending.offeredTeams.includes(team)) {
+          return { cls: 'hot', tag: 'Offered', act: type === 'defender-pick' ? 'pick' : '' };
+        }
+      }
+      if (type === 'attacker-offer' && state.pendingOfferSelection.includes(team)) {
+        return { cls: 'hot', tag: 'Offered', act: 'unoffer' };
+      }
+      if (type === 'final-pairing' && state.pools[side].includes(team)) {
+        return { cls: 'hot', tag: 'Last' };
+      }
+      if (phase && state.pools[side].includes(team)) {
+        const sequence = phase.sequence ? getSequence(phase.sequence) : null;
+        if (type === 'defender-reveal' && side === sequence.defender) {
+          return { cls: '', tag: '', act: 'reveal' };
+        }
+        if (type === 'attacker-offer' && side === sequence.attacker && state.pendingOfferSelection.length < 2) {
+          return { cls: '', tag: '', act: 'offer' };
+        }
+      }
+      return { cls: '', tag: '' };
+    }
+
+    function renderColumn(side, phase, acting) {
+      const key = sideKey(side);
+      const role = state.completed ? 'Done' : formatRole(getRoleForSide(side, phase));
+      const status = state.completed ? 'Round done' : acting === side ? 'Acting now' : 'Waiting';
+      const available = state.pools[side].length;
+      const head = `<div class="tv-col-head"><span class="r"><span>${status}</span><span class="role">${esc(role)}</span></span><span class="n">${esc(teamLabel(side))}</span><span class="r"><span>${available} of 5 available</span></span></div>`;
+      const cards = state.setup[side].map((team) => {
+        const card = rosterCard(side, team, phase);
+        const act = card.act ? ` data-act="${card.act}" data-v="${esc(team)}" role="button" tabindex="0"` : '';
+        return `<div class="rc ${card.cls}"${act}><span>${esc(team)}</span>${card.tag ? `<span class="tag">${card.tag}</span>` : ''}</div>`;
+      }).join('');
+      const column = $(`col-${key}`);
+      column.innerHTML = head + cards;
+      column.classList.toggle('acting', acting === side);
+      column.classList.toggle('idle', Boolean(acting) && acting !== side);
+    }
+
+    function bigCard(side, label, team, act = '') {
+      const attrs = act ? ` data-act="${act}" data-v="${esc(team)}" role="button" tabindex="0"` : '';
+      return { side, html: `<div class="big ${sideKey(side)}"${attrs}><span class="k">${esc(label)}</span><span class="t">${esc(team)}</span></div>` };
+    }
+
+    function stageFor(phase) {
+      const pending = state.pendingMatch;
+      if (!phase) {
+        return { cards: [], note: '' };
+      }
+      if (phase.type === 'mission-ban') {
+        return { cards: [], note: `${teamLabel(phase.side)} bans a mission. Click one in the strip below.` };
+      }
+      const sequence = getSequence(phase.sequence);
+      const def = sequence.defender;
+      const att = sequence.attacker;
+      if (phase.type === 'defender-reveal') {
+        return { cards: [], note: `Click a Kill Team in the ${teamLabel(def)} roster to reveal it.` };
+      }
+      if (phase.type === 'attacker-offer') {
+        const cards = [bigCard(def, 'Revealed', pending.defenderTeam)];
+        for (const team of state.pendingOfferSelection) {
+          cards.push(bigCard(att, 'Offered', team, 'unoffer'));
+        }
+        const left = 2 - state.pendingOfferSelection.length;
+        return {
+          cards,
+          note: left ? `Click ${left} more Kill Team${left === 1 ? '' : 's'} in the ${teamLabel(att)} roster.` : '',
+          button: left ? '' : '<button class="act-btn" type="button" data-act="lock-offer">Lock the offer</button>'
+        };
+      }
+      if (phase.type === 'defender-pick') {
+        const cards = [bigCard(def, 'Revealed', pending.defenderTeam)];
+        for (const team of pending.offeredTeams) {
+          cards.push(bigCard(att, 'Offered', team, 'pick'));
+        }
+        return { cards, note: `${teamLabel(def)} clicks the Kill Team it plays against.` };
+      }
+      const matched = [bigCard(def, 'Defender', pending ? pending.defenderTeam : state.pools[def][0])];
+      matched.push(bigCard(att, 'Attacker', pending ? pending.attackerTeam : state.pools[att][0]));
+      if (phase.type === 'table-select') {
+        return { cards: matched, note: `${teamLabel(att)} clicks an open table.` };
+      }
+      if (phase.type === 'mission-select') {
+        return { cards: matched, note: `Table ${tableIndex(pending.table) + 1} · ${pending.table} · ${teamLabel(def)} clicks a mission below.` };
+      }
+      const table = state.availableTables[0];
+      return { cards: matched, note: `Last pairing is automatic on Table ${tableIndex(table) + 1} · ${table}. ${teamLabel(def)} clicks a mission below.` };
+    }
+
+    let lastStageKey = '';
+    function renderStage(phase) {
+      const stage = stageFor(phase);
+      const left = stage.cards.filter((c) => c.side === 'A').map((c) => c.html).join('');
+      const right = stage.cards.filter((c) => c.side === 'B').map((c) => c.html).join('');
+      const mid = left && right ? '<span class="vs">VS</span>' : '';
+      const body = stage.cards.length ? `<div class="act"><div class="act-a">${left}</div><div class="act-m">${mid}</div><div class="act-b">${right}</div></div>` : '';
+      const key = `${state.phaseIndex}|${stage.cards.map((c) => c.html).join('')}`;
+      const fresh = key !== lastStageKey;
+      lastStageKey = key;
+      $('tv-action').innerHTML = `<div class="act-wrap${fresh ? '' : ' no-deal'}">${body}${stage.note ? `<p class="act-note">${esc(stage.note)}</p>` : ''}${stage.button || ''}</div>`;
+    }
+
+    // ---------- map images ----------
+    // Real images live in assets/maps/<slug>.jpg, landscape 30:22. Until one exists, a drawn board stands in.
+    const missingMaps = new Set();
+    const slugFor = (table) => table.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const layouts = [
+      [[3, 3, 6, 4], [21, 3, 6, 4], [12, 9, 6, 4], [3, 15, 6, 4], [21, 15, 6, 4]],
+      [[2, 8, 7, 3], [21, 11, 7, 3], [11, 3, 3, 7], [16, 12, 3, 7], [12, 9, 6, 4]],
+      [[5, 4, 5, 5], [20, 13, 5, 5], [13, 2, 4, 6], [13, 14, 4, 6], [2, 14, 4, 4], [24, 4, 4, 4]],
+      [[4, 4, 9, 3], [17, 15, 9, 3], [4, 13, 3, 6], [23, 3, 3, 6], [12, 9, 6, 4]],
+      [[3, 3, 4, 4], [23, 3, 4, 4], [3, 15, 4, 4], [23, 15, 4, 4], [10, 7, 10, 2], [10, 13, 10, 2]]
+    ];
+
+    function boardSvg(table, wide) {
+      const hash = [...table].reduce((sum, ch) => (sum * 31 + ch.charCodeAt(0)) >>> 0, 7);
+      const blocks = layouts[hash % layouts.length].map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0.3"/>`).join('');
+      const grid = Array.from({ length: 29 }, (_, x) => `<line x1="${x + 1}" y1="0" x2="${x + 1}" y2="22"/>`).join('')
+        + Array.from({ length: 21 }, (_, y) => `<line x1="0" y1="${y + 1}" x2="30" y2="${y + 1}"/>`).join('');
+      const board = `<rect width="30" height="22" fill="#3a4d60"/><g stroke="rgba(255,255,255,0.08)" stroke-width="0.06">${grid}</g><line x1="15" y1="0" x2="15" y2="22" stroke="rgba(255,255,255,0.35)" stroke-width="0.12" stroke-dasharray="0.6 0.4"/><g fill="#8a9aab" stroke="#c4cfda" stroke-width="0.12">${blocks}</g>`;
+      return wide
+        ? `<svg viewBox="0 0 30 22" aria-hidden="true">${board}</svg>`
+        : `<svg viewBox="0 0 22 30" aria-hidden="true"><g transform="translate(22 0) rotate(90)">${board}</g></svg>`;
+    }
+
+    function mapArt(table, wide) {
+      const slug = slugFor(table);
+      const img = missingMaps.has(slug) ? '' : `<img src="./assets/maps/${slug}.jpg" alt="" data-slug="${slug}">`;
+      return boardSvg(table, wide) + img;
+    }
+
+    document.addEventListener('error', (event) => {
+      const img = event.target;
+      if (img instanceof HTMLImageElement && img.dataset.slug) {
+        missingMaps.add(img.dataset.slug);
+        img.remove();
+      }
+    }, true);
+
+    function sideChips(match) {
+      const aTeam = match.defenderSide === 'A' ? match.defenderTeam : match.attackerTeam;
+      const bTeam = match.defenderSide === 'B' ? match.defenderTeam : match.attackerTeam;
+      const role = (side) => (match.attackerSide === side ? 'att' : 'def');
+      return { aTeam, bTeam, aRole: role('A'), bRole: role('B') };
+    }
+
+    let lockedSeen = 0;
+    function renderTables(phase) {
+      const finalTable = phase?.type === 'final-pairing' ? state.availableTables[0] : null;
+      const pendingTable = state.pendingMatch?.table || finalTable;
+      $('tables').innerHTML = state.tableAssignments.map((table, n) => {
+        const match = state.matchups.find((entry) => entry.table === table);
+        const clickable = phase?.type === 'table-select' && state.availableTables.includes(table);
+        const fresh = match && state.matchups.indexOf(match) >= lockedSeen;
+        const cls = match ? `locked${fresh ? ' fresh' : ''}` : pendingTable === table ? 'target' : '';
+        const act = clickable ? ` data-act="table" data-v="${esc(table)}" role="button" tabindex="0"` : '';
+        let pair = '';
+        if (match) {
+          const chips = sideChips(match);
+          pair = `<div class="pair"><span class="mission">${esc(match.mission)}</span><span class="side a ${chips.aRole}">${esc(chips.aTeam)}</span><span class="side b ${chips.bRole}">${esc(chips.bTeam)}</span></div>`;
+        }
+        return `<div class="tbl ${cls}"${act}><span class="k">Table ${n + 1}${match ? ' ✓' : ''}</span><div class="shot">${mapArt(table, false)}<span class="map">${esc(table)}</span></div>${pair}</div>`;
+      }).join('');
+      lockedSeen = state.matchups.length;
+    }
+
+    function renderMissionStrip(phase) {
+      const type = phase?.type;
+      const choosing = type === 'mission-ban' || type === 'mission-select' || type === 'final-pairing';
+      $('missions').innerHTML = MISSIONS.map((mission) => {
+        if (state.bannedMissions.includes(mission)) {
+          return `<span class="ms banned">${esc(mission)}</span>`;
+        }
+        const match = state.matchups.find((entry) => entry.mission === mission);
+        if (match) {
+          return `<span class="ms lockedm">${esc(mission)}<small>T${tableIndex(match.table) + 1}</small></span>`;
+        }
+        const act = choosing && state.availableMissions.includes(mission) ? ` data-act="mission" data-v="${esc(mission)}" role="button" tabindex="0"` : '';
+        return `<span class="ms"${act}>${esc(mission)}</span>`;
+      }).join('');
+    }
+
+    function renderEmpty() {
+      $('tv-empty').innerHTML = `
+        <div class="fin-brand"><span class="brand-mark" aria-hidden="true">USA</span><span>USA Killteam</span></div>
+        <div class="fin-teams"><span class="fa">${esc(teamLabel('A'))}</span><span class="fvs">vs</span><span class="fb">${esc(teamLabel('B'))}</span></div>
+        <p class="empty-note">Pairings start soon</p>`;
+    }
+
+    // Final step: everything but the pairings animates away and the pairings fill the screen.
+    function renderFinal() {
+      const tv = $('tv');
+      const done = state.started && state.completed && state.matchups.length === TABLE_COUNT;
+      if (done && !tv.classList.contains('is-final')) {
+        const ordered = [...state.matchups].sort((a, b) => tableIndex(a.table) - tableIndex(b.table));
+        $('final').innerHTML = `
+          <div class="fin-head">
+            <div class="fin-brand"><span class="brand-mark" aria-hidden="true">USA</span><span>USA Killteam</span></div>
+            <div class="fin-teams"><span class="fa">${esc(teamLabel('A'))}</span><span class="fvs">vs</span><span class="fb">${esc(teamLabel('B'))}</span></div>
+          </div>
+          <div class="fin-grid">${ordered.map((match, n) => {
+            const chips = sideChips(match);
+            return `
+            <article class="fin-card" style="--d:${n}">
+              <div class="fin-k">Table ${tableIndex(match.table) + 1}</div>
+              <div class="fin-shot">${mapArt(match.table, true)}<span class="fin-map">${esc(match.table)}</span></div>
+              <span class="fin-mission">${esc(match.mission)}</span>
+              <div class="fin-pair">
+                <div class="fin-side a ${chips.aRole}"><small>${esc(teamLabel('A'))}</small><b>${esc(chips.aTeam)}</b></div>
+                <div class="fin-vs">vs</div>
+                <div class="fin-side b ${chips.bRole}"><small>${esc(teamLabel('B'))}</small><b>${esc(chips.bTeam)}</b></div>
+              </div>
+            </article>`;
+          }).join('')}
+          </div>`;
+      }
+      tv.classList.toggle('is-final', done);
+    }
+
+    function renderBoard() {
+      const tv = $('tv');
+      renderEmpty();
+      tv.classList.toggle('is-empty', !state.started);
+      if (!state.started) {
+        tv.classList.remove('is-final');
+        lockedSeen = 0;
+        return;
+      }
+      const phase = getCurrentPhase();
+      const last = state.matchups[state.matchups.length - 1];
+      const roleSides = getRoleSides(phase || (last ? { sequence: last.sequence } : null));
+      tv.classList.toggle('a-def', roleSides.defender === 'A');
+      const acting = actingSide(phase);
+
+      const title = stepTitle(phase);
+      $('tv-step-k').textContent = phase ? `Step ${state.phaseIndex + 1} / ${state.phases.length} · ${title.k}` : title.k;
+      $('tv-step-t').textContent = title.t;
+      $('tv-step-t').classList.toggle('long', title.t.length > 34);
+      const stepColor = !acting ? 'var(--success)' : roleSides.attacker === acting ? 'var(--red)' : 'var(--blue)';
+      $('tv-step').style.setProperty('--step-color', stepColor);
+      $('tv-locked').textContent = `${state.matchups.length} / ${TABLE_COUNT}`;
+
+      renderColumn('A', phase, acting);
+      renderColumn('B', phase, acting);
+      renderStage(phase);
+      renderTables(phase);
+      renderMissionStrip(phase);
+      renderFinal();
+    }
+
+    // ---------- board clicks ----------
+    function handleBoardAction(act, value) {
+      const phase = getCurrentPhase();
+      if (!phase) {
+        return;
+      }
+      const sequence = phase.sequence ? getSequence(phase.sequence) : null;
+      if (act === 'reveal' && phase.type === 'defender-reveal') {
+        revealDefenderTeam(sequence, value);
+      } else if (act === 'offer' && phase.type === 'attacker-offer') {
+        addOfferedTeam(value);
+      } else if (act === 'unoffer' && phase.type === 'attacker-offer') {
+        removeOfferedTeam(value);
+      } else if (act === 'lock-offer' && phase.type === 'attacker-offer') {
+        confirmOfferedTeams(sequence);
+      } else if (act === 'pick' && phase.type === 'defender-pick') {
+        pickAttackerTeam(sequence, value);
+      } else if (act === 'table' && phase.type === 'table-select') {
+        selectTable(sequence, value);
+      } else if (act === 'mission') {
+        if (phase.type === 'mission-ban') {
+          banMission(value, phase.side, phase.detail);
+        } else if (phase.type === 'mission-select') {
+          lockMission(sequence, value);
+        } else if (phase.type === 'final-pairing') {
+          resolveFinalPairing(value);
+        }
+      }
+    }
+
+    $('tv').addEventListener('click', (event) => {
+      const target = event.target.closest('[data-act]');
+      if (target) {
+        handleBoardAction(target.dataset.act, target.dataset.v);
+      }
+    });
+    $('tv').addEventListener('keydown', (event) => {
+      const target = event.target.closest('[data-act]');
+      if (target && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        handleBoardAction(target.dataset.act, target.dataset.v);
+      }
+    });
+
+    // ---------- background, safe area, stream mode ----------
+    function applyBackground(mode) {
+      const tv = $('tv');
+      tv.classList.toggle('broadcast', mode === 'broadcast');
+      tv.classList.toggle('transparent', mode === 'transparent');
+      document.body.classList.toggle('transparent-bg', mode === 'transparent');
+      document.querySelectorAll('[data-bg]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.bg === mode)));
+    }
+    applyBackground(readStore(STORE_BG, 'broadcast'));
+    document.querySelectorAll('[data-bg]').forEach((button) => button.addEventListener('click', () => {
+      writeStore(STORE_BG, button.dataset.bg);
+      applyBackground(button.dataset.bg);
+    }));
+    $('safe-toggle').addEventListener('click', (event) => {
+      const on = event.currentTarget.getAttribute('aria-pressed') !== 'true';
+      event.currentTarget.setAttribute('aria-pressed', String(on));
+      $('safe').hidden = !on;
+    });
+
+    function setStreamMode(on) {
+      document.body.classList.toggle('stream', on);
+      if (on && location.hash !== '#stream') {
+        history.replaceState(null, '', '#stream');
+      } else if (!on && location.hash === '#stream') {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    }
+    $('go-live').addEventListener('click', () => setStreamMode(true));
+    $('stream-exit').addEventListener('click', () => setStreamMode(false));
+    $('open-stream-window').addEventListener('click', () => {
+      window.open(`${location.pathname}#stream`, 'usak-pairing-stream', 'width=1280,height=720');
+    });
+    window.addEventListener('hashchange', () => setStreamMode(location.hash === '#stream'));
+    document.addEventListener('keydown', (event) => {
+      const typing = event.target.closest('input, textarea, select');
+      if (typing) {
+        return;
+      }
+      if (event.key === 'Escape' && document.body.classList.contains('stream')) {
+        setStreamMode(false);
+      } else if (event.key === 's' || event.key === 'S') {
+        setStreamMode(!document.body.classList.contains('stream'));
+      }
+    });
+    setStreamMode(location.hash === '#stream');
+
+    // ---------- team name inputs ----------
+    for (const side of ['A', 'B']) {
+      const input = $(`team-name-${sideKey(side)}`);
+      input.value = teamNames[side] || '';
+      input.addEventListener('input', () => {
+        teamNames[side] = input.value.trim();
+        writeStore(STORE_NAMES, teamNames);
+        renderAll();
+      });
+    }
+
+    // ---------- two-window sync ----------
+    // A stream window and a control window mirror each other: whichever acts sends its state.
+    const channel = 'BroadcastChannel' in window ? new BroadcastChannel('usak-pairing') : null;
+    let applyingRemote = false;
+    // A window only speaks for the round once someone has used it, so a freshly opened
+    // stream window never wipes the window that is running the round.
+    let hasActed = false;
+    for (const type of ['pointerdown', 'keydown', 'input']) {
+      window.addEventListener(type, (event) => { if (event.isTrusted) hasActed = true; }, true);
+    }
+
+    function broadcastState() {
+      if (!channel || applyingRemote || !hasActed) {
+        return;
+      }
+      try {
+        channel.postMessage({ type: 'state', state: JSON.parse(JSON.stringify(state)), names: { ...teamNames } });
+      } catch {
+        // Ignore: syncing is a convenience.
+      }
+    }
+
+    if (channel) {
+      channel.addEventListener('message', (event) => {
+        const message = event.data || {};
+        if (message.type === 'hello') {
+          broadcastState();
+          return;
+        }
+        if (message.type === 'state' && message.state) {
+          applyingRemote = true;
+          hasActed = true;
+          Object.assign(state, message.state);
+          if (message.names) {
+            Object.assign(teamNames, message.names);
+            for (const side of ['A', 'B']) {
+              const input = $(`team-name-${sideKey(side)}`);
+              if (document.activeElement !== input) {
+                input.value = teamNames[side] || '';
+              }
+            }
+          }
+          renderAll();
+          applyingRemote = false;
+        }
+      });
+      channel.postMessage({ type: 'hello' });
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORE_BG) {
+        applyBackground(readStore(STORE_BG, 'broadcast'));
+      }
+    });
+
+    // ---------- ambient flag ----------
+    (function ambientFlag() {
+      const canvas = $('tv-flag');
+      const tv = $('tv');
+      const ctx = canvas.getContext('2d');
+      const src = document.createElement('canvas');
+      const sctx = src.getContext('2d');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let W = 0;
+      let H = 0;
+      let ink = '';
+      let alpha = 0;
+      let visible = true;
+      let last = 0;
+      let raf = 0;
+      let themeKey = '';
+
+      function readTheme() {
+        const styles = getComputedStyle(tv);
+        ink = styles.getPropertyValue('--flag-ink').trim() || '255, 255, 255';
+        alpha = parseFloat(styles.getPropertyValue('--flag-alpha')) || 0;
+      }
+
+      function star(c, x, y, r) {
+        c.beginPath();
+        for (let k = 0; k < 10; k += 1) {
+          const angle = -Math.PI / 2 + k * Math.PI / 5;
+          const radius = k % 2 ? r * 0.4 : r;
+          c.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+        }
+        c.closePath();
+        c.fill();
+      }
+
+      function paintSource() {
+        const fw = Math.round(W * 1.12);
+        const fh = Math.round(H * 1.16);
+        src.width = fw;
+        src.height = fh;
+        const stripe = fh / 13;
+        sctx.fillStyle = `rgba(${ink}, 1)`;
+        for (let r = 0; r < 13; r += 2) {
+          sctx.fillRect(0, r * stripe, fw, stripe);
+        }
+        const cw = fw * 0.42;
+        const ch = stripe * 7;
+        sctx.clearRect(0, 0, cw, ch);
+        sctx.fillStyle = `rgba(${ink}, 0.55)`;
+        sctx.fillRect(0, 0, cw, ch);
+        sctx.globalCompositeOperation = 'destination-out';
+        const sx = cw / 12;
+        const sy = ch / 10;
+        const rad = Math.min(sx, sy) * 0.42;
+        for (let row = 0; row < 9; row += 1) {
+          const count = row % 2 ? 5 : 6;
+          for (let c = 0; c < count; c += 1) {
+            star(sctx, sx * (row % 2 ? 2 : 1) + c * sx * 2, sy * (row + 1), rad);
+          }
+        }
+        sctx.globalCompositeOperation = 'source-over';
+      }
+
+      function resize() {
+        const rect = tv.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        W = Math.max(1, Math.round(rect.width * dpr));
+        H = Math.max(1, Math.round(rect.height * dpr));
+        canvas.width = W;
+        canvas.height = H;
+        readTheme();
+        paintSource();
+        frame(performance.now(), true);
+      }
+
+      function frame(now, force) {
+        if (!force && (!visible || now - last < 33)) {
+          return;
+        }
+        last = now;
+        const t = reduce.matches ? 0 : now / 1000;
+        ctx.clearRect(0, 0, W, H);
+        if (!alpha) {
+          return;
+        }
+        const fw = src.width;
+        const fh = src.height;
+        const ox = -(fw - W) / 2;
+        const oy = -(fh - H) / 2;
+        const amp = H * 0.035;
+        const slice = Math.max(2, Math.round(W / 320));
+        ctx.globalAlpha = alpha;
+        for (let x = 0; x < fw; x += slice) {
+          const p = x / fw;
+          const phase = p * Math.PI * 3.2 - t * 0.9;
+          const dy = Math.sin(phase) * amp * (0.35 + p) + Math.sin(phase * 0.5 + t * 0.4) * amp * 0.4;
+          ctx.drawImage(src, x, 0, slice, fh, x + ox, oy + dy, slice, fh);
+        }
+        ctx.globalCompositeOperation = 'source-atop';
+        for (let x = 0; x < W; x += slice * 2) {
+          const p = (x - ox) / fw;
+          const shade = Math.cos(p * Math.PI * 3.2 - t * 0.9);
+          ctx.globalAlpha = Math.abs(shade) * 0.5;
+          ctx.fillStyle = shade > 0 ? `rgba(${ink}, 1)` : 'rgba(0, 0, 0, 1)';
+          ctx.fillRect(x, 0, slice * 2, H);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
+
+      function loop(now) {
+        frame(now, false);
+        raf = reduce.matches ? 0 : requestAnimationFrame(loop);
+      }
+
+      function start() {
+        if (!raf && !reduce.matches) {
+          raf = requestAnimationFrame(loop);
+        }
+      }
+
+      new ResizeObserver(resize).observe(tv);
+      new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(tv);
+      new MutationObserver(() => {
+        const key = `${tv.classList.contains('broadcast')}|${tv.classList.contains('transparent')}`;
+        if (key !== themeKey) {
+          themeKey = key;
+          readTheme();
+          paintSource();
+          frame(performance.now(), true);
+        }
+      }).observe(tv, { attributes: true, attributeFilter: ['class'] });
+      reduce.addEventListener?.('change', () => {
+        frame(performance.now(), true);
+        start();
+      });
+      resize();
+      start();
+    })();
+
+    function renderMatchups() {
+      elements.matchups.innerHTML = '';
+      if (!state.matchups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'match-card match-empty';
+        empty.textContent = 'No pairings locked yet.';
+        elements.matchups.appendChild(empty);
+        return;
+      }
+
+      const ordered = [...state.matchups].sort((a, b) => tableIndex(a.table) - tableIndex(b.table));
+      for (const match of ordered) {
+        const chips = sideChips(match);
+        const card = document.createElement('article');
+        card.className = 'match-card';
+        card.innerHTML = `
+          <p class="k">Table ${tableIndex(match.table) + 1} · Pairing ${match.sequence}</p>
+          <div class="match-side ${chips.aRole}"><small>${esc(teamLabel('A'))} · ${chips.aRole === 'att' ? 'Attacker' : 'Defender'}</small><b>${esc(chips.aTeam)}</b></div>
+          <div class="match-side ${chips.bRole}"><small>${esc(teamLabel('B'))} · ${chips.bRole === 'att' ? 'Attacker' : 'Defender'}</small><b>${esc(chips.bTeam)}</b></div>
+          <p class="match-meta"><b>${esc(match.table)}</b> · ${esc(match.mission)}</p>
+        `;
+        elements.matchups.appendChild(card);
+      }
+    }
+
+    function renderProgress() {
+      elements.progressChip.textContent = state.completed
+        ? 'Round complete'
+        : state.started ? `${state.matchups.length} / ${TABLE_COUNT} locked` : 'Not started';
+      document.getElementById('restart-simulation').disabled = !canStart();
+    }
+
     function renderAll() {
       renderSetup();
-      renderLive();
+      renderProgress();
+      renderBoard();
       renderMatchups();
       renderHistory();
       renderExportControls();
+      broadcastState();
     }
 
     document.getElementById('random-a').addEventListener('click', () => randomFill('A'));

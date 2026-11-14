@@ -4,6 +4,8 @@ Proposal to rework `docs/pairing-simulator.html` so it reads clearly on a broadc
 
 Browse the visual version at `docs/pairing-redesign/index.html`. It has before screenshots and an interactive 1920×1080 mockup.
 
+**Status: built.** `docs/pairing-simulator.html` now uses this design. The pairing rules, step order and Excel export are unchanged. The old drag-and-drop playmat is replaced by the board, which you operate by clicking. Brand colors and fonts live in `docs/assets/brand.css`.
+
 ## Summary
 
 - Add a **Stream view**: a fixed 16:9 canvas with no scrolling, built for America's scrims between state and regional teams. It shows only the current state: the current step, the pairings locked so far, which missions are open, banned or locked, and which Kill Teams each side has picked or still has available. Sizes are readable after stream compression.
@@ -69,8 +71,8 @@ Both views read the same state. The operator can run the round from the stream v
 - **Two team names set in setup** (e.g. "New England Kill Team" and "DFW Kill Team") instead of "Team A/B". Long regional names wrap to two lines in the column header.
 - **Roster status**: each roster card shows whether it's available, offered or revealed, or already paired. The column header shows how many are still available.
 - **Mission status**: every mission is shown as open, banned (struck through) or locked to a table (T1–T5). The strip has no label or counts; the chips are centered.
-- **Map names stay fixed**: Volkus 25:6, Volkus 25:2, Volkus 25:5, WTC ITC:1, Tomb World:5.
-- **Map images**: each table tile has an image slot above its pairing. Images live in `docs/assets/maps/` as `volkus-25-6.jpg`, `volkus-25-2.jpg`, `volkus-25-5.jpg`, `wtc-itc-1.jpg` and `tomb-world-5.jpg`. Supply them landscape (30:22, at least 800px wide). The tile turns them to portrait so they fill its height, and the map name sits over the bottom edge. A drawn placeholder shows until an image exists.
+- **Map names are not editable**: the simulator draws the five tables each round, as it always has (three of Volkus 24 or 25, plus one Tomb World and one WTC ITC, each numbered 1–6).
+- **Map images**: each table tile has an image slot above its pairing. Images live in `docs/assets/maps/`, one per map, named after the map in lowercase with dashes: `volkus-24-1.jpg` … `volkus-24-6.jpg`, `volkus-25-1.jpg` … `volkus-25-6.jpg`, `tomb-world-1.jpg` … `tomb-world-6.jpg`, `wtc-itc-1.jpg` … `wtc-itc-6.jpg`. Supply them landscape (30:22, at least 800px wide). The tile turns them to portrait so they fill its height, and the map name sits over the bottom edge. A drawn placeholder shows until an image exists.
 
 ### Type scale at 1080p
 
