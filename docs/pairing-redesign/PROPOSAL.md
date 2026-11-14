@@ -60,6 +60,7 @@ Both views read the same state. The operator can run the round from the stream v
 - **48px safe margin** on all sides so overlays and platform UI don't clip anything.
 - **Team A on the left in navy, Team B on the right in red.** This holds for the whole round. "Attacker" and "Defender" are badges on the column, not colors, so the colors don't flip when roles change.
 - **Acting side highlighted**: the active column gets a solid colored header and a soft glow, and the inactive one dims to 55%.
+- **Kill Teams stay on their team's side**: whether a team is attacking or defending, its Kill Team cards sit on that team's side of the screen. Team A's cards go left of center and Team B's go right, with VS (or the mission) in the middle. On each table tile, Team A's chip is set to the left and Team B's to the right.
 - **Only the matched pair after the pick**: once the defender picks, the returned Kill Team goes straight back to its roster as available. During map and mission selection the action stage shows just the two matched teams, both tagged "Matched" in their rosters.
 - **Lock-in moment**: when a pairing commits, its table tile fills with both team colors and a short 400ms flip. This is skipped under `prefers-reduced-motion`.
 - **Two team names set in setup** (e.g. "New England Kill Team" and "DFW Kill Team") instead of "Team A/B". Long regional names wrap to two lines in the column header.

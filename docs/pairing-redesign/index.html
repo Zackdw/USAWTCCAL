@@ -240,7 +240,12 @@
 
   .tv-mid { grid-row: 2 / 3; display: grid; grid-template-rows: minmax(0, 1fr) calc(var(--u) * 430); gap: calc(var(--u) * 24); min-width: 0; }
   .tv-action { min-width: 0; overflow: hidden; border-radius: calc(var(--u) * 12); background: var(--tv-slot); display: grid; place-items: center; padding: calc(var(--u) * 24); }
-  .act { display: flex; gap: calc(var(--u) * 28); align-items: center; justify-content: center; }
+  .act-wrap { width: 100%; display: grid; gap: calc(var(--u) * 14); justify-items: center; }
+  .act { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(var(--u) * 28); align-items: center; }
+  .act-a, .act-b { display: flex; gap: calc(var(--u) * 20); min-width: 0; }
+  .act-a { justify-content: flex-end; }
+  .act-b { justify-content: flex-start; }
+  .act-m { display: flex; justify-content: center; min-width: calc(var(--u) * 60); }
   .act-note { font: 700 calc(var(--u) * 22)/1.3 var(--body); color: var(--tv-muted); text-align: center; max-width: calc(var(--u) * 640); }
   .big { width: calc(var(--u) * 256); min-height: calc(var(--u) * 140); border-radius: calc(var(--u) * 10); background: var(--tv-card); color: #162026; display: grid; align-content: center; gap: calc(var(--u) * 10); padding: calc(var(--u) * 22); border-top: calc(var(--u) * 12) solid var(--c, var(--gold)); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 36) rgba(10, 22, 40, 0.22); animation: deal 380ms ease both; }
   .big .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, #8a6410); }
@@ -262,8 +267,8 @@
   .tbl .map { position: absolute; inset: auto 0 0 0; padding: calc(var(--u) * 18) calc(var(--u) * 10) calc(var(--u) * 8); background: linear-gradient(transparent, rgba(7, 14, 24, 0.85)); color: #fff; font: 700 calc(var(--u) * 22)/1.1 var(--body); }
   .tbl .pair { align-self: end; display: grid; gap: calc(var(--u) * 6); }
   .tbl .side { font: 800 calc(var(--u) * 22)/1.1 var(--headline); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); color: #fff; }
-  .tbl .side.a { background: var(--a); }
-  .tbl .side.b { background: var(--b); }
+  .tbl .side.a { background: var(--a); margin-right: calc(var(--u) * 14); }
+  .tbl .side.b { background: var(--b); margin-left: calc(var(--u) * 14); text-align: right; }
   .tbl .mission { display: inline-flex; align-self: start; justify-self: start; font: 700 calc(var(--u) * 20)/1 var(--body); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); background: var(--mission); color: var(--mission-ink); }
   .tbl.target { border-style: solid; border-color: var(--gold); background: rgba(240, 183, 53, 0.16); }
   .tbl.locked { border-style: solid; border-color: transparent; background: var(--tv-card); color: #162026; animation: flip 420ms ease both; }
@@ -623,9 +628,15 @@
     column(teamB, 'b', s);
 
     const act = s.action || {};
-    const cards = (act.cards || []).map((c) => c === 'vs' ? '<span class="vs">VS</span>'
-      : `<div class="big ${c.c}"><span class="k">${esc(c.k)}</span><span class="t">${esc(c.t)}</span></div>`).join('');
-    $('tv-action').innerHTML = `<div style="display:grid;gap:calc(var(--u)*14);justify-items:center">${cards ? `<div class="act">${cards}</div>` : ''}${act.note ? `<p class="act-note">${esc(act.note)}</p>` : ''}</div>`;
+    // Kill Teams sit on their own team's side: Team A cards left of center, Team B cards right.
+    const big = (c) => `<div class="big ${c.c}"><span class="k">${esc(c.k)}</span><span class="t">${esc(c.t)}</span></div>`;
+    const list = (act.cards || []).filter((c) => c !== 'vs');
+    const sideOf = (c) => c.c.split(' ')[0];
+    const left = list.filter((c) => sideOf(c) === 'a').map(big).join('');
+    const right = list.filter((c) => sideOf(c) === 'b').map(big).join('');
+    const mid = list.filter((c) => sideOf(c) === 'm').map(big).join('') || (left && right ? '<span class="vs">VS</span>' : '');
+    const stage = list.length ? `<div class="act"><div class="act-a">${left}</div><div class="act-m">${mid}</div><div class="act-b">${right}</div></div>` : '';
+    $('tv-action').innerHTML = `<div class="act-wrap">${stage}${act.note ? `<p class="act-note">${esc(act.note)}</p>` : ''}</div>`;
 
     $('tables').innerHTML = maps.map((map, n) => {
       const locked = n < (s.locked || 0);
