@@ -317,7 +317,50 @@
   @keyframes spin { to { --spin: 360deg; } }
   @keyframes breathe { 50% { opacity: 0.45; } }
 
+
+  /* ---------- final step: pairings only ---------- */
+  .tv-top, .tv-col, .tv-mid, .tv-bottom { transition: opacity 520ms ease, transform 620ms cubic-bezier(.6,0,.2,1), filter 520ms ease; }
+  .tv.is-final .tv-top { opacity: 0; transform: translateY(calc(var(--u) * -80)); }
+  .tv.is-final .tv-col.a { opacity: 0; transform: translateX(calc(var(--u) * -140)); }
+  .tv.is-final .tv-col.b { opacity: 0; transform: translateX(calc(var(--u) * 140)); }
+  .tv.is-final .tv-mid { opacity: 0; transform: scale(0.94); filter: blur(calc(var(--u) * 6)); }
+  .tv.is-final .tv-bottom { opacity: 0; transform: translateY(calc(var(--u) * 80)); }
+  .tv.is-final .tv-top, .tv.is-final .tv-col, .tv.is-final .tv-mid, .tv.is-final .tv-bottom { pointer-events: none; }
+
+  .final { position: absolute; inset: calc(var(--u) * 48); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: calc(var(--u) * 40); visibility: hidden; opacity: 0; transition: opacity 400ms ease, visibility 0s linear 400ms; }
+  .tv.is-final .final { visibility: visible; opacity: 1; transition: opacity 400ms ease 380ms, visibility 0s; }
+  .fin-head { display: grid; justify-items: center; gap: calc(var(--u) * 14); padding-top: calc(var(--u) * 8); }
+  .fin-brand { display: flex; align-items: center; gap: calc(var(--u) * 22); font: 900 calc(var(--u) * 56)/1 var(--headline); text-transform: uppercase; letter-spacing: 0.02em; color: var(--tv-ink); }
+  .fin-brand .brand-mark { width: calc(var(--u) * 116); height: calc(var(--u) * 80); padding-top: calc(var(--u) * 10); font-size: calc(var(--u) * 30); border-radius: calc(var(--u) * 6);
+    background:
+      linear-gradient(var(--flag-blue), var(--flag-blue)) 0 0 / 100% 58% no-repeat,
+      repeating-linear-gradient(180deg, var(--flag-red) 0 calc(var(--u) * 6.7), #fff calc(var(--u) * 6.7) calc(var(--u) * 13.4));
+  }
+  .fin-teams { display: flex; align-items: center; gap: calc(var(--u) * 18); font: 800 calc(var(--u) * 30)/1 var(--headline); text-transform: uppercase; }
+  .fin-teams .fa, .fin-teams .fb { padding: calc(var(--u) * 10) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); color: #fff; }
+  .fin-teams .fa { background: var(--a); }
+  .fin-teams .fb { background: var(--b); }
+  .fin-teams .fvs { color: var(--tv-muted); font-size: calc(var(--u) * 24); }
+  .fin-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 24); align-content: center; }
+  .fin-pair { align-self: end; display: grid; gap: calc(var(--u) * 10); }
+  .fin-card { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 10); padding: calc(var(--u) * 16); display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: calc(var(--u) * 14); box-shadow: 0 calc(var(--u) * 20) calc(var(--u) * 44) rgba(10, 22, 40, 0.25); opacity: 0; transform: translateY(calc(var(--u) * 60)); }
+  .tv.is-final .fin-card { animation: rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(520ms + var(--d) * 110ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(calc(var(--u) * 60)); } to { opacity: 1; transform: none; } }
+  .fin-k { font: 700 calc(var(--u) * 20)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--success); }
+  .fin-shot { position: relative; aspect-ratio: 30 / 22; border-radius: calc(var(--u) * 6); overflow: hidden; background: #2a3a4c; }
+  .fin-shot svg, .fin-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .fin-map { position: absolute; inset: auto 0 0 0; padding: calc(var(--u) * 22) calc(var(--u) * 12) calc(var(--u) * 10); background: linear-gradient(transparent, rgba(7, 14, 24, 0.85)); color: #fff; font: 700 calc(var(--u) * 26)/1.1 var(--body); }
+  .fin-mission { justify-self: start; font: 700 calc(var(--u) * 24)/1 var(--body); padding: calc(var(--u) * 10) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); background: var(--mission); color: var(--mission-ink); border-bottom: calc(var(--u) * 4) solid var(--mission-edge); }
+  .fin-side { display: grid; gap: calc(var(--u) * 6); padding: calc(var(--u) * 12) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); color: #fff; }
+  .fin-side small { font: 700 calc(var(--u) * 18)/1.1 var(--body); letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+  .fin-side b { font: 900 calc(var(--u) * 34)/1.05 var(--headline); }
+  .fin-side.a { background: var(--a); margin-right: calc(var(--u) * 22); }
+  .fin-side.b { background: var(--b); margin-left: calc(var(--u) * 22); text-align: right; }
+  .fin-vs { justify-self: center; font: 900 calc(var(--u) * 22)/1 var(--headline); text-transform: uppercase; color: var(--muted); margin-block: calc(var(--u) * -4); }
+
   @media (prefers-reduced-motion: reduce) {
+    .tv-top, .tv-col, .tv-mid, .tv-bottom, .final { transition: none; }
+    .tv.is-final .fin-card { animation: none; opacity: 1; transform: none; }
     .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before,
     .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after { animation: none; }
     .big, .tbl.locked { animation: none; }
@@ -436,7 +479,7 @@
       <div class="section-heading">
         <p class="eyebrow">Proposed · Stream view</p>
         <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
-        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
+        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. When the last pairing locks, everything else animates away and the five pairings fill the screen under a centered USA Killteam logo. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
       </div>
 
       <div class="stage-tools">
@@ -470,6 +513,7 @@
             </div>
             <div class="tv-col b" id="col-b"></div>
             <div class="tv-bottom" id="missions"></div>
+            <div class="final" id="final" aria-hidden="true"></div>
             <div class="safe" id="safe" hidden><span>48px safe area</span></div>
           </div>
         </div>
@@ -647,11 +691,41 @@
     [[4,4,9,3],[17,15,9,3],[4,13,3,6],[23,3,3,6],[12,9,6,4]],
     [[3,3,4,4],[23,3,4,4],[3,15,4,4],[23,15,4,4],[10,7,10,2],[10,13,10,2]],
   ];
-  function boardSvg(n) {
+  function boardSvg(n, wide) {
     const grid = Array.from({ length: 29 }, (_, x) => `<line x1="${x + 1}" y1="0" x2="${x + 1}" y2="22"/>`).join('')
       + Array.from({ length: 21 }, (_, y) => `<line x1="0" y1="${y + 1}" x2="30" y2="${y + 1}"/>`).join('');
     const blocks = layouts[n].map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0.3"/>`).join('');
-    return `<svg viewBox="0 0 22 30" aria-hidden="true"><g transform="translate(22 0) rotate(90)"><rect width="30" height="22" fill="#3a4d60"/><g stroke="rgba(255,255,255,0.08)" stroke-width="0.06">${grid}</g><line x1="15" y1="0" x2="15" y2="22" stroke="rgba(255,255,255,0.35)" stroke-width="0.12" stroke-dasharray="0.6 0.4"/><g fill="#8a9aab" stroke="#c4cfda" stroke-width="0.12">${blocks}</g></g><text x="11" y="3" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Inter, sans-serif" font-size="1.7" font-weight="700" letter-spacing="0.1">MAP IMAGE</text></svg>`;
+    const board = `<rect width="30" height="22" fill="#3a4d60"/><g stroke="rgba(255,255,255,0.08)" stroke-width="0.06">${grid}</g><line x1="15" y1="0" x2="15" y2="22" stroke="rgba(255,255,255,0.35)" stroke-width="0.12" stroke-dasharray="0.6 0.4"/><g fill="#8a9aab" stroke="#c4cfda" stroke-width="0.12">${blocks}</g>`;
+    const label = (x, y) => `<text x="${x}" y="${y}" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Inter, sans-serif" font-size="1.7" font-weight="700" letter-spacing="0.1">MAP IMAGE</text>`;
+    return wide
+      ? `<svg viewBox="0 0 30 22" aria-hidden="true">${board}${label(15, 2.6)}</svg>`
+      : `<svg viewBox="0 0 22 30" aria-hidden="true"><g transform="translate(22 0) rotate(90)">${board}</g>${label(11, 3)}</svg>`;
+  }
+
+  // Final step: everything but the pairings animates away and the pairings fill the screen.
+  function renderFinal(s) {
+    const done = s.acting === null && (s.locked || 0) === maps.length;
+    const tv = $('tv');
+    if (done && !tv.classList.contains('is-final')) {
+      $('final').innerHTML = `
+        <div class="fin-head">
+          <div class="fin-brand"><span class="brand-mark" aria-hidden="true">USA</span><span>USA Killteam</span></div>
+          <div class="fin-teams"><span class="fa">${esc(teamA.name)}</span><span class="fvs">vs</span><span class="fb">${esc(teamB.name)}</span></div>
+        </div>
+        <div class="fin-grid">${finalTables.map((p, n) => `
+          <article class="fin-card" style="--d:${n}">
+            <div class="fin-k">Table ${n + 1}</div>
+            <div class="fin-shot">${boardSvg(n, true)}<span class="fin-map">${esc(maps[n])}</span></div>
+            <span class="fin-mission">${esc(p.m)}</span>
+            <div class="fin-pair">
+              <div class="fin-side a"><small>${esc(teamA.name)}</small><b>${esc(p.a)}</b></div>
+              <div class="fin-vs">vs</div>
+              <div class="fin-side b"><small>${esc(teamB.name)}</small><b>${esc(p.b)}</b></div>
+            </div>
+          </article>`).join('')}
+        </div>`;
+    }
+    tv.classList.toggle('is-final', done);
   }
 
   function render() {
@@ -660,6 +734,7 @@
     $('tv-step-t').textContent = s.t;
     $('tv-step').style.setProperty('--step-color', s.acting === 'a' ? 'var(--a)' : s.acting === 'b' ? 'var(--b)' : 'var(--success)');
     $('tv-locked').textContent = `${s.locked || 0} / 5`;
+    renderFinal(s);
     column(teamA, 'a', s);
     column(teamB, 'b', s);
 
