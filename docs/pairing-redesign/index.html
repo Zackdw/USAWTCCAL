@@ -166,6 +166,7 @@
     --tv-card: #fbf7f0;
     --tv-card-line: rgba(22, 32, 38, 0.1);
     --tv-slot: rgba(22, 32, 38, 0.06);
+    --tv-solid: #e2e8ea;
     --a: #0a3161;
     --a-soft: rgba(60, 109, 203, 0.16);
     --b: #b31942;
@@ -191,6 +192,7 @@
     --tv-card: #fbf7f0;
     --tv-card-line: rgba(255, 255, 255, 0.12);
     --tv-slot: rgba(255, 255, 255, 0.07);
+    --tv-solid: #182940;
   }
   .tv.transparent {
     --tv-bg: repeating-conic-gradient(#c9cfd2 0 25%, #e4e8ea 0 50%) 0 0 / calc(var(--u) * 48) calc(var(--u) * 48);
@@ -219,20 +221,19 @@
   .tv-score b { font: 900 calc(var(--u) * 52)/1 var(--headline); font-variant-numeric: tabular-nums; }
   .tv-score span { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
 
-  .tv-col { grid-row: 2 / 3; display: grid; grid-template-rows: auto repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 12); transition: opacity 300ms ease; }
+  .tv-col { isolation: isolate; grid-row: 2 / 3; display: grid; grid-template-rows: auto repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 12); transition: opacity 300ms ease; }
   .tv-col.idle { opacity: 0.55; }
   .tv-col-head { border-radius: calc(var(--u) * 9); padding: calc(var(--u) * 16) calc(var(--u) * 22); color: #fff; display: grid; gap: calc(var(--u) * 6); }
   .tv-col.a .tv-col-head { background: var(--a); }
   .tv-col.b .tv-col-head { background: var(--b); }
-  .tv-col.acting .tv-col-head { box-shadow: 0 0 0 calc(var(--u) * 5) var(--gold), 0 0 calc(var(--u) * 40) rgba(240, 183, 53, 0.5); }
   .tv-col-head .n { font: 900 calc(var(--u) * 32)/1.02 var(--headline); text-transform: uppercase; text-wrap: balance; }
   .tv-col-head .r { display: flex; justify-content: space-between; align-items: center; font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
   .role { padding: calc(var(--u) * 5) calc(var(--u) * 12); border-radius: 999px; background: rgba(255,255,255,0.2); }
 
-  .rc { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 8); padding: 0 calc(var(--u) * 20); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 10); font: 800 calc(var(--u) * 28)/1.05 var(--headline); border: calc(var(--u) * 3) solid transparent; transition: opacity 300ms ease, border-color 300ms ease, transform 300ms ease; }
+  .rc { background: var(--tv-card); color: #162026; border-radius: calc(var(--u) * 8); padding: 0 calc(var(--u) * 20); display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 10); font: 800 calc(var(--u) * 28)/1.05 var(--headline); border: calc(var(--u) * 3) solid transparent; position: relative; left: 0; transition: opacity 300ms ease, border-color 300ms ease, left 300ms ease; }
   .rc .tag { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; padding: calc(var(--u) * 6) calc(var(--u) * 10); border-radius: calc(var(--u) * 4); white-space: nowrap; }
-  .tv-col.a .rc.hot { border-color: var(--a); transform: translateX(calc(var(--u) * 10)); }
-  .tv-col.b .rc.hot { border-color: var(--b); transform: translateX(calc(var(--u) * -10)); }
+  .tv-col.a .rc.hot { left: calc(var(--u) * 10); }
+  .tv-col.b .rc.hot { left: calc(var(--u) * -10); }
   .tv-col.a .rc .tag { background: var(--a-soft); color: var(--a); }
   .tv-col.b .rc .tag { background: var(--b-soft); color: var(--b); }
   .rc.used { opacity: 0.38; }
@@ -257,7 +258,7 @@
   .vs { font: 900 calc(var(--u) * 40)/1 var(--headline); color: var(--tv-muted); }
   @keyframes deal { from { transform: translateY(calc(var(--u) * 24)); opacity: 0.2; } to { transform: none; opacity: 1; } }
 
-  .tables { min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 16); }
+  .tables { isolation: isolate; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 16); }
   .tbl { border-radius: calc(var(--u) * 10); background: var(--tv-slot); border: calc(var(--u) * 3) dashed var(--tv-card-line); display: grid; grid-template-rows: auto auto minmax(0, 1fr); padding: calc(var(--u) * 12); gap: calc(var(--u) * 8); color: var(--tv-ink); transition: background 300ms ease, border-color 300ms ease; }
   .tbl .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
   .tbl .shot { position: relative; aspect-ratio: 22 / 30; border-radius: calc(var(--u) * 4); overflow: hidden; background: #2a3a4c; }
@@ -270,21 +271,57 @@
   .tbl .side.a { background: var(--a); margin-right: calc(var(--u) * 14); }
   .tbl .side.b { background: var(--b); margin-left: calc(var(--u) * 14); text-align: right; }
   .tbl .mission { display: inline-flex; align-self: start; justify-self: start; font: 700 calc(var(--u) * 20)/1 var(--body); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); background: var(--mission); color: var(--mission-ink); }
-  .tbl.target { border-style: solid; border-color: var(--gold); background: rgba(240, 183, 53, 0.16); }
+  .tbl.target { border-color: transparent; background: var(--tv-solid); }
   .tbl.locked { border-style: solid; border-color: transparent; background: var(--tv-card); color: #162026; animation: flip 420ms ease both; }
   .tbl.locked .k { color: var(--success); }
   @keyframes flip { from { transform: rotateY(70deg); } to { transform: none; } }
 
-  .tv-bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 10); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
+  .tv-bottom { isolation: isolate; grid-column: 1 / -1; display: flex; align-items: center; gap: calc(var(--u) * 14); border-radius: calc(var(--u) * 10); background: var(--tv-slot); padding: 0 calc(var(--u) * 24); overflow: hidden; }
   .tv-bottom .k { font: 900 calc(var(--u) * 24)/1 var(--headline); text-transform: uppercase; margin-right: calc(var(--u) * 10); display: grid; gap: calc(var(--u) * 6); white-space: nowrap; }
   .tv-bottom .mc { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.04em; text-transform: none; color: var(--tv-muted); }
   .ms { font: 700 calc(var(--u) * 22)/1 var(--body); padding: calc(var(--u) * 14) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); background: var(--mission); color: var(--mission-ink); border-bottom: calc(var(--u) * 5) solid var(--mission-edge); white-space: nowrap; }
   .ms.banned { text-decoration: line-through; opacity: 0.5; background: var(--tv-card); color: #162026; border-bottom-color: var(--b); }
   .ms.lockedm { background: rgba(47,138,74,0.16); color: var(--tv-ink); border-bottom-color: var(--success); }
   .ms small { font: 700 calc(var(--u) * 16)/1 var(--body); letter-spacing: 0.06em; margin-left: calc(var(--u) * 6); }
-  .ms.pick { outline: calc(var(--u) * 4) solid var(--mission-edge); outline-offset: calc(var(--u) * 3); }
+  .ms.pick { position: relative; }
+
+  /* Focus glow: a rotating stroke whose gradient spans 20 degrees of hue around the item's own
+     focus color, plus a blurred copy behind it. Team A = teal, Team B = light red, table = white. */
+  @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  .tv-col.a { --fh: 184; --fs: 85%; --fl: 62%; }
+  .tv-col.b { --fh: 352; --fs: 100%; --fl: 74%; }
+  .tbl.target { --fh: 200; --fs: 45%; --fl: 96%; }
+  .ms.pick { --fh: 178; --fs: 85%; --fl: 84%; }
+  .tv-col.acting .tv-col-head, .rc.hot, .tbl.target, .ms.pick { position: relative; }
+  .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before,
+  .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after {
+    content: ""; position: absolute; pointer-events: none;
+    inset: calc(var(--u) * -5); border-radius: calc(var(--u) * 12);
+    background: conic-gradient(from var(--spin),
+      hsl(calc(var(--fh) - 10) var(--fs) var(--fl)),
+      hsl(var(--fh) var(--fs) calc(var(--fl) + 8%)),
+      hsl(calc(var(--fh) + 10) var(--fs) var(--fl)),
+      hsl(var(--fh) var(--fs) calc(var(--fl) - 6%)),
+      hsl(calc(var(--fh) - 10) var(--fs) var(--fl)));
+    animation: spin 3.2s linear infinite;
+  }
+  /* Crisp stroke: the gradient masked down to a ring. */
+  .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before {
+    padding: calc(var(--u) * 4);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  /* Soft glow: the same gradient blurred, sitting behind the item. */
+  .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after {
+    z-index: -1; filter: blur(calc(var(--u) * 14)); opacity: 0.85;
+    animation: spin 3.2s linear infinite, breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes spin { to { --spin: 360deg; } }
+  @keyframes breathe { 50% { opacity: 0.45; } }
 
   @media (prefers-reduced-motion: reduce) {
+    .tv-col.acting .tv-col-head::before, .rc.hot::before, .tbl.target::before, .ms.pick::before,
+    .tv-col.acting .tv-col-head::after, .rc.hot::after, .tbl.target::after, .ms.pick::after { animation: none; }
     .big, .tbl.locked { animation: none; }
     .rc, .tv-col, .tbl, .tv-step { transition: none; }
   }
@@ -401,7 +438,7 @@
       <div class="section-heading">
         <p class="eyebrow">Proposed · Stream view</p>
         <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
-        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
+        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
       </div>
 
       <div class="stage-tools">
@@ -479,6 +516,7 @@
               <tr><td><span class="sw" style="background:#7dbef5"></span>Attacker blue</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-blue)"></span><code>--flag-blue</code></td><td>Team A, every step</td></tr>
               <tr><td><span class="sw" style="background:#f5ca67"></span>Defender gold</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-red)"></span><code>--flag-red</code></td><td>Team B, every step</td></tr>
               <tr><td><span class="sw" style="background:#8bd18f"></span>Mission green</td><td class="arrow">→</td><td><span class="sw" style="background:#a9e0e4"></span><code>--mission #a9e0e4</code></td><td>Mission cards, black text, <code>--accent-cyan</code> edge</td></tr>
+              <tr><td>Gold focus ring</td><td class="arrow">→</td><td>Animated glow, 20° hue gradient</td><td>Teal for Team A, light red for Team B, white for the picked table</td></tr>
               <tr><td>Radii 18–28px</td><td class="arrow">→</td><td>6 / 8 / 12px</td><td>Half the regional radii, on every rectangle</td></tr>
               <tr><td>None</td><td class="arrow">→</td><td><span class="sw" style="background:var(--success)"></span><code>--success</code></td><td>Locked pairing</td></tr>
               <tr><td><span class="sw" style="background:var(--old-black)"></span>Black panels</td><td class="arrow">→</td><td><span class="sw" style="background:var(--panel-strong)"></span><code>--panel-strong</code></td><td>Cards and panels</td></tr>
