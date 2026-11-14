@@ -58,9 +58,9 @@ Both views read the same state. The operator can run the round from the stream v
 ```
 
 - **48px safe margin** on all sides so overlays and platform UI don't clip anything.
-- **Team A on the left in navy, Team B on the right in red.** This holds for the whole round. "Attacker" and "Defender" are badges on the column, not colors, so the colors don't flip when roles change.
+- **Team A on the left, Team B on the right; colors follow the role.** The attacker is always red (`--flag-red`) and the defender always blue (`--flag-blue`). Roles alternate each pairing, so a team's column, cards and step banner change color when roles swap. Locked pairings keep the colors of the roles they were played under, so table 2 shows DFW red if DFW attacked it. Team-name chips on the final screen are neutral cream, since a team has no fixed color.
 - **Acting side highlighted**: the active column's header gets the focus glow, and the inactive column dims to 55%.
-- **Focus glow on anything selected or highlighted**: the acting team header, offered, revealed or matched Kill Teams, the picked table and the picked mission all get the same treatment. It's an animated stroke whose gradient spans 20° of hue around the item's focus color and slowly rotates, plus a blurred copy behind it that gently pulses. Focus colors are a lighter value of the item, never yellow: Team A (navy) uses teal `hsl(184 85% 62%)`, Team B (red) uses light red `hsl(352 100% 74%)`, the picked table uses white, and the picked mission uses pale aqua. Animation stops under `prefers-reduced-motion`.
+- **Focus glow on anything selected or highlighted**: the acting team header, offered, revealed or matched Kill Teams, the picked table and the picked mission all get the same treatment. It's an animated stroke whose gradient spans 20° of hue around the item's focus color and slowly rotates, plus a blurred copy behind it that gently pulses. Focus colors are a lighter value of the item, never yellow: the defender (blue) uses teal `hsl(184 85% 62%)`, the attacker (red) uses light red `hsl(352 100% 74%)`, the picked table uses white, and the picked mission uses pale aqua. Animation stops under `prefers-reduced-motion`.
 - **Ambient flag background**: a full-canvas American flag waves slowly behind all the UI on a `<canvas>`. It's drawn in a single ink color (white on the broadcast background, navy on the site background) at 7–9% opacity, with soft light and shade from the wave and a radial fade toward the edges, so it never competes with the board. It runs at about 30fps, pauses when the board is off screen, holds still under `prefers-reduced-motion`, and is off in transparent mode.
 - **Final step is pairings only**: once all five pairings are locked, the step banner, score, both roster columns, action stage and mission strip animate away. The top bar slides up, the rosters slide out to their sides, the middle blurs out and the mission strip drops. The USA Killteam logo comes back centered at the top, with the two team names under it. Then the five pairings rise in one after another as large cards, each showing the table, the map image (landscape), the mission, and the two Kill Teams on their team's side. Stepping back reverses the animation.
 - **Kill Teams stay on their team's side**: whether a team is attacking or defending, its Kill Team cards sit on that team's side of the screen. Team A's cards go left of center and Team B's go right, with VS (or the mission) in the middle. On each table tile, Team A's chip is set to the left and Team B's to the right.
@@ -93,8 +93,8 @@ Move the token block from `docs/founders/founders.css` into a shared `docs/asset
 | Current (pairing) | New (regional) | Used for |
 |---|---|---|
 | `--orange #ff6118` | `--accent-red #b24133` | Primary buttons, active drop zone |
-| `--blue #7dbef5` (attacker) | `--flag-blue #0a3161` / `--accent-blue #3c6dcb` | Team A, always |
-| `--gold #f5ca67` (defender) | `--flag-red #b31942` | Team B, always |
+| `--blue #7dbef5` (attacker) | `--flag-red #b31942` | Attacker, whichever team it is |
+| `--gold #f5ca67` (defender) | `--flag-blue #0a3161` | Defender, whichever team it is |
 | `--green #8bd18f` (mission) | `--mission #a9e0e4` light teal, black text, `--accent-cyan #2b9aa6` edge | Mission cards |
 | — | `--success #2f8a4a` | Locked pairing tick |
 | `--panel rgba(18,18,18,.9)` | `--panel-strong` cream | Cards and panels |

@@ -167,10 +167,15 @@
     --tv-card-line: rgba(22, 32, 38, 0.1);
     --tv-slot: rgba(22, 32, 38, 0.06);
     --tv-solid: #e2e8ea;
-    --a: #0a3161;
-    --a-soft: rgba(60, 109, 203, 0.16);
-    --b: #b31942;
-    --b-soft: rgba(179, 25, 66, 0.12);
+    /* Colors follow the role, not the team: attacker red, defender blue. */
+    --red: #b31942;
+    --red-soft: rgba(179, 25, 66, 0.12);
+    --blue: #0a3161;
+    --blue-soft: rgba(60, 109, 203, 0.16);
+    --a: var(--red);
+    --a-soft: var(--red-soft);
+    --b: var(--blue);
+    --b-soft: var(--blue-soft);
     --gold: #f0b735;
     --mission: #a9e0e4;
     --mission-edge: #2b9aa6;
@@ -273,8 +278,8 @@
   .tbl .map { position: absolute; inset: auto 0 0 0; padding: calc(var(--u) * 18) calc(var(--u) * 10) calc(var(--u) * 8); background: linear-gradient(transparent, rgba(7, 14, 24, 0.85)); color: #fff; font: 700 calc(var(--u) * 22)/1.1 var(--body); }
   .tbl .pair { align-self: end; display: grid; gap: calc(var(--u) * 6); }
   .tbl .side { font: 800 calc(var(--u) * 22)/1.1 var(--headline); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); color: #fff; }
-  .tbl .side.a { background: var(--a); margin-right: calc(var(--u) * 14); }
-  .tbl .side.b { background: var(--b); margin-left: calc(var(--u) * 14); text-align: right; }
+  .tbl .side.a { margin-right: calc(var(--u) * 14); }
+  .tbl .side.b { margin-left: calc(var(--u) * 14); text-align: right; }
   .tbl .mission { display: inline-flex; align-self: start; justify-self: start; font: 700 calc(var(--u) * 20)/1 var(--body); padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: calc(var(--u) * 5); background: var(--mission); color: var(--mission-ink); }
   .tbl.target { border-color: transparent; background: var(--tv-solid); }
   .tbl.locked { border-style: solid; border-color: transparent; background: var(--tv-card); color: #162026; animation: flip 420ms ease both; }
@@ -291,8 +296,12 @@
   /* Focus glow: a rotating stroke whose gradient spans 20 degrees of hue around the item's own
      focus color, plus a blurred copy behind it. Team A = teal, Team B = light red, table = white. */
   @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-  .tv-col.a { --fh: 184; --fs: 85%; --fl: 62%; }
-  .tv-col.b { --fh: 352; --fs: 100%; --fl: 74%; }
+  .tv.a-def { --a: var(--blue); --a-soft: var(--blue-soft); --b: var(--red); --b-soft: var(--red-soft); }
+  .tbl .side.att, .fin-side.att { background: var(--red); }
+  .tbl .side.def, .fin-side.def { background: var(--blue); }
+  /* Glow is a lighter value of the role color: light red for the attacker, teal for the defender. */
+  .tv-col.a, .tv.a-def .tv-col.b { --fh: 352; --fs: 100%; --fl: 74%; }
+  .tv-col.b, .tv.a-def .tv-col.a { --fh: 184; --fs: 85%; --fl: 62%; }
   .tbl.target { --fh: 200; --fs: 45%; --fl: 96%; }
   .ms.pick { --fh: 178; --fs: 85%; --fl: 84%; }
   .tv-col.acting .tv-col-head, .rc.hot, .tbl.target, .ms.pick { position: relative; }
@@ -351,9 +360,7 @@
       repeating-linear-gradient(180deg, var(--flag-red) 0 calc(var(--u) * 6.7), #fff calc(var(--u) * 6.7) calc(var(--u) * 13.4));
   }
   .fin-teams { display: flex; align-items: center; gap: calc(var(--u) * 18); font: 800 calc(var(--u) * 30)/1 var(--headline); text-transform: uppercase; }
-  .fin-teams .fa, .fin-teams .fb { padding: calc(var(--u) * 10) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); color: #fff; }
-  .fin-teams .fa { background: var(--a); }
-  .fin-teams .fb { background: var(--b); }
+  .fin-teams .fa, .fin-teams .fb { padding: calc(var(--u) * 10) calc(var(--u) * 18); border-radius: calc(var(--u) * 6); background: var(--tv-card); color: #162026; }
   .fin-teams .fvs { color: var(--tv-muted); font-size: calc(var(--u) * 24); }
   .fin-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--u) * 24); align-content: center; }
   .fin-pair { align-self: end; display: grid; gap: calc(var(--u) * 10); }
@@ -368,8 +375,8 @@
   .fin-side { display: grid; gap: calc(var(--u) * 6); padding: calc(var(--u) * 12) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); color: #fff; }
   .fin-side small { font: 700 calc(var(--u) * 18)/1.1 var(--body); letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
   .fin-side b { font: 900 calc(var(--u) * 34)/1.05 var(--headline); }
-  .fin-side.a { background: var(--a); margin-right: calc(var(--u) * 22); }
-  .fin-side.b { background: var(--b); margin-left: calc(var(--u) * 22); text-align: right; }
+  .fin-side.a { margin-right: calc(var(--u) * 22); }
+  .fin-side.b { margin-left: calc(var(--u) * 22); text-align: right; }
   .fin-vs { justify-self: center; font: 900 calc(var(--u) * 22)/1 var(--headline); text-transform: uppercase; color: var(--muted); margin-block: calc(var(--u) * -4); }
 
   @media (prefers-reduced-motion: reduce) {
@@ -434,8 +441,8 @@
       <p class="lede">A stream view for the pairing simulator, built as a fixed 1080p board that viewers can read, in the same look as the Regional Founders site. The pairing rules and step order stay as they are.</p>
       <div class="hero-meta">
         <span class="chip">File: <code>docs/pairing-simulator.html</code></span>
-        <span class="chip"><i style="background:var(--flag-blue)"></i>Team A navy</span>
-        <span class="chip"><i style="background:var(--flag-red)"></i>Team B red</span>
+        <span class="chip"><i style="background:var(--flag-red)"></i>Attacker red</span>
+        <span class="chip"><i style="background:var(--flag-blue)"></i>Defender blue</span>
         <span class="chip"><i style="background:#a9e0e4;box-shadow:inset 0 0 0 1px #2b9aa6"></i>Missions light teal</span>
       </div>
     </header>
@@ -493,7 +500,7 @@
       <div class="section-heading">
         <p class="eyebrow">Proposed · Stream view</p>
         <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
-        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. A faint American flag waves behind everything. When the last pairing locks, everything else animates away and the five pairings fill the screen under a centered USA Killteam logo. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
+        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left and Team B on the right. Colors follow the role: whoever is attacking is red and whoever is defending is blue, so a team changes color when roles swap between pairings. A faint American flag waves behind everything. When the last pairing locks, everything else animates away and the five pairings fill the screen under a centered USA Killteam logo. Anything selected gets an animated glow in a lighter value of its own color: light red for the attacker, teal for the defender, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
       </div>
 
       <div class="stage-tools">
@@ -570,10 +577,10 @@
             <thead><tr><th>Today</th><th></th><th>Regional</th><th>Used for</th></tr></thead>
             <tbody>
               <tr><td><span class="sw" style="background:var(--old-orange)"></span>Orange</td><td class="arrow">→</td><td><span class="sw" style="background:var(--accent-red)"></span><code>--accent-red</code></td><td>Primary buttons, active drop</td></tr>
-              <tr><td><span class="sw" style="background:#7dbef5"></span>Attacker blue</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-blue)"></span><code>--flag-blue</code></td><td>Team A, every step</td></tr>
-              <tr><td><span class="sw" style="background:#f5ca67"></span>Defender gold</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-red)"></span><code>--flag-red</code></td><td>Team B, every step</td></tr>
+              <tr><td><span class="sw" style="background:#7dbef5"></span>Attacker blue</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-red)"></span><code>--flag-red</code></td><td>Attacker, whichever team it is</td></tr>
+              <tr><td><span class="sw" style="background:#f5ca67"></span>Defender gold</td><td class="arrow">→</td><td><span class="sw" style="background:var(--flag-blue)"></span><code>--flag-blue</code></td><td>Defender, whichever team it is</td></tr>
               <tr><td><span class="sw" style="background:#8bd18f"></span>Mission green</td><td class="arrow">→</td><td><span class="sw" style="background:#a9e0e4"></span><code>--mission #a9e0e4</code></td><td>Mission cards, black text, <code>--accent-cyan</code> edge</td></tr>
-              <tr><td>Gold focus ring</td><td class="arrow">→</td><td>Animated glow, 20° hue gradient</td><td>Teal for Team A, light red for Team B, white for the picked table</td></tr>
+              <tr><td>Gold focus ring</td><td class="arrow">→</td><td>Animated glow, 20° hue gradient</td><td>Light red for the attacker, teal for the defender, white for the picked table</td></tr>
               <tr><td>Radii 18–28px</td><td class="arrow">→</td><td>6 / 8 / 12px</td><td>Half the regional radii, on every rectangle</td></tr>
               <tr><td>None</td><td class="arrow">→</td><td><span class="sw" style="background:var(--success)"></span><code>--success</code></td><td>Locked pairing</td></tr>
               <tr><td><span class="sw" style="background:var(--old-black)"></span>Black panels</td><td class="arrow">→</td><td><span class="sw" style="background:var(--panel-strong)"></span><code>--panel-strong</code></td><td>Cards and panels</td></tr>
@@ -646,11 +653,12 @@
   const missions = ['Secure', 'Loot', 'Transmission', 'Orb', 'Reboot', 'Energy Cells', 'Download', 'Stake Claim', 'Data'];
 
   const finalTables = [
-    { a: 'Kasrkin', b: 'Deathwatch', m: 'Secure' },
-    { a: 'Hand of the Archon', b: 'Raveners', m: 'Loot' },
-    { a: 'Angels of Death', b: 'Canoptek Circle', m: 'Reboot' },
-    { a: 'Vespid Stingwings', b: 'Hernkyn Yaegirs', m: 'Download' },
-    { a: 'Plague Marines', b: 'Celestian Insidiants', m: 'Stake Claim' },
+    // att: which team attacked that pairing. Roles alternate each pairing, as in the simulator.
+    { a: 'Kasrkin', b: 'Deathwatch', m: 'Secure', att: 'a' },
+    { a: 'Hand of the Archon', b: 'Raveners', m: 'Loot', att: 'b' },
+    { a: 'Angels of Death', b: 'Canoptek Circle', m: 'Reboot', att: 'a' },
+    { a: 'Vespid Stingwings', b: 'Hernkyn Yaegirs', m: 'Download', att: 'b' },
+    { a: 'Plague Marines', b: 'Celestian Insidiants', m: 'Stake Claim', att: 'a' },
   ];
 
   // Each step: who acts, banner text, and the board state shown.
@@ -733,9 +741,9 @@
             <div class="fin-shot">${boardSvg(n, true)}<span class="fin-map">${esc(maps[n])}</span></div>
             <span class="fin-mission">${esc(p.m)}</span>
             <div class="fin-pair">
-              <div class="fin-side a"><small>${esc(teamA.name)}</small><b>${esc(p.a)}</b></div>
+              <div class="fin-side a ${p.att === 'a' ? 'att' : 'def'}"><small>${esc(teamA.name)}</small><b>${esc(p.a)}</b></div>
               <div class="fin-vs">vs</div>
-              <div class="fin-side b"><small>${esc(teamB.name)}</small><b>${esc(p.b)}</b></div>
+              <div class="fin-side b ${p.att === 'b' ? 'att' : 'def'}"><small>${esc(teamB.name)}</small><b>${esc(p.b)}</b></div>
             </div>
           </article>`).join('')}
         </div>`;
@@ -749,6 +757,7 @@
     $('tv-step-t').textContent = s.t;
     $('tv-step').style.setProperty('--step-color', s.acting === 'a' ? 'var(--a)' : s.acting === 'b' ? 'var(--b)' : 'var(--success)');
     $('tv-locked').textContent = `${s.locked || 0} / 5`;
+    $('tv').classList.toggle('a-def', (s.att || 'a') === 'b');
     renderFinal(s);
     column(teamA, 'a', s);
     column(teamB, 'b', s);
@@ -769,7 +778,7 @@
       const p = finalTables[n];
       const cls = locked ? 'locked' : s.target === n ? 'target' : '';
       return `<div class="tbl ${cls}"><span class="k">Table ${n + 1}${locked ? ' ✓' : ''}</span><div class="shot">${boardSvg(n)}<span class="map">${esc(map)}</span></div>${
-        locked ? `<div class="pair"><span class="mission">${esc(p.m)}</span><span class="side a">${esc(p.a)}</span><span class="side b">${esc(p.b)}</span></div>` : ''}</div>`;
+        locked ? `<div class="pair"><span class="mission">${esc(p.m)}</span><span class="side a ${p.att === 'a' ? 'att' : 'def'}">${esc(p.a)}</span><span class="side b ${p.att === 'b' ? 'att' : 'def'}">${esc(p.b)}</span></div>` : ''}</div>`;
     }).join('');
 
     const usedM = new Map(finalTables.slice(0, s.locked || 0).map((p, n) => [p.m, n + 1]));
