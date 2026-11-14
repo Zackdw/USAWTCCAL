@@ -175,7 +175,9 @@
     --mission: #a9e0e4;
     --mission-edge: #2b9aa6;
     --mission-ink: #071417;
-    position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+    position: relative; isolation: isolate; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+    --flag-ink: 10, 49, 97;
+    --flag-alpha: 0.09;
     background: var(--tv-bg); color: var(--tv-ink);
     font-family: var(--body);
     padding: calc(var(--u) * 48);
@@ -186,6 +188,8 @@
     box-shadow: 0 24px 60px rgba(22, 32, 38, 0.25);
   }
   .tv.broadcast {
+    --flag-ink: 255, 255, 255;
+    --flag-alpha: 0.07;
     --tv-bg: radial-gradient(circle at 15% 0%, rgba(60,109,203,0.28), transparent 40%), radial-gradient(circle at 90% 10%, rgba(179,25,66,0.22), transparent 38%), linear-gradient(180deg, #0f203a 0%, #0a1628 100%);
     --tv-ink: #fbf7f0;
     --tv-muted: #b9c3cf;
@@ -195,6 +199,7 @@
     --tv-solid: #182940;
   }
   .tv.transparent {
+    --flag-alpha: 0;
     --tv-bg: repeating-conic-gradient(#c9cfd2 0 25%, #e4e8ea 0 50%) 0 0 / calc(var(--u) * 48) calc(var(--u) * 48);
   }
   .safe {
@@ -317,6 +322,15 @@
   @keyframes spin { to { --spin: 360deg; } }
   @keyframes breathe { 50% { opacity: 0.45; } }
 
+
+
+  /* Ambient waving flag behind everything: one ink color, very low alpha, faded at the edges. */
+  .tv-flag {
+    position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none;
+    opacity: 1; transition: opacity 600ms ease;
+    -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 35%, transparent 100%);
+            mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 35%, transparent 100%);
+  }
 
   /* ---------- final step: pairings only ---------- */
   .tv-top, .tv-col, .tv-mid, .tv-bottom { transition: opacity 520ms ease, transform 620ms cubic-bezier(.6,0,.2,1), filter 520ms ease; }
@@ -479,7 +493,7 @@
       <div class="section-heading">
         <p class="eyebrow">Proposed · Stream view</p>
         <h2 id="stream-title">One fixed 1080p board, no scrolling</h2>
-        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. When the last pairing locks, everything else animates away and the five pairings fill the screen under a centered USA Killteam logo. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
+        <p>Each table tile has a slot for the map image (shown here as a placeholder drawing). The board shows only what matters right now: the current step, the pairings locked so far, which missions are open, banned or used, and which Kill Teams each side still has. No round history. Team A stays on the left in navy and Team B on the right in red. A faint American flag waves behind everything. When the last pairing locks, everything else animates away and the five pairings fill the screen under a centered USA Killteam logo. Anything selected gets an animated glow in a lighter value of its own color: teal for Team A, light red for Team B, white for the picked table. Built for America's scrims between state and regional teams; the matchup and rosters below are examples.</p>
       </div>
 
       <div class="stage-tools">
@@ -501,6 +515,7 @@
       <div class="canvas-scroll">
         <div class="canvas-wrap">
           <div class="tv broadcast" id="tv" role="img" aria-label="Mockup of the proposed stream view at 1920 by 1080">
+            <canvas class="tv-flag" id="tv-flag" aria-hidden="true"></canvas>
             <div class="tv-top">
               <div class="tv-brand"><span class="brand-mark" aria-hidden="true">USA</span><div>USA Killteam<small>Team pairings</small></div></div>
               <div class="tv-step" id="tv-step"><span class="k" id="tv-step-k"></span><span class="t" id="tv-step-t"></span></div>
@@ -783,6 +798,101 @@
     e.currentTarget.setAttribute('aria-pressed', String(on));
     $('safe').hidden = !on;
   });
+
+
+  // ---------- ambient flag ----------
+  (function flag() {
+    const canvas = $('tv-flag');
+    const tv = $('tv');
+    const ctx = canvas.getContext('2d');
+    const src = document.createElement('canvas');
+    const sctx = src.getContext('2d');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let W = 0, H = 0, ink = '', alpha = 0, visible = true, last = 0, raf = 0;
+
+    function readTheme() {
+      const cs = getComputedStyle(tv);
+      ink = cs.getPropertyValue('--flag-ink').trim() || '255, 255, 255';
+      alpha = parseFloat(cs.getPropertyValue('--flag-alpha')) || 0;
+    }
+
+    // Draw a flat flag once into an offscreen canvas, oversized so the wave never shows an edge.
+    function paintSource() {
+      const fw = Math.round(W * 1.12), fh = Math.round(H * 1.16);
+      src.width = fw; src.height = fh;
+      sctx.clearRect(0, 0, fw, fh);
+      const stripe = fh / 13;
+      sctx.fillStyle = `rgba(${ink}, 1)`;
+      for (let r = 0; r < 13; r += 2) sctx.fillRect(0, r * stripe, fw, stripe);
+      const cw = fw * 0.42, ch = stripe * 7;
+      sctx.fillStyle = `rgba(${ink}, 0.55)`;
+      sctx.clearRect(0, 0, cw, ch);
+      sctx.fillRect(0, 0, cw, ch);
+      // Stars knocked out of the canton: 9 rows alternating 6 and 5.
+      sctx.globalCompositeOperation = 'destination-out';
+      const sx = cw / 12, sy = ch / 10, rad = Math.min(sx, sy) * 0.42;
+      for (let row = 0; row < 9; row++) {
+        const n = row % 2 ? 5 : 6;
+        for (let c = 0; c < n; c++) star(sctx, sx * (row % 2 ? 2 : 1) + c * sx * 2, sy * (row + 1), rad);
+      }
+      sctx.globalCompositeOperation = 'source-over';
+    }
+    function star(c, x, y, r) {
+      c.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.4 : r;
+        c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+      }
+      c.closePath(); c.fill();
+    }
+
+    function resize() {
+      const rect = tv.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      W = Math.max(1, Math.round(rect.width * dpr)); H = Math.max(1, Math.round(rect.height * dpr));
+      canvas.width = W; canvas.height = H;
+      readTheme(); paintSource(); frame(performance.now(), true);
+    }
+
+    // Slice the flag into thin columns and shift each one on a slow traveling wave.
+    function frame(now, force) {
+      if (!force && (!visible || now - last < 33)) return;
+      last = now;
+      const t = reduce.matches ? 0 : now / 1000;
+      ctx.clearRect(0, 0, W, H);
+      if (!alpha) return;
+      const fw = src.width, fh = src.height, ox = -(fw - W) / 2, oy = -(fh - H) / 2;
+      const amp = H * 0.035, slice = Math.max(2, Math.round(W / 320));
+      ctx.globalAlpha = alpha;
+      for (let x = 0; x < fw; x += slice) {
+        const p = x / fw;
+        const phase = p * Math.PI * 3.2 - t * 0.9;
+        const dy = Math.sin(phase) * amp * (0.35 + p) + Math.sin(phase * 0.5 + t * 0.4) * amp * 0.4;
+        ctx.drawImage(src, x, 0, slice, fh, x + ox, oy + dy, slice, fh);
+      }
+      // Light and shade from the wave's slope, applied only where the flag is drawn.
+      ctx.globalCompositeOperation = 'source-atop';
+      for (let x = 0; x < W; x += slice * 2) {
+        const p = (x - ox) / fw;
+        const shade = Math.cos(p * Math.PI * 3.2 - t * 0.9);
+        ctx.globalAlpha = Math.abs(shade) * 0.5;
+        ctx.fillStyle = shade > 0 ? `rgba(${ink}, 1)` : 'rgba(0, 0, 0, 1)';
+        ctx.fillRect(x, 0, slice * 2, H);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+    }
+
+    function loop(now) { frame(now, false); raf = reduce.matches ? 0 : requestAnimationFrame(loop); }
+    function start() { if (!raf && !reduce.matches) raf = requestAnimationFrame(loop); }
+
+    new ResizeObserver(resize).observe(tv);
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(tv);
+    new MutationObserver(() => { readTheme(); paintSource(); frame(performance.now(), true); })
+      .observe(tv, { attributes: true, attributeFilter: ['class'] });
+    reduce.addEventListener?.('change', () => { frame(performance.now(), true); start(); });
+    resize(); start();
+  })();
 
   i = 2;
   render();
