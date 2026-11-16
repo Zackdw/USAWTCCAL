@@ -148,6 +148,12 @@
   .setup-search-empty { padding: 0.5rem; color: var(--muted); font-size: 0.88rem; }
   .mission-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .mission-chip { padding: 0.4rem 0.7rem; border-radius: var(--radius-sm); background: var(--mission); color: var(--mission-ink); border-bottom: 3px solid var(--mission-edge); font: 600 0.88rem/1.1 var(--display); }
+  .map-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.5rem; }
+  .map-pick { display: grid; gap: 0.3rem; min-width: 0; }
+  .map-pick > span { font: 600 0.78rem/1 var(--display); letter-spacing: 0.04em; color: var(--muted); }
+  .map-pick select { width: 100%; min-height: 2.4rem; padding: 0 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #fff; color: var(--ink); font: 500 0.9rem/1 var(--display); cursor: pointer; }
+  .map-pick select:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(60, 109, 203, 0.2); }
+  .map-pick.fixed select { border-color: var(--mission-edge); background: var(--mission); color: var(--mission-ink); }
   .setup-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
   #primary-layout.live-mode .setup-library { display: none; }
 
@@ -549,6 +555,14 @@
         </div>
         <div class="mission-row" id="setup-missions"></div>
 
+        <div class="section-head">
+          <div>
+            <p class="side-tag">Maps</p>
+          </div>
+          <button class="ghost-button" id="maps-all-random" type="button">All random</button>
+        </div>
+        <div class="map-row" id="setup-maps"></div>
+
         <div class="setup-actions">
           <button class="primary-button" id="start-simulation" type="button">Start round</button>
           <button class="ghost-button" id="clear-both" type="button">Clear both rosters</button>
@@ -706,17 +720,32 @@
       return number;
     }
 
-    function createTableAssignments() {
-      const mapTypes = [
-        randomChoice(['Volkus 24', 'Volkus 25']),
-        randomChoice(['Volkus 24', 'Volkus 25']),
-        randomChoice(['Volkus 24', 'Volkus 25']),
-        'Tomb World',
-        'WTC ITC'
-      ];
+    const MAP_TYPES = ['Volkus 24', 'Volkus 25', 'Tomb World', 'WTC ITC'];
+    const MAP_OPTIONS = MAP_TYPES.flatMap((mapType) => MAP_NUMBERS.map((number) => `${mapType}:${number}`));
+    const mapFamily = (mapType) => (mapType.startsWith('Volkus') ? 'Volkus' : mapType);
 
+    // fixedMaps[i] is the map set for Table i+1 in setup, or null to draw it at random.
+    // Random tables fill out the usual spread (three Volkus, one Tomb World, one WTC ITC)
+    // around whatever was set, without repeating a map already on another table.
+    function createTableAssignments(fixedMaps = []) {
+      const fixed = Array.from({ length: TABLE_COUNT }, (_, index) => fixedMaps[index] || null);
+      const families = ['Volkus', 'Volkus', 'Volkus', 'Tomb World', 'WTC ITC'];
       const usedNumbers = new Map();
-      return shuffle(mapTypes).map((mapType) => `${mapType}:${drawMapNumber(usedNumbers, mapType)}`);
+      for (const table of fixed.filter(Boolean)) {
+        const [mapType, number] = table.split(':');
+        const slot = families.indexOf(mapFamily(mapType));
+        families.splice(slot >= 0 ? slot : 0, 1);
+        usedNumbers.set(mapType, (usedNumbers.get(mapType) || new Set()).add(number));
+      }
+
+      const randomTypes = shuffle(families).map((family) => (family === 'Volkus' ? randomChoice(['Volkus 24', 'Volkus 25']) : family));
+      return fixed.map((table) => {
+        if (table) {
+          return table;
+        }
+        const mapType = randomTypes.shift();
+        return `${mapType}:${drawMapNumber(usedNumbers, mapType)}`;
+      });
     }
 
     const INITIAL_TABLE_ASSIGNMENTS = createTableAssignments();
@@ -724,7 +753,8 @@
     const state = {
       setup: {
         A: [],
-        B: []
+        B: [],
+        maps: Array(TABLE_COUNT).fill(null)
       },
       showDeclassifiedTeams: false,
       started: false,
@@ -746,6 +776,7 @@
       pendingOfferSelection: [],
       matchups: [],
       history: [],
+      undoStack: [],
       sessionRecords: [],
       sessionCounter: 0,
       sessionSnapshotCaptured: false,
@@ -769,6 +800,7 @@
       countA: document.getElementById('count-a'),
       countB: document.getElementById('count-b'),
       setupMissions: document.getElementById('setup-missions'),
+      setupMaps: document.getElementById('setup-maps'),
       setupFeedback: document.getElementById('setup-feedback'),
       progressChip: document.getElementById('progress-chip'),
       simEmpty: document.getElementById('sim-empty'),
@@ -1181,12 +1213,13 @@
       state.availableMissions = [...MISSIONS];
       state.bannedMissions = [];
       state.usedMissions = [];
-      state.tableAssignments = createTableAssignments();
+      state.tableAssignments = createTableAssignments(state.setup.maps);
       state.availableTables = [...state.tableAssignments];
       state.pendingMatch = null;
       state.pendingOfferSelection = [];
       state.matchups = [];
       state.history = [];
+      state.undoStack = [];
       state.sessionSnapshotCaptured = false;
     }
 
@@ -1742,9 +1775,61 @@
       elements.setupMissions.innerHTML = MISSIONS.map((mission) => `<span class="mission-chip">${mission}</span>`).join('');
     }
 
+    function setSetupMap(index, table) {
+      if (table && state.setup.maps.some((entry, other) => other !== index && entry === table)) {
+        return;
+      }
+      state.setup.maps[index] = table || null;
+      if (state.started) {
+        resetSimulationState();
+      }
+      renderAll();
+    }
+
+    function setAllMapsRandom() {
+      if (state.setup.maps.every((entry) => !entry)) {
+        return;
+      }
+      state.setup.maps = Array(TABLE_COUNT).fill(null);
+      if (state.started) {
+        resetSimulationState();
+      }
+      renderAll();
+    }
+
+    function renderSetupMaps() {
+      const container = elements.setupMaps;
+      if (!Array.isArray(state.setup.maps)) {
+        state.setup.maps = Array(TABLE_COUNT).fill(null);
+      }
+      if (!container.childElementCount) {
+        const optionGroups = MAP_TYPES.map((mapType) => `<optgroup label="${mapType}">${MAP_NUMBERS
+          .map((number) => `<option value="${mapType}:${number}">${mapType}:${number}</option>`).join('')}</optgroup>`).join('');
+        container.innerHTML = Array.from({ length: TABLE_COUNT }, (_, index) => `<label class="map-pick"><span>Table ${index + 1}</span><select data-table="${index}" aria-label="Map for Table ${index + 1}"><option value="">Random</option>${optionGroups}</select></label>`).join('');
+        container.addEventListener('change', (event) => {
+          const select = event.target.closest('select[data-table]');
+          if (select) {
+            setSetupMap(Number(select.dataset.table), select.value);
+          }
+        });
+      }
+      container.querySelectorAll('select[data-table]').forEach((select) => {
+        const index = Number(select.dataset.table);
+        const value = state.setup.maps[index] || '';
+        if (select.value !== value) {
+          select.value = value;
+        }
+        select.closest('.map-pick').classList.toggle('fixed', Boolean(value));
+        for (const option of select.options) {
+          option.disabled = Boolean(option.value) && option.value !== value && state.setup.maps.includes(option.value);
+        }
+      });
+      document.getElementById('maps-all-random').disabled = state.setup.maps.every((entry) => !entry);
+    }
+
     function renderSetupFeedback() {
       if (state.started) {
-        elements.setupFeedback.textContent = 'The round is live. Changing a roster restarts it.';
+        elements.setupFeedback.textContent = 'The round is live. Changing a roster or map restarts it.';
         return;
       }
       if (canStart()) {
@@ -1762,6 +1847,7 @@
       renderSetupRoster('B');
       renderSetupSearchControls();
       renderSetupMissions();
+      renderSetupMaps();
       document.getElementById('team-a-setup-heading').textContent = teamLabel('A');
       document.getElementById('team-b-setup-heading').textContent = teamLabel('B');
       renderSetupFeedback();
@@ -2132,12 +2218,50 @@
       renderFinal();
     }
 
+    // ---------- undo (press Z) ----------
+    // Each committed pairing step stores a snapshot of the round so Z can step back to it.
+    const UNDO_KEYS = ['completed', 'phaseIndex', 'pools', 'availableMissions', 'bannedMissions', 'usedMissions',
+      'availableTables', 'pendingMatch', 'pendingOfferSelection', 'matchups', 'history'];
+
+    function captureRoundSnapshot() {
+      const snapshot = {};
+      for (const key of UNDO_KEYS) {
+        snapshot[key] = JSON.parse(JSON.stringify(state[key]));
+      }
+      return snapshot;
+    }
+
+    function undoStep() {
+      if (!state.started || !state.undoStack.length) {
+        return;
+      }
+      const snapshot = state.undoStack.pop();
+      if (state.completed && !snapshot.completed && state.sessionSnapshotCaptured) {
+        // Stepping back out of a finished round un-saves it, so finishing again doesn't log a duplicate.
+        state.sessionRecords = state.sessionRecords.filter((record) => record.id !== state.sessionCounter);
+        state.sessionCounter = Math.max(0, state.sessionCounter - 1);
+        state.sessionSnapshotCaptured = false;
+        state.exportFeedback = 'Last step undone; the round is no longer saved.';
+      }
+      Object.assign(state, snapshot);
+      renderAll();
+    }
+
     // ---------- board clicks ----------
     function handleBoardAction(act, value) {
       const phase = getCurrentPhase();
       if (!phase) {
         return;
       }
+      const before = captureRoundSnapshot();
+      runBoardAction(phase, act, value);
+      if (state.phaseIndex !== before.phaseIndex || state.completed !== before.completed) {
+        state.undoStack.push(before);
+        broadcastState();
+      }
+    }
+
+    function runBoardAction(phase, act, value) {
       const sequence = phase.sequence ? getSequence(phase.sequence) : null;
       if (act === 'reveal' && phase.type === 'defender-reveal') {
         revealDefenderTeam(sequence, value);
@@ -2218,6 +2342,8 @@
         setStreamMode(false);
       } else if (event.key === 's' || event.key === 'S') {
         setStreamMode(!document.body.classList.contains('stream'));
+      } else if ((event.key === 'z' || event.key === 'Z') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        undoStep();
       }
     });
     setStreamMode(location.hash === '#stream');
@@ -2476,6 +2602,7 @@
     document.getElementById('clear-both').addEventListener('click', clearBothSides);
     document.getElementById('swap-sides-button').addEventListener('click', swapSides);
     document.getElementById('start-simulation').addEventListener('click', startSimulation);
+    document.getElementById('maps-all-random').addEventListener('click', setAllMapsRandom);
     document.getElementById('restart-simulation').addEventListener('click', restartSimulation);
     elements.downloadSessionReport.addEventListener('click', downloadSessionWorkbook);
     elements.clearSessionRecords.addEventListener('click', () => {
