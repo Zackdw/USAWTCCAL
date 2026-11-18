@@ -308,6 +308,15 @@
   .tbl { border-radius: calc(var(--u) * 10); background: var(--tv-slot); border: calc(var(--u) * 3) dashed var(--tv-card-line); display: grid; grid-template-rows: auto auto minmax(0, 1fr); padding: calc(var(--u) * 12); gap: calc(var(--u) * 8); color: var(--tv-ink); transition: background 300ms ease, border-color 300ms ease; }
   .tbl .k { font: 700 calc(var(--u) * 18)/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-muted); }
   .tbl .shot { position: relative; aspect-ratio: 22 / 30; border-radius: calc(var(--u) * 4); overflow: hidden; background: #2a3a4c; }
+  /* vector maps: cream card behind the board, footer with logo, small set name and a big map number */
+  .tbl .shot:has(svg[role=img]:not(.map-logo)), .fin-shot:has(svg[role=img]:not(.map-logo)) { background: var(--tv-card); }
+  .tbl .shot svg[role=img]:not(.map-logo), .fin-shot svg[role=img]:not(.map-logo) { position: absolute; inset: 0; padding: calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 64); box-sizing: border-box; }
+  .tbl .map, .fin-map { display: flex; align-items: center; gap: calc(var(--u) * 8); }
+  .tbl .shot:has(svg[role=img]:not(.map-logo)) .map, .fin-shot:has(svg[role=img]:not(.map-logo)) .fin-map { background: var(--tv-card); color: var(--tv-ink); padding: calc(var(--u) * 6) calc(var(--u) * 8); border-top: 1px solid var(--tv-card-line); }
+  .tbl .shot .map-logo, .fin-shot .map-logo, .map-logo { flex: none; display: block; width: calc(var(--u) * 48); height: calc(var(--u) * 48); border-radius: calc(var(--u) * 3); }
+  .map-name { font: 800 calc(var(--u) * 13)/1.05 var(--headline); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; color: var(--tv-muted); }
+  .map-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: calc(var(--u) * 3); }
+  .map-num { font: 900 calc(var(--u) * 40)/1 var(--headline); color: var(--accent-red); background: var(--red-soft); border-radius: calc(var(--u) * 5); padding: calc(var(--u) * 2) calc(var(--u) * 8); }
   .tbl .shot svg { display: block; width: 100%; height: 100%; }
   /* Real images are supplied landscape (30:22) and turned to portrait to fill the tile. */
   .tbl .shot img { position: absolute; top: 50%; left: 50%; width: 136.37%; height: 73.33%; object-fit: cover; transform: translate(-50%, -50%) rotate(90deg); }
@@ -652,6 +661,9 @@
   </main>
 
   <script src="./team-pairing-teams.js"></script>
+  <script src="./assets/maps/maps.js"></script>
+  <script src="./assets/maps/logo-paths.js"></script>
+  <script src="./assets/maps/render.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
   <script>
     const teamNames = { A: '', B: '' };
@@ -2093,7 +2105,24 @@
         : `<svg viewBox="0 0 22 30" aria-hidden="true"><g transform="translate(22 0) rotate(90)">${board}</g></svg>`;
     }
 
+    // Vector maps (assets/maps/maps.js) in the board colours, red deployment zone at the bottom.
+    const MAP_SETS = { 'Volkus 24': ['volkus-2024', 'volkus'], 'Volkus 25': ['volkus', 'volkus'], 'Tomb World': ['tomb-world', 'tombworld'], 'WTC ITC': ['wtc-itd', 'wtc'] };
+    function vectorMap(table) {
+      const [type, number] = table.split(':');
+      const set = MAP_SETS[type];
+      const map = set && window.MAPS && window.MAPS[`${set[0]}-${number}`];
+      return map && window.MapRender ? window.MapRender.renderMap(map, 'usa', { title: `${type} map ${number}` }) : '';
+    }
+    function mapLabel(table) {
+      const [type, number] = table.split(':');
+      const set = MAP_SETS[type];
+      const logo = set && window.MapRender ? window.MapRender.renderLogo(set[1], 'usaRed', { className: 'map-logo', title: type }) : '';
+      return `${logo}<span class="map-meta"><span class="map-num">${esc(number || '')}</span><span class="map-name">${esc(type)}</span></span>`;
+    }
+
     function mapArt(table, wide) {
+      const vec = vectorMap(table);
+      if (vec) return vec;
       const slug = slugFor(table);
       const img = missingMaps.has(slug) ? '' : `<img src="./assets/maps/${slug}.jpg" alt="" data-slug="${slug}">`;
       return boardSvg(table, wide) + img;
@@ -2129,7 +2158,7 @@
           const chips = sideChips(match);
           pair = `<div class="pair"><span class="mission">${esc(match.mission)}</span><span class="side a ${chips.aRole}">${esc(chips.aTeam)}</span><span class="side b ${chips.bRole}">${esc(chips.bTeam)}</span></div>`;
         }
-        return `<div class="tbl ${cls}"${act}><span class="k">Table ${n + 1}${match ? ' ✓' : ''}</span><div class="shot">${mapArt(table, false)}<span class="map">${esc(table)}</span></div>${pair}</div>`;
+        return `<div class="tbl ${cls}"${act}><span class="k">Table ${n + 1}${match ? ' ✓' : ''}</span><div class="shot">${mapArt(table, false)}<span class="map">${mapLabel(table)}</span></div>${pair}</div>`;
       }).join('');
       lockedSeen = state.matchups.length;
     }
@@ -2173,7 +2202,7 @@
             return `
             <article class="fin-card" style="--d:${n}">
               <div class="fin-k">Table ${tableIndex(match.table) + 1}</div>
-              <div class="fin-shot">${mapArt(match.table, true)}<span class="fin-map">${esc(match.table)}</span></div>
+              <div class="fin-shot">${mapArt(match.table, true)}<span class="fin-map">${mapLabel(match.table)}</span></div>
               <span class="fin-mission">${esc(match.mission)}</span>
               <div class="fin-pair">
                 <div class="fin-side a ${chips.aRole}"><small>${esc(teamLabel('A'))}</small><b>${esc(chips.aTeam)}</b></div>
