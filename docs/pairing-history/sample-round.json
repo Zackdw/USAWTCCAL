@@ -1,0 +1,65 @@
+{
+  "id": 1,
+  "capturedAt": "2026-11-28T19:42:07.311Z",
+  "capturedAtLabel": "28/11/2026, 19:42",
+  "teamA": ["Kommandos", "Pathfinders", "Legionaries", "Wolf Scouts", "Vespid Stingwings"],
+  "teamB": ["Nemesis Claw", "Hearthkyn Salvagers", "Blooded", "Void-Dancer Troupe", "Hand of the Archon"],
+  "matchups": [
+    {
+      "sequence": 1,
+      "defenderSide": "A",
+      "attackerSide": "B",
+      "defenderTeam": "Kommandos",
+      "offeredTeams": ["Blooded", "Nemesis Claw"],
+      "attackerTeam": "Blooded",
+      "returnedAttackerTeam": "Nemesis Claw",
+      "table": "Tomb World:5",
+      "mission": "Secure"
+    },
+    {
+      "sequence": 2,
+      "defenderSide": "B",
+      "attackerSide": "A",
+      "defenderTeam": "Hearthkyn Salvagers",
+      "offeredTeams": ["Pathfinders", "Wolf Scouts"],
+      "attackerTeam": "Wolf Scouts",
+      "returnedAttackerTeam": "Pathfinders",
+      "table": "Volkus 24:3",
+      "mission": "Loot"
+    },
+    {
+      "sequence": 3,
+      "defenderSide": "A",
+      "attackerSide": "B",
+      "defenderTeam": "Legionaries",
+      "offeredTeams": ["Nemesis Claw", "Hand of the Archon"],
+      "attackerTeam": "Hand of the Archon",
+      "returnedAttackerTeam": "Nemesis Claw",
+      "table": "WTC ITC:2",
+      "mission": "Transmission"
+    },
+    {
+      "sequence": 4,
+      "defenderSide": "B",
+      "attackerSide": "A",
+      "defenderTeam": "Void-Dancer Troupe",
+      "offeredTeams": ["Pathfinders", "Vespid Stingwings"],
+      "attackerTeam": "Vespid Stingwings",
+      "returnedAttackerTeam": "Pathfinders",
+      "table": "Volkus 25:1",
+      "mission": "Download"
+    },
+    {
+      "sequence": 5,
+      "defenderSide": "A",
+      "attackerSide": "B",
+      "defenderTeam": "Pathfinders",
+      "attackerTeam": "Nemesis Claw",
+      "returnedAttackerTeam": null,
+      "table": "Volkus 24:6",
+      "mission": "Stake Claim"
+    }
+  ],
+  "bannedMissions": ["Orb", "Data", "Reboot"],
+  "usedMissions": ["Secure", "Loot", "Transmission", "Download", "Stake Claim"]
+}

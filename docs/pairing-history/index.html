@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pairing History JSON</title>
+<meta name="description" content="How the USA Kill Team pairing simulator structures a completed round's match history as JSON.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@800;900&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/brand.css">
+<style>
+  /* Reference page for collaborators. Light theme only, matching the rest of the regional site. */
+  :root {
+    color-scheme: light;
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+    --code-bg: #142029;
+    --code-ink: #dbe4ea;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .flagbar { height: 6px; background: linear-gradient(90deg, var(--flag-blue) 0 33%, #f4f1ea 33% 66%, var(--flag-red) 66%); }
+  main { max-width: 920px; margin: 0 auto; padding: 40px 16px 72px; }
+  h1, h2 { font-family: var(--headline); font-weight: 900; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(2rem, 5vw, 2.8rem); color: var(--flag-blue); }
+  h2 { font-size: 1.5rem; color: var(--navy); margin-bottom: 12px; }
+  h3 { font-size: 1rem; margin: 24px 0 8px; }
+  .kicker { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 700; color: var(--accent-red); margin-bottom: 8px; }
+  .lead { font-size: 1.1rem; color: var(--muted); max-width: 62ch; margin: 14px 0 22px; }
+  section { background: var(--panel-strong); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-top: 20px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 1.3rem; }
+  li { margin-bottom: 6px; }
+  code { font-family: var(--mono); font-size: 0.88em; background: rgba(10, 49, 97, 0.07); padding: 1px 5px; border-radius: 4px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 600 0.95rem var(--body); text-decoration: none; cursor: pointer;
+    padding: 10px 16px; border-radius: var(--radius); border: 1px solid var(--flag-blue);
+  }
+  .btn-primary { background: var(--flag-blue); color: #fff; }
+  .btn-primary:hover { background: #0d3f7c; }
+  .btn-ghost { background: transparent; color: var(--flag-blue); }
+  .btn-ghost:hover { background: rgba(10, 49, 97, 0.06); }
+  .btn:focus-visible { outline: 3px solid var(--accent-gold); outline-offset: 2px; }
+  .btn svg { width: 18px; height: 18px; }
+
+  .codewrap { position: relative; margin-top: 12px; }
+  pre {
+    margin: 0; background: var(--code-bg); color: var(--code-ink);
+    font: 0.84rem/1.6 var(--mono); padding: 18px; border-radius: var(--radius);
+    overflow: auto; max-height: 620px;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .k { color: #8cc4ff; } .s { color: #f2c879; } .n { color: #9fe3a8; } .z { color: #f08f8f; }
+
+  .table-scroll { overflow-x: auto; margin: 0 -4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  td:first-child { white-space: nowrap; }
+  td:nth-child(2) { color: var(--muted); white-space: nowrap; }
+
+  .callout { border-left: 4px solid var(--accent-gold); background: rgba(240, 183, 53, 0.1); padding: 12px 14px; border-radius: 0 var(--radius) var(--radius) 0; margin-top: 8px; }
+  .callout li:last-child { margin-bottom: 0; }
+  footer { color: var(--muted); font-size: 0.85rem; margin-top: 28px; text-align: center; }
+  footer a { color: var(--flag-blue); }
+
+  @media (max-width: 600px) {
+    section { padding: 18px 16px; }
+    td:first-child, td:nth-child(2) { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<div class="flagbar" aria-hidden="true"></div>
+<main>
+  <div class="kicker">Pairing Simulator · Data format</div>
+  <h1>Match History JSON</h1>
+  <p class="lead">Each round finished in the pairing simulator is saved as one JSON record holding both rosters, the five locked matchups, and the missions that were banned or played.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="sample-round.json" download="sample-round.json">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Download sample JSON
+    </a>
+    <button class="btn btn-ghost" type="button" id="copy-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      <span>Copy JSON</span>
+    </button>
+  </div>
+
+  <section aria-labelledby="overview">
+    <h2 id="overview">Overview</h2>
+    <ul>
+      <li><strong>Saved when:</strong> the fifth pairing locks. Undoing out of a finished round removes its record again.</li>
+      <li><strong>Several rounds:</strong> a session is an array of these records, numbered by <code>id</code> from 1: <code>[ {"id": 1, …}, {"id": 2, …} ]</code>.</li>
+      <li><strong>Where it lives:</strong> in the browser's memory only, so a page refresh loses it. Today it leaves the tool only through the Excel export.</li>
+      <li><strong>Not included:</strong> the step-by-step History panel. That log is plain English sentences for display, not structured data.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="example">
+    <h2 id="example">Example: one completed round</h2>
+    <p>Team A was the opening Defender here, so A defends pairings 1, 3 and 5 and B defends 2 and 4. The team names and maps are made up, but the shape is exactly what the tool saves.</p>
+    <div class="codewrap">
+      <pre><code id="json-view">Loading sample-round.json…</code></pre>
+    </div>
+  </section>
+
+  <section aria-labelledby="fields">
+    <h2 id="fields">Field reference</h2>
+    <h3>Round record</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>number</td><td>Round number in this session, from 1</td></tr>
+          <tr><td><code>capturedAt</code></td><td>string, ISO 8601 UTC</td><td>When the round finished</td></tr>
+          <tr><td><code>capturedAtLabel</code></td><td>string</td><td>The same time for display, <code>DD/MM/YYYY, HH:MM</code> in local time</td></tr>
+          <tr><td><code>teamA</code></td><td>string[5]</td><td>Side A roster, in setup order</td></tr>
+          <tr><td><code>teamB</code></td><td>string[5]</td><td>Side B roster, in setup order</td></tr>
+          <tr><td><code>matchups</code></td><td>object[5]</td><td>The five locked games, in pairing order (below)</td></tr>
+          <tr><td><code>bannedMissions</code></td><td>string[3]</td><td>Missions banned, in ban order</td></tr>
+          <tr><td><code>usedMissions</code></td><td>string[5]</td><td>Missions played, in the same order as <code>matchups</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Matchup (one per entry in <code>matchups</code>)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>sequence</code></td><td>number 1–5</td><td>Which pairing step locked this game</td></tr>
+          <tr><td><code>defenderSide</code></td><td>"A" or "B"</td><td>Side that defended this pairing</td></tr>
+          <tr><td><code>attackerSide</code></td><td>"A" or "B"</td><td>The other side</td></tr>
+          <tr><td><code>defenderTeam</code></td><td>string</td><td>Team the Defender revealed</td></tr>
+          <tr><td><code>offeredTeams</code></td><td>string[2]</td><td>The two teams the Attacker offered. Pairings 1–4 only</td></tr>
+          <tr><td><code>attackerTeam</code></td><td>string</td><td>The offered team the Defender picked to play</td></tr>
+          <tr><td><code>returnedAttackerTeam</code></td><td>string or null</td><td>The offered team sent back to the Attacker's pool. <code>null</code> on pairing 5</td></tr>
+          <tr><td><code>table</code></td><td>string</td><td>Map on that table, as <code>"&lt;map type&gt;:&lt;number&gt;"</code></td></tr>
+          <tr><td><code>mission</code></td><td>string</td><td>Mission the Defender chose for that table</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="values">
+    <h2 id="values">Values, pairing order and quirks</h2>
+    <h3>Allowed values</h3>
+    <ul>
+      <li><strong>Missions (9):</strong> Secure, Loot, Transmission, Orb, Reboot, Energy Cells, Download, Stake Claim, Data. Each round bans 3 and plays 5, so 1 goes unused.</li>
+      <li><strong>Map types:</strong> <code>Volkus 24</code>, <code>Volkus 25</code>, <code>Tomb World</code>, <code>WTC ITC</code>, each numbered 1–6, for example <code>"Volkus 25:1"</code>. Split on <code>:</code> to get the type and number. A round normally has three Volkus tables, one Tomb World and one WTC ITC.</li>
+      <li><strong>Sides</strong> are always <code>"A"</code> or <code>"B"</code>. Custom team names typed into the tool are stored separately and never appear in the record.</li>
+    </ul>
+    <h3>How a round runs</h3>
+    <ol>
+      <li>Opening bans: the opening Defender bans one mission, then the Attacker bans one.</li>
+      <li>Pairings 1–4, each in five steps: the Defender reveals a team, the Attacker offers two, the Defender picks one (the other goes back), the Attacker picks the table, and the Defender picks the mission.</li>
+      <li>After pairing 3, that pairing's Defender bans one more mission.</li>
+      <li>Pairing 5 is automatic: the last team on each side meets on the last table, and the Defender picks the mission.</li>
+    </ol>
+    <p>The Defender role alternates. The opening Defender is picked at random and defends pairings 1, 3 and 5.</p>
+    <h3>Things to watch for</h3>
+    <div class="callout">
+      <ul>
+        <li>The pairing 5 matchup has <strong>no <code>offeredTeams</code> key at all</strong>, not an empty array. Treat it as optional.</li>
+        <li>Nothing records who won or the score. The Excel export leaves a blank "Self-Assessed Score" column for that.</li>
+        <li><code>bannedMissions</code> doesn't say who banned what. By position: 0 is the opening Defender, 1 is the opening Attacker, and 2 is pairing 3's Defender (the opening Defender again).</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Part of the <a href="../">USA Kill Team regional site</a> · <a href="../pairing-simulator.html">Open the pairing simulator</a></footer>
+</main>
+<script>
+  // The sample file is the single source: the page shows and copies exactly what the download contains.
+  const view = document.getElementById('json-view');
+  const copyBtn = document.getElementById('copy-btn');
+  let rawJson = '';
+
+  function escapeHtml(text) {
+    return text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  }
+
+  function highlight(text) {
+    return escapeHtml(text).replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(-?\d+(?:\.\d+)?)\b|\b(null|true|false)\b/g,
+      (match, str, colon, num, lit) => {
+        if (str) return colon ? `<span class="k">${str}</span>${colon}` : `<span class="s">${str}</span>`;
+        if (num) return `<span class="n">${num}</span>`;
+        return `<span class="z">${lit}</span>`;
+      });
+  }
+
+  fetch('sample-round.json')
+    .then((response) => {
+      if (!response.ok) throw new Error(response.status);
+      return response.text();
+    })
+    .then((text) => {
+      rawJson = text.trim();
+      view.innerHTML = highlight(rawJson);
+    })
+    .catch(() => {
+      view.textContent = 'Could not load the sample here. Use the download button above to get sample-round.json.';
+      copyBtn.hidden = true;
+    });
+
+  copyBtn.addEventListener('click', async () => {
+    const label = copyBtn.querySelector('span');
+    try {
+      await navigator.clipboard.writeText(rawJson);
+      label.textContent = 'Copied';
+    } catch {
+      label.textContent = 'Copy failed';
+    }
+    setTimeout(() => { label.textContent = 'Copy JSON'; }, 1600);
+  });
+</script>
+</body>
+</html>
